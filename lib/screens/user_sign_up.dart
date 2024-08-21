@@ -168,7 +168,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
       DateTime dobDateOnly = DateTime(dob!.year, dob.month, dob.day);
 
       // Save user data
-      await firestore.collection('users').doc(name).set({
+      await firestore.collection('users').doc(email).set({
         'id': id,
         'name': name,
         'username': name,
