@@ -71,15 +71,26 @@ class _AccountScreenState extends State<AccountScreen> {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 10,),
-                      userData['profileImage'] != null
-                      ? CircleAvatar(
-                          radius: 62,
-                          backgroundImage: NetworkImage(userData['profileImage']),
-                        )
-                      : const CircleAvatar(
-                          radius: 62,
-                          backgroundImage: AssetImage("images/profile.png"),
-                          backgroundColor: Colors.white,
+                      Container(
+                        width: 128,  // Width and height should match the CircleAvatar's diameter (2 * radius)
+                        height: 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Color(0xFF467BA1),  // Border color
+                            width: 3.0,  // Border width
+                          ),
+                        ),
+                        child: userData['profileImage'] != null
+                            ? CircleAvatar(
+                                radius: 64,
+                                backgroundImage: NetworkImage(userData['profileImage']),
+                              )
+                            : const CircleAvatar(
+                                radius: 64,
+                                backgroundImage: AssetImage("images/profile.png"),
+                                backgroundColor: Colors.white,
+                              ),
                       )
                     ]
                   ),
@@ -144,7 +155,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      const SettingScreen()),
+                                      SettingScreen(userId: widget.userId)),
                             );
                           },
                           child: Image.asset(
@@ -170,12 +181,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingScreen()),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -200,12 +211,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingScreen()),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -230,12 +241,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingScreen()),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -260,12 +271,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingScreen()),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -290,12 +301,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SettingScreen()),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
                           },
                           child: Image.asset(
                             'images/location-pin.png',

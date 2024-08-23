@@ -6,6 +6,7 @@ import 'package:assignment_tripmate/screens/forgot_password.dart';
 import 'package:assignment_tripmate/screens/tarvel_agent_sign_up.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user_sign_up.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -33,6 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool rememberMe = false;
   bool isLoading = false; // Track loading state
 
+  // Hash the password using bcrypt
+  String hashPassword(String password) {
+    return BCrypt.hashpw(password, BCrypt.gensalt());
+  }
+
   Future<void> _login() async {
     setState(() {
       isLoading = true; // Start loading
@@ -54,10 +60,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (userDoc.exists) {
           var data = userDoc.data() as Map<String, dynamic>;
-          String? storedPassword = data['password'];
+          String? storedPasswordHash = data['password']; // Password hash
 
-          if (storedPassword != null) {
-            if (storedPassword == password) {
+          if (storedPasswordHash != null) {
+            // Verify the entered password with the stored hash
+            bool isPasswordCorrect = BCrypt.checkpw(password, storedPasswordHash);
+
+            if (isPasswordCorrect) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -102,10 +111,13 @@ class _LoginScreenState extends State<LoginScreen> {
           DocumentSnapshot adminDoc = adminQuery.docs.first;
 
           if (adminDoc.exists) {
-            String? storedPassword = adminDoc['password'];
+            String? storedPasswordHash = adminDoc['password']; // Password hash
 
-            if (storedPassword != null) {
-              if (storedPassword == password) {
+            if (storedPasswordHash != null) {
+              // Verify the entered password with the stored hash
+              bool isPasswordCorrect = BCrypt.checkpw(password, storedPasswordHash);
+
+              if (isPasswordCorrect) {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(

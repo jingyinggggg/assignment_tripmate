@@ -2,6 +2,7 @@
 
 import 'package:assignment_tripmate/firebase_auth_services.dart';
 import 'package:assignment_tripmate/screens/login.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -167,15 +168,18 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
       // Convert date to a date-only format (without time)
       DateTime dobDateOnly = DateTime(dob!.year, dob.month, dob.day);
 
+      // Hash the password
+      String hashedPassword = BCrypt.hashpw(_passwordController.text, BCrypt.gensalt());
+
       // Save user data
       await firestore.collection('users').doc(email).set({
         'id': id,
         'name': name,
-        'username': name,
+        'username': "",
         'email': email,
         'dob': Timestamp.fromDate(dobDateOnly),
         'contact': contact,
-        'password': password,
+        'password': hashedPassword,
         'gender': gender,
       });
 

@@ -92,16 +92,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 10,),
-                      userData['profileImage'] != null
-                      ? CircleAvatar(
-                          radius: 64,
-                          backgroundImage: NetworkImage(userData['profileImage']),
-                        )
-                      : const CircleAvatar(
-                          radius: 64,
-                          backgroundImage: AssetImage("images/profile.png"),
-                          backgroundColor: Colors.white,
+                      Container(
+                        width: 128,  // Width and height should match the CircleAvatar's diameter (2 * radius)
+                        height: 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Color(0xFF467BA1),  // Border color
+                            width: 3.0,  // Border width
+                          ),
+                        ),
+                        child: userData['profileImage'] != null
+                            ? CircleAvatar(
+                                radius: 64,
+                                backgroundImage: NetworkImage(userData['profileImage']),
+                              )
+                            : const CircleAvatar(
+                                radius: 64,
+                                backgroundImage: AssetImage("images/profile.png"),
+                                backgroundColor: Colors.white,
+                              ),
                       )
+
                     ]
                   ),
                 ),
@@ -116,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Positioned(
-                top: 40,
+                top: 60,
                 left: 322,
                 child: Column(
                   children: [
