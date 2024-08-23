@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/admin/adminProfile.dart';
+import 'package:assignment_tripmate/screens/admin/adminSetting.dart';
 import 'package:assignment_tripmate/screens/login.dart';
 // import 'package:assignment_tripmate/screens/user/profile.dart';
 // import 'package:assignment_tripmate/screens/user/setting.dart';
@@ -152,12 +153,12 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      AdminSettingScreen(userId: widget.userId,)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
