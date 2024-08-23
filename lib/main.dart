@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/firebase_options.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/welcome.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,6 +7,10 @@ import 'package:firebase_core/firebase_core.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Disable App Check for Firebase Storage
+  // FirebaseStorage.instance.useStorageEmulator('localhost', 9199); 
+
   runApp(const MainApp());
 }
 

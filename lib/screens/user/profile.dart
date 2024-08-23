@@ -75,10 +75,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 30, left: 10),
+                padding: const EdgeInsets.only(top: 30, left: 20),
                 child: Container(
                   width: 150,
-                  height: 150,
+                  height: 170,
                   alignment: Alignment.center,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -91,17 +91,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const Icon(
-                        Icons.account_circle_rounded,
-                        color: Color(0xFF467BA1),
-                        size: 100.0,
-                      ),
-                    ],
+                      SizedBox(height: 10,),
+                      userData['profileImage'] != null
+                      ? CircleAvatar(
+                          radius: 64,
+                          backgroundImage: NetworkImage(userData['profileImage']),
+                        )
+                      : const CircleAvatar(
+                          radius: 64,
+                          backgroundImage: AssetImage("images/profile.png"),
+                          backgroundColor: Colors.white,
+                      )
+                    ]
                   ),
                 ),
               ),
               Positioned(
-                top: 55,
+                top: 75,
                 left: 30,
                 child: const Image(
                   image: AssetImage("images/route line.png"),

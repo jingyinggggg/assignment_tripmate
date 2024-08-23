@@ -43,6 +43,8 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+		<!-- <key>NSPhotoLibraryUsageDescription</key>
+		<string>Photo Library usage</string> -->
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

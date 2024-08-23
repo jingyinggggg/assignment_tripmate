@@ -1,4 +1,4 @@
-import 'package:assignment_tripmate/screens/user/updateProfile.dart';
+import 'package:assignment_tripmate/screens/admin/adminUpdateProfile.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -320,7 +320,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => UpdateProfileScreen(userId: widget.userId,)),
+                        MaterialPageRoute(builder: (context) => AdminUpdateProfileScreen(userId: widget.userId,)),
                       );
                     },
                     child: const Text(

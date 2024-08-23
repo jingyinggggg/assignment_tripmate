@@ -1,6 +1,11 @@
+import 'dart:typed_data';
+import 'package:assignment_tripmate/utils.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   final String userId;
@@ -19,6 +24,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   late TextEditingController _addressController;
   DateTime? _selectedDate;
   String? _selectedGender;
+  Uint8List? _image;
+  bool isUpdating = false;
 
   @override
   void initState() {
@@ -39,6 +46,65 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _contactController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> requestPermissions() async {
+    final permissionStatus = await Permission.photos.request();
+    if (permissionStatus.isDenied) {
+      // Optionally show a message or guide the user to app settings
+      print('Permission denied');
+    } else if (permissionStatus.isPermanentlyDenied) {
+      // Optionally open app settings to allow the user to enable permissions manually
+      await openAppSettings();
+    }
+  }
+
+  Future<void> uploadProfileImage() async {
+    if (_image == null) return; // If no image is selected, skip the upload
+
+    try {
+      // Construct the file path in Firebase Storage
+      String filePath = 'profile_images/${_nameController.text}.jpg';
+
+      // Get a reference to the Firebase Storage bucket
+      Reference ref = FirebaseStorage.instance.ref().child(filePath);
+
+      // Upload the image to the specified path
+      UploadTask uploadTask = ref.putData(_image!);
+
+      // Wait for the upload to complete
+      await uploadTask;
+
+      // Optionally, get the download URL of the uploaded image
+      String downloadURL = await ref.getDownloadURL();
+
+      // Save the download URL to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
+        'profileImage': downloadURL,
+      });
+
+      print("Profile image uploaded successfully");
+    } catch (e) {
+      print("Failed to upload profile image: $e");
+    }
+  }
+
+  void selectImage() async {
+    try {
+      await requestPermissions();
+
+      final permissionStatus = await Permission.photos.status;
+      if (permissionStatus.isGranted) {
+        Uint8List img = await pickImage(ImageSource.gallery);
+        setState(() {
+          _image = img;
+        });
+      } else {
+        print('Permission to access photos was not granted.');
+      }
+    } catch (e) {
+      print('Error selecting image: $e');
+    }
   }
 
   @override
@@ -105,7 +171,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 30, left: 10, right: 10),
+                padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
@@ -113,9 +179,43 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 30),
                       child: Column(
                         children: [
-                          name(),
-                          const SizedBox(height: 20),
+                          Stack(
+                            children: [
+                              _image != null
+                                ? CircleAvatar(
+                                    radius: 64,
+                                    backgroundImage: MemoryImage(_image!), // Show selected image
+                                  )
+                                : userData['profileImage'] != null
+                                    ? CircleAvatar(
+                                        radius: 64,
+                                        backgroundImage: NetworkImage(userData['profileImage']),
+                                      )
+                                    : const CircleAvatar(
+                                        radius: 64,
+                                        backgroundImage: AssetImage("images/profile.png"),
+                                        backgroundColor: Colors.white,
+                                      ),
+                              Positioned(
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.add_a_photo,
+                                    color: Colors.black,
+                                  ),
+                                  onPressed: () {
+                                    selectImage();
+                                  },
+                                ),
+                                bottom: -13,
+                                left: 80,
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 40),
                           username(),
+                          const SizedBox(height: 20),
+                          name(),
                           const SizedBox(height: 20),
                           email(),
                           const SizedBox(height: 20),
@@ -127,28 +227,31 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           const SizedBox(height: 20),
                           address(),
                           const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: _updateProfile,
-                            child: const Text(
-                              'Update',
-                              style: TextStyle(
-                                color: Colors.white,
+
+                          isUpdating
+                            ? const CircularProgressIndicator() // Show loading indicator
+                            : ElevatedButton(
+                                onPressed: _updateProfile,
+                                child: const Text(
+                                  'Update',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF467BA1),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 70, vertical: 15),
+                                  textStyle: const TextStyle(
+                                    fontSize: 22,
+                                    fontFamily: 'Inika',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF467BA1),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 70, vertical: 15),
-                              textStyle: const TextStyle(
-                                fontSize: 22,
-                                fontFamily: 'Inika',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -522,7 +625,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   }
 
   void _updateProfile() async {
+    setState(() {
+      isUpdating = true; // Start loading
+    });
+
     try {
+      // Upload the profile image if one is selected
+      await uploadProfileImage();
+
       await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
         'name': _nameController.text,
         'username': _usernameController.text,
@@ -548,6 +658,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           Navigator.of(context).pop();
         },
       );
+    } finally {
+      setState(() {
+        isUpdating = false; // Stop loading
+      });
     }
   }
 

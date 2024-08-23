@@ -400,33 +400,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
                      // Show loading indicator or login button
                     isLoading
-                        ? const CircularProgressIndicator() // Show loading indicator
-                        : Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _login(); // Call _login method
-                              },
-                              child: const Text(
-                                'Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
+                      ? const CircularProgressIndicator() // Show loading indicator
+                      : Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _login(); // Call _login method
+                            },
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(
+                                color: Colors.white,
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF467BA1),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 150, vertical: 15),
-                                textStyle: const TextStyle(
-                                  fontSize: 22,
-                                  fontFamily: 'Inika',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF467BA1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 150, vertical: 15),
+                              textStyle: const TextStyle(
+                                fontSize: 22,
+                                fontFamily: 'Inika',
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                           ),
+                        ),
 
                     // Sign Up Procedure
                     const SizedBox(height: 50),

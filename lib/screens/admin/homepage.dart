@@ -70,7 +70,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Country List",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,
@@ -111,7 +110,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Registration Request",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,
@@ -152,7 +150,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Booking",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,
@@ -193,7 +190,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Tour",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,
@@ -234,7 +230,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Posting",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,
@@ -275,7 +270,6 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       Text(
                         "Manage Car Rental",
                         style: TextStyle(
-                          fontFamily: "Inika",
                           fontSize: 18,
                           color: Color(0xFF467BA1),
                           fontWeight: FontWeight.bold,

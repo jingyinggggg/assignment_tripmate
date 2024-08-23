@@ -54,29 +54,34 @@ class _AccountScreenState extends State<AccountScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.only(top: 30, left: 10), // Add space before the container
+                padding: const EdgeInsets.only(top: 10, left: 20),
                 child: Container(
                   width: 150,
-                  height: 150,
+                  height: 170,
                   alignment: Alignment.center,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        username,
+                        userData['username'] ?? 'Please update your username',
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w900,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const Icon(
-                        Icons.account_circle_rounded,
-                        color: Color(0xFF467BA1),
-                        size: 100.0,
-                      ),
-                    ],
+                      SizedBox(height: 10,),
+                      userData['profileImage'] != null
+                      ? CircleAvatar(
+                          radius: 62,
+                          backgroundImage: NetworkImage(userData['profileImage']),
+                        )
+                      : const CircleAvatar(
+                          radius: 62,
+                          backgroundImage: AssetImage("images/profile.png"),
+                          backgroundColor: Colors.white,
+                      )
+                    ]
                   ),
                 ),
               ),
