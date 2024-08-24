@@ -11,6 +11,7 @@ analyzer:
   errors:
     non_constant_identifier_names: ignore
     prefer_const_constructors: ignore 
+    unused_local_variable: ignore
 include    prefer_const_literals_to_create_immutables: ignore
 : package:flutter_lints/flutter.yaml
 

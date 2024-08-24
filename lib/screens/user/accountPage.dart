@@ -36,7 +36,6 @@ class _AccountScreenState extends State<AccountScreen> {
           }
 
           var userData = snapshot.data!.data() as Map<String, dynamic>;
-          var username = userData['username'] ?? '';
 
           return Stack(
             children: [

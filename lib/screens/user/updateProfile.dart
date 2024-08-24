@@ -3,9 +3,7 @@ import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class UpdateProfileScreen extends StatefulWidget {
   final String userId;
@@ -48,32 +46,12 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     super.dispose();
   }
 
-  Future<void> requestPermissions() async {
-    final permissionStatus = await Permission.photos.request();
-    if (permissionStatus.isDenied) {
-      // Optionally show a message or guide the user to app settings
-      print('Permission denied');
-    } else if (permissionStatus.isPermanentlyDenied) {
-      // Optionally open app settings to allow the user to enable permissions manually
-      await openAppSettings();
-    }
-  }
-
   void selectImage() async {
-    try {
-      await requestPermissions();
-
-      final permissionStatus = await Permission.photos.status;
-      if (permissionStatus.isGranted) {
-        Uint8List img = await pickImage(ImageSource.gallery);
-        setState(() {
-          _image = img;
-        });
-      } else {
-        print('Permission to access photos was not granted.');
-      }
-    } catch (e) {
-      print('Error selecting image: $e');
+    Uint8List? img = await ImageUtils.selectImage(context);
+    if (img != null) {
+      setState(() {
+        _image = img;
+      });
     }
   }
 

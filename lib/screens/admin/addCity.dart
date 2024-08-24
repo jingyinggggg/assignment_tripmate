@@ -4,26 +4,27 @@ import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AdminAddCountryScreen extends StatefulWidget {
+class AdminAddCityScreen extends StatefulWidget {
   final String userId;
+  final String country;
 
-  const AdminAddCountryScreen({super.key, required this.userId});
+  const AdminAddCityScreen({super.key, required this.userId, required this.country});
 
   @override
-  State<AdminAddCountryScreen> createState() => _AdminAddCountryScreenState();
+  State<AdminAddCityScreen> createState() => _AdminAddCityScreenState();
 }
 
-class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
+class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
   bool _isLoading = false;
   Uint8List? _image;
-  String? previewCountryName = "";
+  String? previewCityName = "";
 
-  final TextEditingController _countryNameController = TextEditingController();
+  final TextEditingController _cityNameController = TextEditingController();
   final TextEditingController _imageNameController = TextEditingController(); // Controller for the image file name
 
   @override
   void dispose() {
-    _countryNameController.dispose();
+    _cityNameController.dispose();
     _imageNameController.dispose();
     super.dispose();
   }
@@ -43,7 +44,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text("Add Country"),
+        title: const Text("Add City"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -66,9 +67,9 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                countryName(),
+                cityName(),
                 const SizedBox(height: 20),
-                countryImage(),
+                cityImage(),
                 const SizedBox(height: 20),
                 const Text(
                   "Preview:",
@@ -116,21 +117,21 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     );
   }
 
-  Widget countryName() {
+  Widget cityName() {
     return TextField(
-      controller: _countryNameController,
+      controller: _cityNameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 17,
       ),
       onChanged: (value) {
         setState(() {
-          previewCountryName = value;
+          previewCityName = value;
         });
       },
       decoration: InputDecoration(
-        hintText: 'Enter Country Name',
-        labelText: 'Country Name',
+        hintText: 'Enter City Name',
+        labelText: 'City Name',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -170,7 +171,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     );
   }
 
-  Widget countryImage() {
+  Widget cityImage() {
     return TextField(
       controller: _imageNameController,
       readOnly: true,
@@ -181,7 +182,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
       ),
       decoration: InputDecoration(
         hintText: 'Upload an image...',
-        labelText: 'Country Image',
+        labelText: 'City Image',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -232,7 +233,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
   }
 
   Widget previewWidget() {
-    if (_image == null || _countryNameController.text.isEmpty) {
+    if (_image == null || _cityNameController.text.isEmpty) {
       return Container(
         width: double.infinity,
         height: 200,
@@ -281,7 +282,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    previewCountryName!, 
+                    _cityNameController.text, 
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 22,
@@ -305,10 +306,10 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
   }
 
   Future<void> _addCountry() async {
-    if (_countryNameController.text.isEmpty || _image == null) {
+    if (_cityNameController.text.isEmpty || _image == null) {
       _showDialog(
         title: 'Failed',
-        content: 'Please make sure you have inserted the country name and uploaded an image!',
+        content: 'Please make sure you have inserted the city name and uploaded an image!',
         onPressed: () {
           Navigator.of(context).pop(); // Close the dialog
         },
@@ -322,23 +323,24 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
 
     try {
       // Get the count of existing countries
-      final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').get();
+      final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').doc(widget.country).collection('cities').get();
       final countryCount = countriesSnapshot.size;
 
       // Generate new country ID
-      final newCountryID = 'C${(countryCount + 1).toString().padLeft(4, '0')}';
+      final newCityID = 'CT${(countryCount + 1).toString().padLeft(4, '0')}';
 
       // Save the country data
-      String resp = await StoreData().saveCountryData(
-        country: _countryNameController.text, 
-        countryID: newCountryID, // Use the generated ID
+      String resp = await StoreData().saveCityData(
+        country: widget.country,
+        city: _cityNameController.text, 
+        cityID: newCityID, // Use the generated ID
         file: _image!,
       );
 
       // Show success dialog
       _showDialog(
         title: 'Successful',
-        content: 'The country has been added successfully.',
+        content: 'The city has been added successfully.',
         onPressed: () {
           Navigator.of(context).pop(); // Close the success dialog
           Navigator.of(context).pop(); // Close the screen

@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/screens/admin/addCity.dart';
 import 'package:assignment_tripmate/screens/admin/addCountry.dart';
 import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:flutter/material.dart';
@@ -53,10 +54,10 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
               padding: const EdgeInsets.only(top: 10.0,right: 10.0), // Adds padding to the right
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminAddCountryScreen(userId: widget.userId))
-                  // );
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminAddCountryScreen(userId: widget.userId))
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF467BA1), // Button background color
@@ -68,6 +69,37 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                 ),
                 child: Text(
                   "Add Country",
+                  style: TextStyle(
+                    // fontFamily: "Inika",
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topLeft, // Aligns the button to the right
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10.0,right: 10.0), // Adds padding to the right
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminAddCityScreen(userId: widget.userId, country: "CHINA",))
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF467BA1), // Button background color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    side: BorderSide(color: Color(0xFF467BA1), width: 2),
+                  ),
+                  // minimumSize: const Size(120, 65),
+                ),
+                child: Text(
+                  "Add City",
                   style: TextStyle(
                     // fontFamily: "Inika",
                     fontSize: 16,

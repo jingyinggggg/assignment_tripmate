@@ -27,7 +27,7 @@ class StoreData {
   }) async{
     String resp = "Some Error Occurred";
     try{
-      String fileName = "$name.jpg"; // You can adjust the file extension as needed
+      String fileName = "$name.jpg"; 
       String imageURL = await uploadImageToStorage("profile_images/$fileName", file);
       await _firestore.collection("users").doc(userId).update({
         'name': name,
@@ -36,6 +36,49 @@ class StoreData {
         'contact': contact,
         'address': address,
         'profileImage': imageURL
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  }
+
+  Future<String> saveCountryData({
+    required String country, 
+    required String countryID, 
+    required Uint8List file,
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$country.jpg"; 
+      String imageURL = await uploadImageToStorage("countries/$country/$fileName", file);
+      await _firestore.collection("countries").doc(country).set({
+        'name': country,
+        'countryID': countryID,
+        'countryImage': imageURL
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  }
+
+  Future<String> saveCityData({
+    required String country, 
+    required String city, 
+    required String cityID, 
+    required Uint8List file,
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$city.jpg"; 
+      String imageURL = await uploadImageToStorage("countries/$country/$fileName", file);
+      await _firestore.collection("countries").doc(country).collection("cities").doc(city).set({
+        'city_name': city,
+        'cityID': cityID,
+        'cityImage': imageURL
       });
       resp = "Success";
     } catch(err){
