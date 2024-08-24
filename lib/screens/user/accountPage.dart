@@ -63,7 +63,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        userData['username'] ?? 'Please update your username',
+                        userData['username'] ?? userData['name'],
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w900,

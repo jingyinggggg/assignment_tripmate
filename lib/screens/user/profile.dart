@@ -84,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        userData['username'] ?? 'Please update your username',
+                        userData['username'] ?? userData['name'],
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.w900,
@@ -286,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 ),
                                                 Expanded(
                                                   child: Text(
-                                                    userData['address'] ?? 'Please update your address...',
+                                                    userData['address'] ?? 'Update your address...',
                                                     style: const TextStyle(
                                                       fontSize: 15,
                                                       color: Colors.black,
@@ -316,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ),
                                       Text(
-                                        userData['username']?? '',
+                                        userData['username']?? '-',
                                         style: TextStyle(
                                           fontSize: 15,
                                           color: Colors.black,
