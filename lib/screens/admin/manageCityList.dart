@@ -1,53 +1,53 @@
 import 'package:assignment_tripmate/screens/admin/addCity.dart';
-import 'package:assignment_tripmate/screens/admin/addCountry.dart';
-import 'package:assignment_tripmate/screens/admin/homepage.dart';
-import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
+import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AdminManageCountryListScreen extends StatefulWidget {
+class AdminManageCityListScreen extends StatefulWidget{
   final String userId;
+  final String countryName;
 
-  const AdminManageCountryListScreen({super.key, required this.userId});
+  const AdminManageCityListScreen({super.key, required this.userId, required this.countryName});
 
   @override
-  State<AdminManageCountryListScreen> createState() => _AdminManageCountryListScreenState();
+  State<AdminManageCityListScreen> createState() => _AdminManageCityListScreenState();
+
 }
 
-class _AdminManageCountryListScreenState extends State<AdminManageCountryListScreen> {
-  List<Country> _countryList = [];
-  List<Country> _foundedCountry = [];
+class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
+    List<City> _cityList = [];
+    List<City> _foundedCity = [];
 
   @override
   void initState() {
     super.initState();
-    fetchCountryList();
+    fetchCityList();
     setState(() {
-      _foundedCountry = _countryList;
+      _foundedCity = _cityList;
     });
   }
 
-  Future<void> fetchCountryList() async {
+  Future<void> fetchCityList() async {
     try {
       // Reference to the countries collection in Firestore
-      CollectionReference countriesRef = FirebaseFirestore.instance.collection('countries');
+      CollectionReference citiesRef = FirebaseFirestore.instance.collection('countries').doc(widget.countryName).collection("cities");
 
       // Fetch the documents from the countries collection
-      QuerySnapshot querySnapshot = await countriesRef.get();
+      QuerySnapshot querySnapshot = await citiesRef.get();
 
       // Convert each document into a Country object and add to _countryList
-      _countryList = querySnapshot.docs.map((doc) {
-        return Country(
-          doc['name'],
-          doc['countryID'],
-          doc['countryImage'],
+      _cityList = querySnapshot.docs.map((doc) {
+        return City(
+          doc['city_name'],
+          doc['cityID'],
+          doc['cityImage'],
         );
       }).toList();
 
       // Update _foundedCountry
       setState(() {
-        _foundedCountry = _countryList;
+        _foundedCity = _cityList;
       });
     } catch (e) {
       // Handle any errors
@@ -57,19 +57,19 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
 
   void onSearch(String search) {
     setState(() {
-      _foundedCountry = _countryList
-          .where((country) =>
-              country.countryName.toUpperCase().contains(search.toUpperCase()))
+      _foundedCity = _cityList
+          .where((city) =>
+              city.cityName.toUpperCase().contains(search.toUpperCase()))
           .toList();
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text("Country List"),
+        title: const Text("City List"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -83,12 +83,13 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           onPressed: () {
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => AdminHomepageScreen(userId: widget.userId))
+              MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
             );
           },
         ),
       ),
-      body: Stack(
+
+            body: Stack(
         children: [
           Column(
             children: [
@@ -120,7 +121,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.red, width: 2), // Red border for error state
                       ),
-                      hintText: "Search country...",
+                      hintText: "Search city...",
                       hintStyle: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade500,
@@ -139,7 +140,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                       onPressed: () {
                         Navigator.push(
                           context, 
-                          MaterialPageRoute(builder: (context) => AdminAddCountryScreen(userId: widget.userId))
+                          MaterialPageRoute(builder: (context) => AdminAddCityScreen(userId: widget.userId, country: widget.countryName,))
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -150,7 +151,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                         ),
                       ),
                       child: Text(
-                        "Add Country",
+                        "Add City",
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.white,
@@ -166,18 +167,27 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           Container(
             padding: EdgeInsets.only(right: 10, left: 15, top:140),
             child: ListView.builder(
-              itemCount: _foundedCountry.length,
+              itemCount: _foundedCity.length,
               itemBuilder: (context, index) {
-                return countryComponent(country: _foundedCountry[index]);
+                return cityComponent(city: _foundedCity[index]);
               }
             ),
           ),
+          // Container(
+          //   padding: EdgeInsets.only(right: 10, left: 15, top:140),
+          //   child: ListView.builder(
+          //     itemCount: _foundedCountry.length,
+          //     itemBuilder: (context, index) {
+          //       return countryComponent(country: _foundedCountry[index]);
+          //     }
+          //   ),
+          // ),
         ]
       )
     );
   }
 
-  Widget countryComponent({required Country country}) {
+    Widget cityComponent({required City city}) {
     return Container(
       // color: Colors.white,
       padding: EdgeInsets.only(bottom: 15, top: 10),
@@ -192,14 +202,14 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(0),
                   image: DecorationImage(
-                    image: NetworkImage(country.image),
+                    image: NetworkImage(city.image),
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
               SizedBox(width: 20), // Spacing between image and text
               Text(
-                country.countryName,
+                city.cityName,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -211,10 +221,10 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
             children: [
               IconButton(
                 onPressed: (){
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
-                  );
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
+                  // );
                 }, 
                 icon: Icon(Icons.remove_red_eye),
                 iconSize: 25,
@@ -234,4 +244,3 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
   }
 
 }
-

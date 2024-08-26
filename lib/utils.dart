@@ -44,3 +44,19 @@ class ImageUtils {
     }
   }
 }
+
+class Country{
+  final String countryName;
+  final String countryID;
+  final String image;
+
+  Country(this.countryName, this.countryID, this.image);
+}
+
+class City{
+  final String cityName;
+  final String cityID;
+  final String image;
+
+  City(this.cityName, this.cityID, this.image);
+}

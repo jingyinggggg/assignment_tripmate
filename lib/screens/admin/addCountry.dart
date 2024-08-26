@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -340,8 +341,12 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
         title: 'Successful',
         content: 'The country has been added successfully.',
         onPressed: () {
-          Navigator.of(context).pop(); // Close the success dialog
-          Navigator.of(context).pop(); // Close the screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    AdminManageCountryListScreen(userId: widget.userId)),
+          );
         },
       );
     } catch (e) {
