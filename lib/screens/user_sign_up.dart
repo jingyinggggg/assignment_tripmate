@@ -477,73 +477,72 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
     );
   }
 
-Widget dobField() {
-  return GestureDetector(
-    onTap: () {}, // Prevents the TextField from being editable by touch.
-    child: TextField(
-      controller: TextEditingController(
-        text: _selectedDate == null
-            ? ''
-            : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-      ),
-      style: TextStyle(
-        fontFamily: 'Inika',
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-        color: _selectedDate == null ? Colors.grey.shade600 : Colors.black,
-      ),
-      readOnly: true,
-      decoration: InputDecoration(
-        hintText: 'Select your date of birth',
-        labelText: 'Date of Birth',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
+  Widget dobField() {
+    return GestureDetector(
+      onTap: () {}, // Prevents the TextField from being editable by touch.
+      child: TextField(
+        controller: TextEditingController(
+          text: _selectedDate == null
+              ? ''
+              : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
+          fontWeight: FontWeight.w800,
+          fontSize: 17,
+          color: _selectedDate == null ? Colors.grey.shade600 : Colors.black,
         ),
-        suffixIcon: IconButton(
-          icon: const Icon(
-            Icons.calendar_today_outlined,
-            color: Color(0xFF467BA1),
+        readOnly: true,
+        decoration: InputDecoration(
+          hintText: 'Select your date of birth',
+          labelText: 'Date of Birth',
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
           ),
-          onPressed: () => _selectDate(context),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          labelStyle: const TextStyle(
+            fontFamily: 'Inika',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            shadows: [
+              Shadow(
+                offset: Offset(0.5, 0.5),
+                color: Colors.black87,
+              ),
+            ],
+          ),
+          suffixIcon: IconButton(
+            icon: const Icon(
+              Icons.calendar_today_outlined,
+              color: Color(0xFF467BA1),
+            ),
+            onPressed: () => _selectDate(context),
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget gender() {
     return DropdownButtonFormField<String>(

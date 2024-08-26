@@ -1,9 +1,11 @@
+import 'dart:typed_data';
+
+import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/utils.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:assignment_tripmate/firebase_auth_services.dart';
 
 class TravelAgentSignUpScreen extends StatefulWidget {
   const TravelAgentSignUpScreen({super.key});
@@ -20,10 +22,14 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
   final TextEditingController _companyNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _employeeCardController = TextEditingController();
   String? dropdownValue;
   
   DateTime? _selectedDate;
   bool passwordVisible = true;
+  bool confirmPasswordVisible = true;
+  bool _isLoading = false;
+  Uint8List? _employeeCard;
 
   @override
   void dispose() {
@@ -33,7 +39,18 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
     _companyNameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _employeeCardController.dispose();
     super.dispose();
+  }
+
+  void selectImage() async {
+    Uint8List? img = await ImageUtils.selectImage(context);
+    if (img != null) {
+      setState(() {
+        _employeeCard = img;
+        _employeeCardController.text = 'Employee Card Uploaded'; 
+      });
+    }
   }
 
   // Method to show date picker
@@ -59,6 +76,9 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
   }
 
   void _saveUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
     // Validate inputs
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
@@ -67,11 +87,15 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty ||
         _selectedDate == null ||
-        dropdownValue == null) {
+        dropdownValue == null ||
+        _employeeCard == null) {
+      setState(() {
+        _isLoading = false;
+      });
       // Show an error dialog if any field is empty
       _showDialog(
         title: 'Validation Error',
-        content: 'Please fill all fields and select a date of birth.',
+        content: 'Please fill all fields, select a date of birth, and upload your employee card.',
         onPressed: () {
           Navigator.of(context).pop();
         },
@@ -79,48 +103,11 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       return;
     }
 
-    // // Validate password
-    // String _errorMessage = ''; 
-
-    // // Password length greater than 6 
-    // if (_passwordController.text.length <6) { 
-    //   _errorMessage += '• Password must be longer than 6 characters.\n'; 
-    // } 
-
-    // // Contains at least one uppercase letter 
-    // if (!_passwordController.text.contains(RegExp(r'[A-Z]'))) { 
-    //   _errorMessage += '• Uppercase letter is missing.\n'; 
-    // } 
-
-    // // Contains at least one lowercase letter 
-    // if (!_passwordController.text.contains(RegExp(r'[a-z]'))) { 
-    //   _errorMessage += '• Lowercase letter is missing.\n'; 
-    // } 
-
-    // // Contains at least one digit 
-    // if (!_passwordController.text.contains(RegExp(r'[0-9]'))) { 
-    //   _errorMessage += '• Digit is missing.\n'; 
-    // } 
-
-    // // Contains at least one special character 
-    // if (!_passwordController.text.contains(RegExp(r'[!@#%^&*(),.?":{}|<>]'))) { 
-    //   _errorMessage += '• Special character is missing.\n'; 
-    // } 
-
-    // if (_errorMessage != ""){
-    //   _showDialog(
-    //     title: 'Validation Error',
-    //     content: _errorMessage,
-    //     onPressed: () {
-    //       Navigator.of(context).pop();
-    //     },
-    //   );
-    // } else {
-    //   return;
-    // }
-
     // Check if passwords match
     if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() {
+        _isLoading = false;
+      });
       // Show an error dialog if passwords do not match
       _showDialog(
         title: 'Validation Error',
@@ -132,45 +119,114 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       return;
     }
 
+    // Validate password
+    final password = _passwordController.text;
+    final specialCharRegExp = RegExp(r'[!@#%^&*(),.?":{}|<>]');
+    String errorMessage = '';
+
+    if (password.length < 6) {
+      errorMessage += '• Password must be longer than 6 characters.\n';
+    }
+
+    if (!specialCharRegExp.hasMatch(password)) {
+      errorMessage += '• Password must contain at least one special character.\n';
+    }
+
+    if (errorMessage.isNotEmpty) {
+      // Stop loading and show an error dialog if password validation fails
+      setState(() {
+        _isLoading = false;
+      });
+      _showDialog(
+        title: 'Validation Error',
+        content: errorMessage,
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+      return;
+    }
+
     final firestore = FirebaseFirestore.instance;
-    final FirebaseAuthService _auth = FirebaseAuthService();
 
-    String name = _nameController.text;
-    String email = _emailController.text;
+    // String name = _nameController.text;
+    // String email = _emailController.text;
     DateTime? dob = _selectedDate;
-    String companyContact = _companyContactController.text;
-    String companyName = _companyNameController.text;
-    String password = _passwordController.text;
-    String gender = dropdownValue!;
+    // String companyContact = _companyContactController.text;
+    // String companyName = _companyNameController.text;
+    // String gender = dropdownValue!;
 
-    User? user = await _auth.signUpWithEmailAndPassword(email, password);
+    try {
+      // Check if email already exists
+      final emailQuery = await firestore.collection('travel agent')
+        .where('email', isEqualTo: _emailController.text)
+        .get();
 
-    try{
-      if (user != null){
-        await firestore.collection('travelAgent').add({
-          'name': name,
-          'email': email,
-          'dob': dob,
-          'companyContact': companyContact,
-          'companyName': companyName,
-          'gender': gender,
-          'password': password
+      if (emailQuery.docs.isNotEmpty) {
+        // Stop loading and show an error dialog if email is already registered
+        setState(() {
+          _isLoading = false;
         });
-
-        // Show success dialog
         _showDialog(
-          title: 'Registration Successful',
-          content: 'You have been registered successfully.',
+          title: 'Validation Error',
+          content: 'This email is already registered.',
           onPressed: () {
-            Navigator.of(context).pop(); // Close the success dialog
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
+            Navigator.of(context).pop();
           },
         );
+        return;
       }
-    } catch(e){
+
+      // Retrieve the current number of users
+      final usersSnapshot = await firestore.collection('travelAgent').get();
+      int id = usersSnapshot.docs.length + 1;
+
+      // Convert date to a date-only format (without time)
+      DateTime dobDateOnly = DateTime(dob!.year, dob.month, dob.day);
+
+      // Hash the password
+      String hashedPassword = BCrypt.hashpw(_passwordController.text, BCrypt.gensalt());
+
+      String resp = await StoreData().saveTAData(
+        TAid: id,
+        name: _nameController.text,
+        email: _emailController.text,
+        dob: dobDateOnly,
+        companyContact: _companyContactController.text,
+        companyName: _companyNameController.text,
+        password: hashedPassword,
+        gender: dropdownValue!,
+        employeeCard: _employeeCard!
+      );
+
+      // // Save user data
+      // await firestore.collection('travel agent').doc(email).set({
+      //   'id': id,
+      //   'name': name,
+      //   'username': null,
+      //   'email': email,
+      //   'dob': Timestamp.fromDate(dobDateOnly),
+      //   'companyContact': companyContact,
+      //   'companyName': companyName,
+      //   'password': hashedPassword,
+      //   'gender': gender,
+      //   'accountApproved': 0,
+      //   'employeCardPath': _employeeCard!,
+      // });
+
+      // Show success dialog
+      _showDialog(
+        title: 'Registration Successful',
+        content: 'You have been registered successfully. Please wait for admin to approve your regiatration request.',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the success dialog
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        },
+      );
+    } catch (e) {
       // Show error dialog
       _showDialog(
         title: 'Registration Failed',
@@ -179,6 +235,10 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           Navigator.of(context).pop(); // Close the error dialog
         },
       );
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
 
@@ -267,9 +327,11 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
                           SizedBox(height: 20),
                           gender(),
                           SizedBox(height: 20),
+                          companyName(),
+                          SizedBox(height: 20),
                           companyContact(),
                           SizedBox(height: 20),
-                          companyName(),
+                          employeeCard(),
                           SizedBox(height: 20),
                           password(),
                           SizedBox(height: 20),
@@ -278,6 +340,10 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
                       ),
                     ),
 
+                    if (_isLoading)
+                      Center(child: CircularProgressIndicator(),
+                      )
+                    else
                     ElevatedButton(
                       onPressed: () {
                         _saveUserData();
@@ -446,59 +512,65 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
 
   Widget dobField() {
     return GestureDetector(
-      onTap: () => _selectDate(context),
-      child: AbsorbPointer(
-        child: TextField(
-          controller: TextEditingController(
-            text: _selectedDate == null
-                ? 'Select Date of Birth'
-                : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+      onTap: () {}, // Prevents the TextField from being editable by touch.
+      child: TextField(
+        controller: TextEditingController(
+          text: _selectedDate == null
+              ? ''
+              : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
+        ),
+        style: TextStyle(
+          fontFamily: 'Inika',
+          fontWeight: FontWeight.w800,
+          fontSize: 17,
+          color: _selectedDate == null ? Colors.grey.shade600 : Colors.black,
+        ),
+        readOnly: true,
+        decoration: InputDecoration(
+          hintText: 'Select your date of birth',
+          labelText: 'Date of Birth',
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
           ),
-          style: TextStyle(
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          labelStyle: const TextStyle(
             fontFamily: 'Inika',
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
-            color: _selectedDate == null ? Colors.grey.shade600 : Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            shadows: [
+              Shadow(
+                offset: Offset(0.5, 0.5),
+                color: Colors.black87,
+              ),
+            ],
           ),
-          decoration: InputDecoration(
-            hintText: 'Date of Birth',
-            labelText: 'Date of Birth',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
+          suffixIcon: IconButton(
+            icon: const Icon(
+              Icons.calendar_today_outlined,
+              color: Color(0xFF467BA1),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            labelStyle: const TextStyle(
-              fontFamily: 'Inika',
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-              shadows: [
-                Shadow(
-                  offset: Offset(0.5, 0.5),
-                  color: Colors.black87,
-                ),
-              ],
-            ),
+            onPressed: () => _selectDate(context),
           ),
         ),
       ),
@@ -740,7 +812,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
   Widget confirm_password() {
     return TextField(
       controller: _confirmPasswordController,
-      obscureText: passwordVisible,
+      obscureText: confirmPasswordVisible,
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
@@ -787,14 +859,77 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         ),
         suffixIcon: IconButton(
           icon: Icon(
-            passwordVisible ? Icons.visibility : Icons.visibility_off,
+            confirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.black54,
           ),
           onPressed: () {
             setState(() {
-              passwordVisible = !passwordVisible;
+              confirmPasswordVisible = !confirmPasswordVisible;
             });
           },
+        ),
+      ),
+    );
+  }
+
+    Widget employeeCard() {
+    return TextField(
+      controller: _employeeCardController,
+      readOnly: true,
+      style: const TextStyle(
+        fontFamily: 'Inika',
+        fontWeight: FontWeight.w800,
+        fontSize: 17,
+        color: Colors.black54
+      ),
+      decoration: InputDecoration(
+        hintText: 'Upload your employee card',
+        labelText: 'Employee Card',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: const TextStyle(
+          fontFamily: 'Inika',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          shadows: [
+            Shadow(
+              offset: Offset(0.5, 0.5),
+              color: Colors.black87,
+            ),
+          ],
+        ),
+        suffixIcon: IconButton(
+          icon: const Icon(
+            Icons.image,
+            color: Color(0xFF467BA1),
+            size: 30,
+          ),
+          onPressed: () {
+            selectImage();
+          }
         ),
       ),
     );

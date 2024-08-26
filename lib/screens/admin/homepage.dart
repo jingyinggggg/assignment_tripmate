@@ -1,8 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
-// import 'package:assignment_tripmate/screens/user/bookings.dart';
-// import 'package:assignment_tripmate/screens/user/itinerary.dart';
 import 'package:assignment_tripmate/screens/user/messages.dart';
 import 'package:flutter/material.dart';
 
@@ -34,257 +32,63 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
   Widget build(BuildContext context) {
     final List<Widget> _screens = [
       Padding(
-        padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0), // Adjust the values as needed
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Column(
-              // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Country List",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 25),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Registration Request",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 25),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Booking",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 25),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Tour",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 25),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Posting",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 25),
-
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white, // Button background color
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10), // Rounded corners
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    minimumSize: const Size(120, 65),
-                    elevation: 10, 
-                    shadowColor: Color(0xFF467BA1),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Image(
-                        image: AssetImage("images/countries.png"),
-                        width: 40,
-                        height: 40,
-                      ),
-                      SizedBox(width: 15),
-                      Text(
-                        "Manage Car Rental",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFF467BA1),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+        child: Center(
+          child: Wrap(
+            spacing: 25, // Horizontal space between buttons
+            runSpacing: 25, // Vertical space between rows
+            alignment: WrapAlignment.start, 
+            children: [
+              _buildMenuButton(
+                context,
+                icon: "images/countries.png",
+                label: "Tour",
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  );
+                },
+              ),
+              _buildMenuButton(
+                context,
+                icon: "images/registration_request.png",
+                label: "Registration",
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  );
+                },
+              ),
+              _buildMenuButton(
+                context,
+                icon: "images/manage_booking.png",
+                label: "Booking",
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  );
+                },
+              ),
+              _buildMenuButton(
+                context,
+                icon: "images/posting.png",
+                label: "Posting",
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       MessagesScreen(),
-      AdminAccountScreen(userId: widget.userId), // Access widget.userId here
+      AdminAccountScreen(userId: widget.userId),
     ];
 
     return Scaffold(
@@ -299,7 +103,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
           fontWeight: FontWeight.bold,
           fontSize: 24,
         ),
-        automaticallyImplyLeading: false, // This removes the default leading widget
+        automaticallyImplyLeading: false,
       ),
       bottomNavigationBar: AdminCustomBottomNavBar(
         currentIndex: currentPageIndex,
@@ -308,6 +112,42 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
       body: IndexedStack(
         index: currentPageIndex,
         children: _screens,
+      ),
+    );
+  }
+
+  Widget _buildMenuButton(BuildContext context, {required String icon, required String label, required VoidCallback onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: Color(0xFF467BA1), width: 2),
+        ),
+        minimumSize: const Size(160, 160), // Adjust the size as needed
+        elevation: 10,
+        shadowColor: Color(0xFF467BA1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Image(
+            image: AssetImage(icon),
+            width: 80,
+            height: 80,
+          ),
+          SizedBox(height: 10),
+          Text(
+            label,
+            textAlign: TextAlign.center, // Center text if it wraps to the next line
+            style: TextStyle(
+              fontSize: 17,
+              color: Color(0xFF467BA1),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

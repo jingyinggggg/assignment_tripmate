@@ -110,8 +110,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 140,
-                    left: 220,
+                    top: 160,
+                    left: 260,
                     child: Column(
                       children: [
                         const Text(
@@ -126,8 +126,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      AdminProfileScreen(userId: widget.userId)),
+                                builder: (context) =>
+                                    AdminProfileScreen(userId: widget.userId)),
                             );
                           },
                           child: Image.asset(
@@ -139,13 +139,44 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ],
                     ),
                   ),
+                  // Positioned(
+                  //   top: 230,
+                  //   left: 310,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Setting",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 16),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           Navigator.push(
+                  //             context,
+                  //             MaterialPageRoute(
+                  //                 builder: (context) =>
+                  //                     AdminSettingScreen(userId: widget.userId,)),
+                  //           );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: 50,
+                  //           height: 50,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
-                    top: 230,
-                    left: 310,
+                    top: 320,
+                    left: 160,
                     child: Column(
                       children: [
                         const Text(
                           "Setting",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
@@ -169,14 +200,73 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ],
                     ),
                   ),
+                  // Positioned(
+                  //   top: 320,
+                  //   left: 110,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Booking",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 16),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           // Navigator.push(
+                  //           //   context,
+                  //           //   MaterialPageRoute(
+                  //           //       builder: (context) =>
+                  //           //           const SettingScreen()),
+                  //           // );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: 50,
+                  //           height: 50,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+                  // Positioned(
+                  //   top: 365,
+                  //   left: 20,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Posting",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 16),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           // Navigator.push(
+                  //           //   context,
+                  //           //   MaterialPageRoute(
+                  //           //       builder: (context) =>
+                  //           //           const SettingScreen()),
+                  //           // );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: 50,
+                  //           height: 50,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
-                    top: 290,
-                    left: 200,
+                    top: 500,
+                    left: 70,
                     child: Column(
                       children: [
                         const Text(
-                          "Registration\nRequest",
-                          textAlign: TextAlign.center,
+                          "Feedback",
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
@@ -200,126 +290,36 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 320,
-                    left: 110,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Booking",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 365,
-                    left: 20,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Posting",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 490,
-                    left: 55,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Tour",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 505,
-                    left: 170,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Car Rental",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: 505,
+                  //   left: 170,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Car Rental",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 16),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           // Navigator.push(
+                  //           //   context,
+                  //           //   MaterialPageRoute(
+                  //           //       builder: (context) =>
+                  //           //           const SettingScreen()),
+                  //           // );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: 50,
+                  //           height: 50,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
                     top: 520,
                     left: 330,

@@ -86,4 +86,39 @@ class StoreData {
     }
     return resp;
   }
+
+  Future<String> saveTAData({
+    required String name, 
+    required int TAid, 
+    required String email,
+    required DateTime dob,
+    required String companyContact, 
+    required String companyName,
+    required String password,
+    required String gender,
+    required Uint8List employeeCard,
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$name-$companyName.jpg"; 
+      String imageURL = await uploadImageToStorage("travelAgent/$fileName", employeeCard);
+      await _firestore.collection("travelAgent").doc(email).set({
+        'id': TAid,
+        'name': name,
+        'username': null,
+        'email': email,
+        'dob': dob,
+        'companyContact': companyContact,
+        'companyName': companyName,
+        'password': password,
+        'gender': gender,
+        'accountApproved': 0,
+        'employeCardPath': imageURL
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  }
 }
