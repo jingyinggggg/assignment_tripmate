@@ -21,7 +21,7 @@ class ImageUtils {
 
       final permissionStatus = await Permission.photos.status;
       if (permissionStatus.isGranted) {
-        Uint8List img = await pickImage(ImageSource.gallery);
+        Uint8List? img = await pickImage(ImageSource.gallery);
         return img;
       } else {
         print('Permission to access photos was not granted.');
@@ -34,13 +34,19 @@ class ImageUtils {
   }
 
   // Function to pick an image using ImagePicker
-  static Future<Uint8List> pickImage(ImageSource source) async {
+  static Future<Uint8List?> pickImage(ImageSource source) async {
     final ImagePicker _imagePicker = ImagePicker();
-    XFile? _file = await _imagePicker.pickImage(source: source);
-    if (_file != null) {
-      return await _file.readAsBytes();
-    } else {
-      throw Exception('No image selected');
+    try {
+      XFile? _file = await _imagePicker.pickImage(source: source);
+      if (_file != null) {
+        return await _file.readAsBytes();
+      } else {
+        print('No image selected');
+        return null;
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      return null;
     }
   }
 }

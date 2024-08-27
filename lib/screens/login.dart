@@ -4,6 +4,7 @@
 import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:assignment_tripmate/screens/forgot_password.dart';
 import 'package:assignment_tripmate/screens/tarvel_agent_sign_up.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user_sign_up.dart';
 import 'package:bcrypt/bcrypt.dart';
@@ -93,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } else {
           _showDialog(
             title: 'Login Failed',
-            content: 'User document does not exist.',
+            content: 'User does not exist in the system.',
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -144,20 +145,72 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             _showDialog(
               title: 'Login Failed',
-              content: 'Admin document does not exist.',
+              content: 'Admin does not exist in the system.',
               onPressed: () {
                 Navigator.of(context).pop();
               },
             );
           }
         } else {
-          _showDialog(
-            title: 'Login Failed',
-            content: 'Email not found in both users and admin collections.',
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          );
+          // Check 'travelAgent' collection if user not found
+          QuerySnapshot TAQuery = await FirebaseFirestore.instance
+            .collection('travelAgent')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+          
+          if (TAQuery.docs.isNotEmpty) {
+            DocumentSnapshot TADoc = TAQuery.docs.first;
+
+            if (TADoc.exists) {
+              String? storedPasswordHash = TADoc['password']; // Password hash
+
+              if (storedPasswordHash != null) {
+                // Verify the entered password with the stored hash
+                bool isPasswordCorrect = BCrypt.checkpw(password, storedPasswordHash);
+
+                if (isPasswordCorrect) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => TravelAgentHomepageScreen(userId: TADoc.id)),
+                  );
+                } else {
+                  _showDialog(
+                    title: 'Login Failed',
+                    content: 'Incorrect password for travel agent.',
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  );
+                }
+              } else {
+                _showDialog(
+                  title: 'Login Failed',
+                  content: 'Password field is missing in travel agent document.',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                );
+              }
+            } else {
+              _showDialog(
+                title: 'Login Failed',
+                content: 'Travel agent does not exist in the system.',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              );
+            }
+          } else {
+            _showDialog(
+              title: 'Login Failed',
+              content: 'Email not found in the system.',
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            );
+          }
         }
       }
     } catch (e) {

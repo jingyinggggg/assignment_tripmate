@@ -28,7 +28,7 @@ class StoreData {
     String resp = "Some Error Occurred";
     try{
       String fileName = "$name.jpg"; 
-      String imageURL = await uploadImageToStorage("profile_images/$fileName", file);
+      String imageURL = await uploadImageToStorage("profile_images/users/$fileName", file);
       await _firestore.collection("users").doc(userId).update({
         'name': name,
         'username': username,
@@ -43,6 +43,36 @@ class StoreData {
     }
     return resp;
   }
+
+  Future<String> updateTravelAgentProfile({
+    required String userId, 
+    required String name, 
+    required String username, 
+    required String email, 
+    required String companyName, 
+    required String companyContact, 
+    required String companyAddress, 
+    required Uint8List file,
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$name.jpg"; 
+      String imageURL = await uploadImageToStorage("profile_images/travelAgent/$fileName", file);
+      await _firestore.collection("travelAgent").doc(userId).update({
+        'name': name,
+        'username': username,
+        'email': email,
+        'companyName': companyName,
+        'companyContact': companyContact,
+        'companyAddress': companyAddress,
+        'profileImage': imageURL
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  } 
 
   Future<String> saveCountryData({
     required String country, 
@@ -94,6 +124,7 @@ class StoreData {
     required DateTime dob,
     required String companyContact, 
     required String companyName,
+    required String companyAddress,
     required String password,
     required String gender,
     required Uint8List employeeCard,
@@ -110,6 +141,7 @@ class StoreData {
         'dob': dob,
         'companyContact': companyContact,
         'companyName': companyName,
+        'companyAddress': companyAddress,
         'password': password,
         'gender': gender,
         'accountApproved': 0,

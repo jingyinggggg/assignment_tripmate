@@ -1,18 +1,18 @@
-import 'package:assignment_tripmate/screens/user/updateProfile.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentUpdateProfile.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; 
 
-class ProfileScreen extends StatefulWidget {
+class TravelAgentProfileScreen extends StatefulWidget {
   final String userId;
 
-  const ProfileScreen({super.key, required this.userId});
+  const TravelAgentProfileScreen({super.key, required this.userId});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<TravelAgentProfileScreen> createState() => _TravelAgentProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('users')
+            .collection('travelAgent')
             .doc(widget.userId)
             .snapshots(),
         builder: (context, snapshot) {
@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(child: Text("User not found"));
+            return const Center(child: Text("Travel agent not found"));
           }
 
           var userData = snapshot.data!.data() as Map<String, dynamic>;
@@ -175,6 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: const [
                             Text(
                               "ACCOUNT INFO",
@@ -203,105 +204,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                                Row(
                                 children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            "Name: ",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            userData['name'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            "Email: ",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            userData['email'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            "Contact: ",
-                                            style: TextStyle(
-                                                fontSize: 15,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            userData['contact'] ?? '',
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.w500
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Container(
-                                        width: 280,
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                  Container(
+                                    width: 260,
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        right: BorderSide(
+                                          color: Color(0xFF467BA1),
+                                          width: 2
+                                        )
+                                      )
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           children: [
-                                            Row(
-                                              children: [
-                                                const Text(
-                                                  "Address: ",
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: Colors.black,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Text(
-                                                    userData['address'] ?? 'Update your address...',
-                                                    style: const TextStyle(
-                                                      fontSize: 15,
-                                                      color: Colors.black,
-                                                      fontWeight: FontWeight.w500
-                                                    ),
-                                                    overflow: TextOverflow.visible,
-                                                  ),
-                                                ),
-                                              ],
+                                            const Text(
+                                              "Name: ",
+                                              style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              userData['name'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500
+                                              ),
                                             ),
                                           ],
                                         ),
-                                      )
-                                    ],
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              "DOB: ",
+                                              style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              dob != null ? formatDate(dob) : '',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              "Email: ",
+                                              style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              userData['email'] ?? '',
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w500
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              "Account Status: ",
+                                              style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            Row(
+                                              children: [
+                                                if (userData['accountApproved'] == 0)
+                                                  Row(
+                                                    children: const [
+                                                      Text(
+                                                        "Reviewing",
+                                                        style: TextStyle(
+                                                          fontSize: 15,
+                                                          color: Colors.orange, // You can change the color as needed
+                                                          fontWeight: FontWeight.w900,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 5),
+                                                      Icon(Icons.hourglass_empty, color: Colors.orange), // Icon for reviewing
+                                                    ],
+                                                  )
+                                                else if (userData['accountApproved'] == 1)
+                                                  Row(
+                                                    children: const [
+                                                      Text(
+                                                        "Approved",
+                                                        style: TextStyle(
+                                                          fontSize: 15,
+                                                          color: Colors.green, // You can change the color as needed
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 5),
+                                                      Icon(Icons.check_circle, color: Colors.green), // Icon for approved
+                                                    ],
+                                                  )
+                                                else
+                                                  const Text(
+                                                    "", // Default case (empty text)
+                                                  ),
+                                              ],
+                                            )
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
+
+                                  SizedBox(width: 10),
 
                                   Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
@@ -323,8 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           fontWeight: FontWeight.w500
                                         ),
                                       ),
-                                      SizedBox(height: 10),
-
+                                      SizedBox(height: 5),
                                       Text(
                                         "Gender: ",
                                         style: TextStyle(
@@ -341,28 +370,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ),
 
-                                      SizedBox(height: 10),
-
-                                      Text(
-                                        "DOB:",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      Text(
-                                        dob != null ? formatDate(dob) : '',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500
-                                        ),
-                                      )
                                     ],
                                   ),
                                 ]
-                               )
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: Color(0xFF467BA1),
+                                      width: 2,
+                                    )
+                                  )
+                                ),
+                                padding: EdgeInsets.symmetric(vertical: 10),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          "Company Name: ",
+                                          style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          userData['companyName'] ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          "Company Contact: ",
+                                          style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          userData['companyContact'] ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 5),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          "Company Address: ",
+                                          style: TextStyle(
+                                              fontSize: 15,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          userData['companyAddress'] ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              ),
                             ],
                           ),
                         ),
@@ -379,43 +469,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             bottomRight: Radius.circular(20),
                           ),
                         ),
-                        // child: Text(
-                        //   'Bottom Text Here', // Example content
-                        //   style: TextStyle(color: Colors.white, fontSize: 16),
-                        // ),
                       ),
-
-                      // Vertical dotted line on the right
-                      // Positioned(
-                      //   top: 0,
-                      //   bottom: 0,
-                      //   right: 10, // Position the line 10 pixels from the right edge
-                      //   child: Column(
-                      //     mainAxisAlignment: MainAxisAlignment.center,
-                      //     children: List.generate(10, (index) {
-                      //       return Container(
-                      //         width: 2,
-                      //         height: 10,
-                      //         color: Colors.white,
-                      //         margin: EdgeInsets.symmetric(vertical: 4),
-                      //       );
-                      //     }),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
               ),
 
               Padding(
-                padding: const EdgeInsetsDirectional.only(top: 350),
+                padding: const EdgeInsetsDirectional.only(top: 500),
                 child: Container(
                   alignment: Alignment.center,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => UpdateProfileScreen(userId: widget.userId,)),
+                        MaterialPageRoute(builder: (context) => TravelAgentUpdateProfileScreen(userId: widget.userId,)),
                       );
                     },
                     child: const Text(

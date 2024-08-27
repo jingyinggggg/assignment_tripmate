@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:assignment_tripmate/screens/user/profile.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -7,21 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-class UpdateProfileScreen extends StatefulWidget {
+class TravelAgentUpdateProfileScreen extends StatefulWidget {
   final String userId;
 
-  const UpdateProfileScreen({super.key, required this.userId});
+  const TravelAgentUpdateProfileScreen({super.key, required this.userId});
 
   @override
-  State<UpdateProfileScreen> createState() => _UpdateProfileScreenState();
+  State<TravelAgentUpdateProfileScreen> createState() => _TravelAgentUpdateProfileScreenState();
 }
 
-class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
+class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
-  late TextEditingController _contactController;
-  late TextEditingController _addressController;
+  late TextEditingController _companyNameController;
+  late TextEditingController _companyContactController;
+  late TextEditingController _companyAddressController;
   DateTime? _selectedDate;
   String? _selectedGender;
   Uint8List? _image;
@@ -33,8 +33,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _nameController = TextEditingController();
     _usernameController = TextEditingController();
     _emailController = TextEditingController();
-    _contactController = TextEditingController();
-    _addressController = TextEditingController();
+    _companyNameController = TextEditingController();
+    _companyContactController = TextEditingController();
+    _companyAddressController = TextEditingController();
     _selectedGender = null;
   }
 
@@ -43,8 +44,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _nameController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
-    _contactController.dispose();
-    _addressController.dispose();
+    _companyNameController.dispose();
+    _companyContactController.dispose();
+    _companyAddressController.dispose();
     super.dispose();
   }
 
@@ -80,7 +82,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('users')
+            .collection('travelAgent')
             .doc(widget.userId)
             .snapshots(),
         builder: (context, snapshot) {
@@ -89,7 +91,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           }
 
           if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(child: Text("User not found"));
+            return const Center(child: Text("Travel agent not found"));
           }
 
           var userData = snapshot.data!.data() as Map<String, dynamic>;
@@ -98,15 +100,17 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           if (_nameController.text.isEmpty &&
               _usernameController.text.isEmpty &&
               _emailController.text.isEmpty &&
-              _contactController.text.isEmpty &&
-              _addressController.text.isEmpty &&
+              _companyNameController.text.isEmpty &&
+              _companyContactController.text.isEmpty &&
+              _companyAddressController.text.isEmpty &&
               _selectedGender == null &&
               _selectedDate == null) {
             _nameController.text = userData['name'] ?? '';
             _usernameController.text = userData['username'] ?? '';
             _emailController.text = userData['email'] ?? '';
-            _contactController.text = userData['contact'] ?? '';
-            _addressController.text = userData['address'] ?? '';
+            _companyNameController.text = userData['companyName'] ?? '';
+            _companyContactController.text = userData['companyContact'] ?? '';
+            _companyAddressController.text = userData['companyAddress'] ?? '';
             _selectedGender = userData['gender'];
             _selectedDate = userData['dob']?.toDate();
           }
@@ -172,13 +176,15 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                           const SizedBox(height: 20),
                           email(),
                           const SizedBox(height: 20),
-                          contact(),
-                          const SizedBox(height: 20),
                           dob(),
                           const SizedBox(height: 20),
                           gender(),
                           const SizedBox(height: 20),
-                          address(),
+                          companyName(),
+                          const SizedBox(height: 20),
+                          companyContact(),
+                          const SizedBox(height: 20),
+                          companyAddress(),
                           const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: isUpdating ? null : _updateProfile,
@@ -371,16 +377,16 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     );
   }
 
-  Widget contact() {
+  Widget companyName() {
     return TextField(
-      controller: _contactController,
+      controller: _companyNameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 17,
       ),
       decoration: InputDecoration(
-        hintText: 'Please update your contact...',
-        labelText: 'Contact',
+        hintText: 'Please update company name...',
+        labelText: 'Company Name',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -420,16 +426,65 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     );
   }
 
-  Widget address() {
+  Widget companyContact() {
     return TextField(
-      controller: _addressController,
+      controller: _companyContactController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 17,
       ),
       decoration: InputDecoration(
-        hintText: 'Please update your address...',
-        labelText: 'Address',
+        hintText: 'Please update company contact...',
+        labelText: 'Company Contact',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          shadows: [
+            Shadow(
+              offset: Offset(0.5, 0.5),
+              color: Colors.black87,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget companyAddress() {
+    return TextField(
+      controller: _companyAddressController,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 17,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Please update company address...',
+        labelText: 'Company Address',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -621,7 +676,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     try {
       // Fetch the current user's data from Firestore
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('travelAgent')
           .doc(widget.userId) // Assuming `widget.userId` is the current user's ID
           .get();
 
@@ -641,17 +696,19 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       if (_nameController.text.isNotEmpty && 
           _usernameController.text.isNotEmpty && 
           _emailController.text.isNotEmpty &&
-          _contactController.text.isNotEmpty && 
-          _addressController.text.isNotEmpty) {
+          _companyNameController.text.isNotEmpty && 
+          _companyContactController.text.isNotEmpty && 
+          _companyAddressController.text.isNotEmpty) {
         
         // Update the profile data in Firestore
-        String resp = await StoreData().updateUserProfile(
+        String resp = await StoreData().updateTravelAgentProfile(
           userId: widget.userId, 
           name: _nameController.text, 
           username: _usernameController.text, 
           email: _emailController.text, 
-          contact: _contactController.text, 
-          address: _addressController.text, 
+          companyName: _companyNameController.text,
+          companyContact: _companyContactController.text, 
+          companyAddress: _companyAddressController.text, 
           file: profileImageToUpload! // Use the selected or existing image
         );
 
@@ -661,10 +718,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           content: 'Your details have been updated successfully.',
           onPressed: () {
             Navigator.of(context).pop(); // Close the success dialog
-            Navigator.push(
-              context, 
-              MaterialPageRoute(builder: (context) => ProfileScreen(userId: widget.userId))
-            );
+            Navigator.of(context).pop();
           },
         );
       }
@@ -689,7 +743,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     final response = await http.get(Uri.parse(imageUrl));
     return response.bodyBytes;
   }
-
 
   void showSnackBar(String message, BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(

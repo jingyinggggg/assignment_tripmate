@@ -20,6 +20,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _companyContactController = TextEditingController();
   final TextEditingController _companyNameController = TextEditingController();
+  final TextEditingController _companyAddressController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _employeeCardController = TextEditingController();
@@ -37,6 +38,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
     _emailController.dispose();
     _companyContactController.dispose();
     _companyNameController.dispose();
+    _companyAddressController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _employeeCardController.dispose();
@@ -84,6 +86,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         _emailController.text.isEmpty ||
         _companyContactController.text.isEmpty ||
         _companyNameController.text.isEmpty ||
+        _companyAddressController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty ||
         _selectedDate == null ||
@@ -149,12 +152,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
 
     final firestore = FirebaseFirestore.instance;
 
-    // String name = _nameController.text;
-    // String email = _emailController.text;
     DateTime? dob = _selectedDate;
-    // String companyContact = _companyContactController.text;
-    // String companyName = _companyNameController.text;
-    // String gender = dropdownValue!;
 
     try {
       // Check if email already exists
@@ -194,25 +192,11 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         dob: dobDateOnly,
         companyContact: _companyContactController.text,
         companyName: _companyNameController.text,
+        companyAddress: _companyAddressController.text,
         password: hashedPassword,
         gender: dropdownValue!,
         employeeCard: _employeeCard!
       );
-
-      // // Save user data
-      // await firestore.collection('travel agent').doc(email).set({
-      //   'id': id,
-      //   'name': name,
-      //   'username': null,
-      //   'email': email,
-      //   'dob': Timestamp.fromDate(dobDateOnly),
-      //   'companyContact': companyContact,
-      //   'companyName': companyName,
-      //   'password': hashedPassword,
-      //   'gender': gender,
-      //   'accountApproved': 0,
-      //   'employeCardPath': _employeeCard!,
-      // });
 
       // Show success dialog
       _showDialog(
@@ -330,6 +314,8 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
                           companyName(),
                           SizedBox(height: 20),
                           companyContact(),
+                          SizedBox(height: 20),
+                          companyAddress(),
                           SizedBox(height: 20),
                           employeeCard(),
                           SizedBox(height: 20),
@@ -743,6 +729,57 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget companyAddress() {
+    return TextField(
+      controller: _companyAddressController,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 17,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Enter company address',
+        labelText: 'Company Address',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          shadows: [
+            Shadow(
+              offset: Offset(0.5, 0.5),
+              color: Colors.black87,
+            ),
+          ],
+        ),
+      ),
+      keyboardType: TextInputType.multiline,
+      maxLines: null, 
     );
   }
 
