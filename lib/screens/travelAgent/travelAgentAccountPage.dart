@@ -1,6 +1,6 @@
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentProfile.dart';
-import 'package:assignment_tripmate/screens/user/setting.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentSettingScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -153,8 +153,8 @@ class _TravelAgentAccountScreenState extends State<TravelAgentAccountScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      SettingScreen(userId: widget.userId)),
+                                builder: (context) =>
+                                    TravelAgentSettingScreen(userId: widget.userId)),
                             );
                           },
                           child: Image.asset(

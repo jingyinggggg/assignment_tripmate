@@ -2,16 +2,16 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class UpdatePasswordScreen extends StatefulWidget {
+class TravelAgentUpdatePasswordScreen extends StatefulWidget {
   final String userId;
 
-  const UpdatePasswordScreen({super.key, required this.userId});
+  const TravelAgentUpdatePasswordScreen({super.key, required this.userId});
 
   @override
-  State<UpdatePasswordScreen> createState() => _UpdatePasswordScreenState();
+  State<TravelAgentUpdatePasswordScreen> createState() => _TravelAgentUpdatePasswordScreenState();
 }
 
-class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
+class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePasswordScreen> {
   final TextEditingController currentPasswordController = TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController = TextEditingController();
@@ -55,7 +55,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
     if (currentPassword.isNotEmpty && newPassword.isNotEmpty && confirmNewPassword.isNotEmpty) {
       try {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('travelAgent').doc(widget.userId).get();
         Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
         String storedHashedPassword = userData?['password'] ?? '';
 
@@ -94,7 +94,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
 
         String newHashedPassword = hashPassword(newPassword);
 
-        await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
+        await FirebaseFirestore.instance.collection('travelAgent').doc(widget.userId).update({
           'password': newHashedPassword,
         });
 
