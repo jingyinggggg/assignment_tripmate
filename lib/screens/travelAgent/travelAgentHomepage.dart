@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
-import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAccountPage.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCarInfo.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCountry.dart';
 import 'package:assignment_tripmate/screens/user/messages.dart';
 import 'package:flutter/material.dart';
 
@@ -46,7 +47,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => TravelAgentViewCountryScreen(userId: widget.userId))
                   );
                 },
               ),
@@ -57,7 +58,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => TravelAgentViewCarListingScreen(userId: widget.userId))
                   );
                 },
               ),
@@ -66,10 +67,10 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                 icon: "images/manage_booking.png",
                 label: "Booking",
                 onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                  );
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  // );
                 },
               ),
               _buildMenuButton(
@@ -77,10 +78,10 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                 icon: "images/posting.png",
                 label: "Analytics Report",
                 onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                  );
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  // );
                 },
               ),
             ],
@@ -92,6 +93,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(_screenTitles[currentPageIndex]),

@@ -225,6 +225,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Update Password"),
@@ -244,9 +245,10 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 40),
+        padding: const EdgeInsets.only(left: 10, right: 10, top: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             _passwordTextField(
               controller: currentPasswordController,

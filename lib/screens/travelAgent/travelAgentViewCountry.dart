@@ -1,19 +1,19 @@
-import "package:assignment_tripmate/screens/user/homepage.dart";
-import "package:assignment_tripmate/screens/user/viewCity.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentViewCity.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
 
-class ViewCountryScreen extends StatefulWidget {
+class TravelAgentViewCountryScreen extends StatefulWidget {
   final String userId;
 
-  const ViewCountryScreen({super.key, required this.userId});
+  const TravelAgentViewCountryScreen({super.key, required this.userId});
 
   @override
-  State<ViewCountryScreen> createState() => _ViewCountryScreenState();
+  State<TravelAgentViewCountryScreen> createState() => _TravelAgentViewCountryScreenState();
 }
 
-class _ViewCountryScreenState extends State<ViewCountryScreen> {
+class _TravelAgentViewCountryScreenState extends State<TravelAgentViewCountryScreen> {
   List<Country> _countryList = [];
   List<Country> _foundedCountry = [];
 
@@ -65,6 +65,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Group Tour"),
@@ -81,7 +82,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
           onPressed: () {
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId))
+              MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
             );
           },
         ),
@@ -170,7 +171,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
               onPressed: () {
                 Navigator.push(
                   context, 
-                  MaterialPageRoute(builder: (context) => ViewCityScreen(userId: widget.userId, countryName: country.countryName)),
+                  MaterialPageRoute(builder: (context) => TravelAgentViewCityScreen(userId: widget.userId, countryName: country.countryName)),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -187,7 +188,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                 height: 50,
                 alignment: Alignment.center,
                 child: Text(
-                  country.countryName!, 
+                  country.countryName, 
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 22,

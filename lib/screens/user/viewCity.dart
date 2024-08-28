@@ -1,5 +1,3 @@
-import "package:assignment_tripmate/screens/admin/manageCountryList.dart";
-import "package:assignment_tripmate/screens/user/homepage.dart";
 import "package:assignment_tripmate/screens/user/viewCountry.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";

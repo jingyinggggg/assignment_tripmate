@@ -911,7 +911,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
     );
   }
 
-    Widget employeeCard() {
+  Widget employeeCard() {
     return TextField(
       controller: _employeeCardController,
       readOnly: true,

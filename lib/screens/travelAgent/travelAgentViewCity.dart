@@ -1,70 +1,75 @@
-import "package:assignment_tripmate/screens/user/homepage.dart";
-import "package:assignment_tripmate/screens/user/viewCity.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentViewCountry.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
 
-class ViewCountryScreen extends StatefulWidget {
+class TravelAgentViewCityScreen extends StatefulWidget {
   final String userId;
+  final String countryName;
 
-  const ViewCountryScreen({super.key, required this.userId});
+  const TravelAgentViewCityScreen({super.key, required this.userId, required this.countryName});
 
   @override
-  State<ViewCountryScreen> createState() => _ViewCountryScreenState();
+  State<TravelAgentViewCityScreen> createState() => _TravelAgentViewCityScreenState();
 }
 
-class _ViewCountryScreenState extends State<ViewCountryScreen> {
-  List<Country> _countryList = [];
-  List<Country> _foundedCountry = [];
+class _TravelAgentViewCityScreenState extends State<TravelAgentViewCityScreen> {
+  List<City> _cityList = [];
+  List<City> _foundedCity = [];
+  bool hasCity = false;
+  bool isLoading = true;  // Add a loading indicator flag
 
   @override
   void initState(){
     super.initState();
-    fetchCountryList();
+    fetchCityList();
     setState(() {
-      _foundedCountry = _countryList;
+      _foundedCity = _cityList;
     });
   }
 
-    Future<void> fetchCountryList() async {
+  Future<void> fetchCityList() async {
     try {
-      // Reference to the countries collection in Firestore
-      CollectionReference countriesRef = FirebaseFirestore.instance.collection('countries');
+      // Reference to the cities collection in Firestore
+      CollectionReference citiesRef = FirebaseFirestore.instance.collection('countries').doc(widget.countryName).collection("cities");
 
-      // Fetch the documents from the countries collection
-      QuerySnapshot querySnapshot = await countriesRef.get();
+      // Fetch the documents from the cities collection
+      QuerySnapshot querySnapshot = await citiesRef.get();
 
-      // Convert each document into a Country object and add to _countryList
-      _countryList = querySnapshot.docs.map((doc) {
-        return Country(
-          doc['name'],
-          doc['countryID'],
-          doc['countryImage'],
+      // Convert each document into a City object and add to _cityList
+      _cityList = querySnapshot.docs.map((doc) {
+        return City(
+          doc['city_name'],
+          doc['cityID'],
+          doc['cityImage'],
         );
       }).toList();
 
-      // Update _foundedCountry
       setState(() {
-        _foundedCountry = _countryList;
+        _foundedCity = _cityList;
+        hasCity = _foundedCity.isNotEmpty;
+        isLoading = false;  // Stop loading when the data is fetched
       });
     } catch (e) {
       // Handle any errors
-      print('Error fetching country list: $e');
+      print('Error fetching city list: $e');
+      setState(() {
+        isLoading = false;  // Stop loading in case of an error
+      });
     }
   }
 
   void onSearch(String search) {
     setState(() {
-      _foundedCountry = _countryList
-          .where((country) =>
-              country.countryName.toUpperCase().contains(search.toUpperCase()))
-          .toList();
+      _foundedCity = _cityList.where((city) => city.cityName.toUpperCase().contains(search.toUpperCase())).toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Group Tour"),
@@ -81,7 +86,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
           onPressed: () {
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId))
+              MaterialPageRoute(builder: (context) => TravelAgentViewCountryScreen(userId: widget.userId))
             );
           },
         ),
@@ -119,7 +124,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.red, width: 2), // Red border for error state
                       ),
-                      hintText: "Search country...",
+                      hintText: "Search city...",
                       hintStyle: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade500,
@@ -131,34 +136,48 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
               ),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.only(right: 10, left: 10, top: 100, bottom: 30),
-            child: GridView.builder(
-              itemCount: _foundedCountry.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, // Number of columns in the grid
-                crossAxisSpacing: 20.0, 
-                mainAxisSpacing: 20.0,  
-                childAspectRatio: 1.0,  // Aspect ratio of each item (width/height)
-              ),
-              itemBuilder: (context, index) {
-                return buildCountryButton(country: _foundedCountry[index]);
-              },
-            ),
-          )
 
+          isLoading
+          ? Center(child: CircularProgressIndicator())  // Show loading indicator while fetching data
+          : hasCity
+          ? Container(
+              padding: EdgeInsets.only(right: 10, left: 10, top: 85),
+              child: ListView.builder(
+                itemCount: _foundedCity.length,
+                itemBuilder: (context, index) {
+                  return buildCityButton(city: _foundedCity[index]);
+                }
+              ),
+            )
+          : Container(
+              alignment: Alignment.center,
+              child: Center(
+                child: Text(
+                  "No cities available for the selected country.",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
         ]
       )
 
     );
   }
 
-  Widget buildCountryButton({required Country country}) {
+  Widget buildCityButton({required City city}) {
     return Container(
+      width: double.infinity,
+      height: 180,
+      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 00),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         image: DecorationImage(
-          image: NetworkImage(country.image),
+          image: NetworkImage(city.image),
           fit: BoxFit.cover,
         ),
       ),
@@ -170,7 +189,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
               onPressed: () {
                 Navigator.push(
                   context, 
-                  MaterialPageRoute(builder: (context) => ViewCityScreen(userId: widget.userId, countryName: country.countryName)),
+                  MaterialPageRoute(builder: (context) => TravelAgentViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: city.cityName)),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -187,7 +206,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                 height: 50,
                 alignment: Alignment.center,
                 child: Text(
-                  country.countryName!, 
+                  city.cityName, 
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 22,
