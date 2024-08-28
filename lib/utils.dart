@@ -66,3 +66,12 @@ class City{
 
   City(this.cityName, this.cityID, this.image);
 }
+
+class TravelAgent{
+  final String name;
+  final String companyName;
+  final int id;
+  final String image;
+
+  TravelAgent(this.name, this.companyName, this.id, this.image);
+}

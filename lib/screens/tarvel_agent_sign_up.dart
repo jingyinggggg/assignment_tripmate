@@ -738,6 +738,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 17,
+        fontFamily: "inika",
       ),
       decoration: InputDecoration(
         hintText: 'Enter company address',
@@ -770,6 +771,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
+          fontFamily: "inika",
           shadows: [
             Shadow(
               offset: Offset(0.5, 0.5),

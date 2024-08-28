@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
+import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
 import 'package:assignment_tripmate/screens/user/messages.dart';
 import 'package:flutter/material.dart';
 
@@ -57,7 +58,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => RegistrationRequestScreen(userId: widget.userId))
                   );
                 },
               ),
