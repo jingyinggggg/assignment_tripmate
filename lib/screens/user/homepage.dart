@@ -166,6 +166,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(_screenTitles[currentPageIndex]),
         centerTitle: true,

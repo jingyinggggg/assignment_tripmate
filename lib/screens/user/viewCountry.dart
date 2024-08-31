@@ -65,6 +65,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Group Tour"),

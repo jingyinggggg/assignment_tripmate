@@ -19,7 +19,14 @@ class TravelAgentAddTourPackageScreen extends StatefulWidget {
 class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPackageScreen> {
   final TextEditingController _tourNameController = TextEditingController();
   final TextEditingController _travelAgencyController = TextEditingController();
+  final List<TextEditingController> _tourHighlightControllers = [];
   bool isLoading = false;
+
+  void _initControllers() {
+    for (var i = 0; i < _tourHighlights.length; i++) {
+      _tourHighlightControllers.add(TextEditingController(text: _tourHighlights[i]['description']));
+    }
+  }
 
   final List<Map<String, String>> _tourHighlights = [
     {'no': '', 'description': ''},
@@ -40,14 +47,44 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   @override
   void initState() {
     super.initState();
+    _initControllers();
   }
 
   @override
   void dispose() {
     _tourNameController.dispose();
     _travelAgencyController.dispose();
+    for (var controller in _tourHighlightControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
+
+void _addTourHighlightRow() {
+  setState(() {
+    _tourHighlights.add({'no': '', 'description': ''});
+    _tourHighlightControllers.add(TextEditingController());
+  });
+}
+
+void _removeTourHighlightRow(int index) {
+  setState(() {
+    if (_tourHighlights.length > 1) {
+      _tourHighlights.removeAt(index);
+      _tourHighlightControllers[index].dispose();
+      _tourHighlightControllers.removeAt(index);
+    }
+  });
+}
+
+
+//   void _removeTourHighlightRow(int index) {
+//   setState(() {
+//     if (_tourHighlights.length > 1) {
+//       _tourHighlights.removeAt(index);
+//     }
+//   });
+// }
 
   @override
   Widget build(BuildContext context) {
@@ -404,97 +441,70 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                   ),
                 ],
               ),
-              for (int i = 0; i < _tourHighlights.length; i++)
-                TableRow(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          right: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-                        ),
-                      ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Text(
-                          (i + 1).toString(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-                        ),
-                      ),
-                      child: TextField(
-                        controller: TextEditingController(
-                          text: _tourHighlights[i]['description'],
-                        ),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Description...',
-                        ),
-                        maxLines: null, // Allows multiline input
-                      ),
-                    ),
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-                        ),
-                      ),
-                      child: Center(
-                        child: IconButton(
-                          icon: Icon(Icons.delete_rounded), 
-                          color: Colors.black54,
-                          iconSize: 22,
-                          onPressed: (){},
-                        )
-                      ),
-                    ), 
-                    // if (i > 0)
-                    //   Container(
-                    //     decoration: const BoxDecoration(
-                    //       color: Colors.white,
-                    //       border: Border(
-                    //         right: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-                    //       ),
-                    //     ),
-                    //     child: Center(
-                    //       child: IconButton(
-                    //         icon: const Icon(Icons.delete_rounded),
-                    //         color: Colors.black54,
-                    //         iconSize: 22,
-                    //         onPressed: () => _removeTourHighlightRow(i),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // else
-                    //   Container(
-                    //     decoration: const BoxDecoration(
-                    //       color: Colors.white,
-                    //     ),
-                    //     child: Center(
-                    //       child: const SizedBox(width: 22),
-                    //     ),
-                    //   ),
-                  ],
-                ),
+for (int i = 0; i < _tourHighlights.length; i++)
+  TableRow(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            right: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+          ),
+        ),
+        child: Container(
+          alignment: Alignment.center,
+          child: Text(
+            (i + 1).toString(),
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.only(left: 10, right: 10),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+          ),
+        ),
+        child: TextField(
+          controller: _tourHighlightControllers[i],
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            hintText: 'Description...',
+          ),
+          maxLines: null, // Allows multiline input
+        ),
+      ),
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+          ),
+        ),
+        child: Center(
+          child: IconButton(
+            icon: Icon(Icons.delete_rounded), 
+            color: Colors.black54,
+            iconSize: 22,
+            onPressed: () => _removeTourHighlightRow(i),
+          ),
+        ),
+      ),
+    ],
+  ),
+
             ],
           ),
         ),
@@ -1343,26 +1353,26 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     );
   }
 
-  void _addTourHighlightRow() {
-    if (_tourHighlights.last['description']!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill in the description before adding another row."),
-        ),
-      );
-    } else {
-      setState(() {
-        _tourHighlights.add({'no': '', 'description': ''});
-      });
-    }
-  }
+  // void _addTourHighlightRow() {
+  //   if (_tourHighlights.last['description']!.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text("Please fill in the description before adding another row."),
+  //       ),
+  //     );
+  //   } else {
+  //     setState(() {
+  //       _tourHighlights.add({'no': '', 'description': ''});
+  //     });
+  //   }
+  // }
 
-  void _removeTourHighlightRow(int index) {
-    setState(() {
-      _tourHighlights.removeAt(index);
-      for (int i = 0; i < _tourHighlights.length; i++) {
-        _tourHighlights[i]['no'] = (i + 1).toString();
-      }
-    });
-  }
+  // void _removeTourHighlightRow(int index) {
+  //   setState(() {
+  //     _tourHighlights.removeAt(index);
+  //     for (int i = 0; i < _tourHighlights.length; i++) {
+  //       _tourHighlights[i]['no'] = (i + 1).toString();
+  //     }
+  //   });
+  // }
 }

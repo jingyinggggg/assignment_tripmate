@@ -68,6 +68,7 @@ class _ViewCityScreenState extends State<ViewCityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Group Tour"),

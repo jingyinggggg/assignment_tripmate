@@ -186,6 +186,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
           ),
           IconButton(
             onPressed: (){
+              print("UserId: ${widget.userId}, TAId: ${travelAgent.id}");
               Navigator.push(
                 context, 
                 MaterialPageRoute(builder: (context) => AdminManageRegistrationRequestScreen(userId: widget.userId, TAId: travelAgent.id))
