@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:assignment_tripmate/screens/user/profile.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/utils.dart';

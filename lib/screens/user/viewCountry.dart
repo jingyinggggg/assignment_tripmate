@@ -188,7 +188,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                 height: 50,
                 alignment: Alignment.center,
                 child: Text(
-                  country.countryName!, 
+                  country.countryName, 
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 22,
