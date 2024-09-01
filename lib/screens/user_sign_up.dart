@@ -62,7 +62,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
     }
   }
 
-  void _saveUserData() async {
+  Future<void> _saveUserData() async {
     setState(() {
       _isLoading = true; // Start loading
     });
@@ -164,7 +164,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
 
       // Retrieve the current number of users
       final usersSnapshot = await firestore.collection('users').get();
-      int id = usersSnapshot.docs.length + 1;
+      final id = 'U${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
       // Convert date to a date-only format (without time)
       DateTime dobDateOnly = DateTime(dob!.year, dob.month, dob.day);
@@ -173,7 +173,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
       String hashedPassword = BCrypt.hashpw(_passwordController.text, BCrypt.gensalt());
 
       // Save user data
-      await firestore.collection('users').doc(email).set({
+      await firestore.collection('users').doc(id).set({
         'id': id,
         'name': name,
         'username': null,
@@ -182,6 +182,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
         'contact': contact,
         'password': hashedPassword,
         'gender': gender,
+        'profileImage': null,
       });
 
       // Show success dialog

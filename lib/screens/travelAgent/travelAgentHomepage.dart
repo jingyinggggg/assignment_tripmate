@@ -2,7 +2,7 @@ import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAccountPage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCarInfo.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCountry.dart';
-import 'package:assignment_tripmate/screens/user/messages.dart';
+import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:flutter/material.dart';
 
 class TravelAgentHomepageScreen extends StatefulWidget {
@@ -88,7 +88,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
           ),
         ),
       ),
-      MessagesScreen(),
+      ChatScreen(userId: widget.userId),
       TravelAgentAccountScreen(userId: widget.userId),
     ];
 

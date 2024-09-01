@@ -1,7 +1,7 @@
 import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
-import 'package:assignment_tripmate/screens/user/messages.dart';
+import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:assignment_tripmate/screens/user/viewCountry.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/user/bottom_nav_bar.dart';
@@ -159,7 +159,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
         ],
       ),
       ItineraryScreen(),
-      MessagesScreen(),
+      ChatScreen(userId: widget.userId),
       BookingsScreen(),
       AccountScreen(userId: widget.userId), // Access widget.userId here
     ];

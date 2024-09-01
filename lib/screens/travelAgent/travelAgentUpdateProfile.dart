@@ -709,7 +709,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
           companyName: _companyNameController.text,
           companyContact: _companyContactController.text, 
           companyAddress: _companyAddressController.text, 
-          file: profileImageToUpload! // Use the selected or existing image
+          file: profileImageToUpload // Use the selected or existing image
         );
 
         // Show success dialog

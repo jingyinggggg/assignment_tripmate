@@ -224,11 +224,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
   Widget name() {
     return TextField(
       controller: _nameController,
-      readOnly: true,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
         fontSize: 17,
-        color: Colors.black54
+        color: Colors.black
       ),
       decoration: InputDecoration(
         hintText: 'Please update your name...',
@@ -427,6 +426,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
         fontWeight: FontWeight.w800,
         fontSize: 17,
       ),
+      textAlign: TextAlign.justify,
       decoration: InputDecoration(
         hintText: 'Please update your address...',
         labelText: 'Address',
@@ -622,7 +622,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       // Fetch the current user's data from Firestore
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.userId) // Assuming `widget.userId` is the current user's ID
+          .doc(widget.userId) 
           .get();
 
       // Get the profile image URL from the fetched user data
@@ -636,7 +636,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
       } else if (existingProfileURL != null && existingProfileURL.isNotEmpty) {
         // If no new image is selected, use the existing profile image URL
         profileImageToUpload = await _getImageFromURL(existingProfileURL);
-      }
+      } 
 
       if (_nameController.text.isNotEmpty && 
           _usernameController.text.isNotEmpty && 
@@ -652,7 +652,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           email: _emailController.text, 
           contact: _contactController.text, 
           address: _addressController.text, 
-          file: profileImageToUpload! // Use the selected or existing image
+          file: profileImageToUpload // Use the selected or existing image
         );
 
         // Show success dialog
@@ -661,10 +661,10 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
           content: 'Your details have been updated successfully.',
           onPressed: () {
             Navigator.of(context).pop(); // Close the success dialog
-            Navigator.push(
-              context, 
-              MaterialPageRoute(builder: (context) => ProfileScreen(userId: widget.userId))
-            );
+            // Navigator.push(
+            //   context, 
+            //   MaterialPageRoute(builder: (context) => ProfileScreen(userId: widget.userId))
+            // );
           },
         );
       }

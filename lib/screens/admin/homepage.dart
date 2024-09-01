@@ -2,7 +2,7 @@ import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
-import 'package:assignment_tripmate/screens/user/messages.dart';
+import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:flutter/material.dart';
 
 class AdminHomepageScreen extends StatefulWidget {
@@ -88,7 +88,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
           ),
         ),
       ),
-      MessagesScreen(),
+      ChatScreen(userId: widget.userId),
       AdminAccountScreen(userId: widget.userId),
     ];
 

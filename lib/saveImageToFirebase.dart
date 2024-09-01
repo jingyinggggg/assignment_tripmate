@@ -17,28 +17,42 @@ class StoreData {
   }
 
   Future<String> updateUserProfile({
-    required String userId, 
-    required String name, 
-    required String username, 
-    required String email, 
-    required String contact, 
-    required String address, 
-    required Uint8List file,
-  }) async{
+    required String userId,
+    required String name,
+    required String username,
+    required String email,
+    required String contact,
+    required String address,
+    Uint8List? file, // Make file nullable
+  }) async {
     String resp = "Some Error Occurred";
-    try{
-      String fileName = "$name.jpg"; 
-      String imageURL = await uploadImageToStorage("profile_images/users/$fileName", file);
-      await _firestore.collection("users").doc(userId).update({
+    try {
+      String? imageURL;
+
+      if (file != null) {
+        String fileName = "$userId($name).jpg";
+        imageURL = await uploadImageToStorage("profile_images/users/$fileName", file);
+      }
+
+      // Prepare the update data
+      Map<String, dynamic> updateData = {
         'name': name,
         'username': username,
         'email': email,
         'contact': contact,
         'address': address,
-        'profileImage': imageURL
-      });
+      };
+
+      // Add profileImage to updateData only if it's not null
+      if (imageURL != null) {
+        updateData['profileImage'] = imageURL;
+      }
+
+      // Update the Firestore document
+      await _firestore.collection("users").doc(userId).update(updateData);
+
       resp = "Success";
-    } catch(err){
+    } catch (err) {
       resp = err.toString();
     }
     return resp;
@@ -52,27 +66,39 @@ class StoreData {
     required String companyName, 
     required String companyContact, 
     required String companyAddress, 
-    required Uint8List file,
-  }) async{
+    Uint8List? file, // Make file parameter optional
+  }) async {
     String resp = "Some Error Occurred";
-    try{
-      String fileName = "$name.jpg"; 
-      String imageURL = await uploadImageToStorage("profile_images/travelAgent/$fileName", file);
-      await _firestore.collection("travelAgent").doc(userId).update({
+    try {
+      String? imageURL;
+
+      if (file != null) {
+        String fileName = "$userId($name).jpg"; 
+        imageURL = await uploadImageToStorage("profile_images/travelAgent/$fileName", file);
+      }
+
+      // Build the update data map with only non-null values
+      Map<String, dynamic> updateData = {
         'name': name,
         'username': username,
         'email': email,
         'companyName': companyName,
         'companyContact': companyContact,
         'companyAddress': companyAddress,
-        'profileImage': imageURL
-      });
+      };
+
+      // Only include 'profileImage' if a new image is provided
+      if (imageURL != null) {
+        updateData['profileImage'] = imageURL;
+      }
+
+      await _firestore.collection("travelAgent").doc(userId).update(updateData);
       resp = "Success";
-    } catch(err){
+    } catch (err) {
       resp = err.toString();
     }
     return resp;
-  } 
+  }
 
   Future<String> saveCountryData({
     required String country, 
@@ -119,7 +145,7 @@ class StoreData {
 
   Future<String> saveTAData({
     required String name, 
-    required int TAid, 
+    required String TAid, 
     required String email,
     required DateTime dob,
     required String companyContact, 
@@ -131,9 +157,9 @@ class StoreData {
   }) async{
     String resp = "Some Error Occurred";
     try{
-      String fileName = "$name-$companyName.jpg"; 
-      String imageURL = await uploadImageToStorage("travelAgent/$fileName", employeeCard);
-      await _firestore.collection("travelAgent").doc(email).set({
+      String fileName = "$TAid-$companyName.jpg"; 
+      String imageURL = await uploadImageToStorage("travelAgent(employee card)/$fileName", employeeCard);
+      await _firestore.collection("travelAgent").doc(TAid).set({
         'id': TAid,
         'name': name,
         'username': null,
