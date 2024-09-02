@@ -1,4 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:assignment_tripmate/utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TravelAgentAddTourPackageScreen extends StatefulWidget {
   final String userId;
@@ -19,6 +25,8 @@ class TravelAgentAddTourPackageScreen extends StatefulWidget {
 class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPackageScreen> {
   final TextEditingController _tourNameController = TextEditingController();
   final TextEditingController _travelAgencyController = TextEditingController();
+  final TextEditingController _imageNameController = TextEditingController();
+  final TextEditingController _brochureController = TextEditingController();
   final List<TextEditingController> _tourHighlightControllers = [];
   final List<TextEditingController> _itineraryTitleControllers = [];
   final List<TextEditingController> _itineraryDescriptionControllers = [];
@@ -30,6 +38,8 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   final List<TextEditingController> _availableSlotControllers = [];
   final List<TextEditingController> _priceControllers = [];
   bool isLoading = false;
+  Uint8List? _image;
+  File? _pdfFile;
 
   void _initControllers() {
     for (var i = 0; i < _tourHighlights.length; i++) {
@@ -75,13 +85,15 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   void initState() {
     super.initState();
     _initControllers();
+    fetchTravelAgencyName();
   }
 
   @override
   void dispose() {
-    // Dispose tour name and travel agency controllers
     _tourNameController.dispose();
     _travelAgencyController.dispose();
+    _imageNameController.dispose();
+    _brochureController.dispose();
     
     // Dispose tour highlight controllers
     for (var controller in _tourHighlightControllers) {
@@ -125,39 +137,79 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     super.dispose();
   }
 
+  Future<void> fetchTravelAgencyName() async {
+    try {
+      QuerySnapshot userQuery = await FirebaseFirestore.instance
+        .collection('travelAgent')
+        .where('id', isEqualTo: widget.userId)
+        .limit(1)
+        .get();
+      
+      DocumentSnapshot userDoc = userQuery.docs.first;
+      var agencyData = userDoc.data() as Map<String, dynamic>;
 
-  void _addTourHighlightRow() {
+      setState(() {
+        _travelAgencyController.text = agencyData['companyName'];
+      });
+    } catch (e) {
+      print("Error fetching agency details: $e");
+    }
+  }
+
+void _addTourHighlightRow() {
+  // Check if the last row's content is not empty
+  if (_tourHighlightControllers.isNotEmpty && _tourHighlightControllers.last.text.trim().isEmpty) {
+    // Show a message to the user to fill in the previous row first
+    showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+  } else {
     setState(() {
       _tourHighlights.add({'no': '', 'description': ''});
       _tourHighlightControllers.add(TextEditingController());
     });
   }
+}
 
   void _addItineraryRow() {
-    setState(() {
-      _itinerary.add({'day': '', 'title': '', 'description': '', 'remarks': ''});
-      _itineraryTitleControllers.add(TextEditingController());
-      _itineraryDescriptionControllers.add(TextEditingController());
-      _itineraryRemarksControllers.add(TextEditingController());
-    });
+    if(_itineraryTitleControllers.isNotEmpty && _itineraryDescriptionControllers.isNotEmpty && _itineraryRemarksControllers.isNotEmpty && 
+    (_itineraryTitleControllers.last.text.trim().isEmpty || _itineraryDescriptionControllers.last.text.trim().isEmpty || _itineraryRemarksControllers.last.text.trim().isEmpty)){
+      showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+    } else {
+      setState(() {
+        _itinerary.add({'day': '', 'title': '', 'description': '', 'remarks': ''});
+        _itineraryTitleControllers.add(TextEditingController());
+        _itineraryDescriptionControllers.add(TextEditingController());
+        _itineraryRemarksControllers.add(TextEditingController());
+      });
+    }
   }
 
   void _addFlightRow() {
-    setState(() {
-      _flight.add({'no': '', 'depart': '', 'return': '', 'flight': ''});
-      _flightDepartDateControllers.add(TextEditingController());
-      _flightReturnDateControllers.add(TextEditingController());
-      _flightNameControllers.add(TextEditingController());
-    });
+    if(_flightDepartDateControllers.isNotEmpty && _flightReturnDateControllers.isNotEmpty & _flightNameControllers.isNotEmpty &&
+    (_flightDepartDateControllers.last.text.trim().isEmpty || _flightReturnDateControllers.last.text.trim().isEmpty || _flightNameControllers.last.text.trim().isEmpty)){
+      showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+    } else{
+      setState(() {
+        _flight.add({'no': '', 'depart': '', 'return': '', 'flight': ''});
+        _flightDepartDateControllers.add(TextEditingController());
+        _flightReturnDateControllers.add(TextEditingController());
+        _flightNameControllers.add(TextEditingController());
+
+      });
+    }
   }
 
   void _addAvailabilityRow() {
-    setState(() {
-      _availability.add({'no': '', 'date': '', 'slot': '', 'price': ''});
-      _availableDateRangeControllers.add(TextEditingController());
-      _availableSlotControllers.add(TextEditingController());
-      _priceControllers.add(TextEditingController());
-    });
+    if(_availableDateRangeControllers.isNotEmpty &&
+    (_availableDateRangeControllers.last.text.trim().isEmpty)){
+      showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+    } else{
+      setState(() {
+        _availability.add({'no': '', 'date': '', 'slot': '', 'price': ''});
+        _availableDateRangeControllers.add(TextEditingController());
+        _availableSlotControllers.add(TextEditingController());
+        _priceControllers.add(TextEditingController());
+      });
+    }
   }
 
   void _removeTourHighlightRow(int index) {
@@ -198,6 +250,8 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
         _flightDepartDateControllers.removeAt(index);
         _flightReturnDateControllers.removeAt(index);
         _flightNameControllers.removeAt(index);
+
+        _removeAvailabilityRow(index);
       }
     });
   }
@@ -217,6 +271,84 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
       }
     });
   }
+
+  void _updateReturnDatePicker(int index, DateTime firstDate) {
+    setState(() {
+      // Update the return date picker's firstDate by storing it in a list or directly in the controller
+      _flightReturnDateFirstDates[index] = firstDate;
+    });
+  }
+
+  DateTime _getFirstReturnDate(int index) {
+    // Return the first available return date based on the selected depart date or a default date
+    return _flightReturnDateFirstDates[index] ?? DateTime.now().add(const Duration(days: 1));
+  }
+
+  void _showSelectDepartDateFirstMessage() {
+    showSnackBar("Please select the departure date first.", context);
+  }
+
+  void showSnackBar(String message, BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _updateAvailabilityRanges() {
+    print("Update availability ranges triggered");
+
+    setState(() {
+      for (int i = 0; i < _flightDepartDateControllers.length; i++) {
+        print("Processing row $i");
+
+        String? departDate = _flightDepartDateControllers[i].text;
+        String? returnDate = _flightReturnDateControllers[i].text;
+
+        print("Depart Date: $departDate");
+        print("Return Date: $returnDate");
+
+        if (departDate.isNotEmpty && returnDate.isNotEmpty) {
+          print("Updating date range");
+
+          String formattedDateRange = "$departDate - $returnDate";
+
+          if (i < _availableDateRangeControllers.length) {
+            _availableDateRangeControllers[i].text = formattedDateRange;
+          } else {
+            print("Index $i is out of bounds for _availableDateRangeControllers");
+          }
+        } else {
+            print("Index $i is out of bounds for _availableDateRangeControllers");
+        }
+      }
+    });
+  }
+
+  void selectImage() async {
+    Uint8List? img = await ImageUtils.selectImage(context);
+    if (img != null) {
+      setState(() {
+        _image = img;
+        _imageNameController.text = 'Image Selected'; 
+      });
+    }
+  }
+
+  void selectPdfFile() async {
+    File? pdfFile = await FileUtils.selectPdf(context);
+    if (pdfFile != null) {
+      // await uploadPdfToFirebase(pdfFile);
+      setState(() {
+        _brochureController.text = pdfFile.path.split('/').last;
+      });
+    }
+  }
+
+  // A list to store the first available dates for return date pickers
+  List<DateTime?> _flightReturnDateFirstDates = List.filled(10, null);
 
   @override
   Widget build(BuildContext context) {
@@ -261,11 +393,11 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                   ),
                   const SizedBox(height: 10),
                   tourName(),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   travelAgency(),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   tourHighlightsSection(),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Align(
                     alignment: Alignment.topRight,
                     child: ElevatedButton(
@@ -323,7 +455,11 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                   Align(
                     alignment: Alignment.topRight,
                     child: ElevatedButton(
-                      onPressed: _addFlightRow,
+                      onPressed: (){
+                        _addFlightRow();
+                        _addAvailabilityRow();
+                      },
+                      // _addFlightRow,
                       child: isLoading
                           ? const CircularProgressIndicator()
                           : const Text(
@@ -346,34 +482,34 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                     ),
                   ),   
                   availabilitySection(),
-                  const SizedBox(height: 10), 
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton(
-                      onPressed: _addAvailabilityRow,
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(20,35),
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),  
+                  const SizedBox(height: 20), 
+                  // Align(
+                  //   alignment: Alignment.topRight,
+                  //   child: ElevatedButton(
+                  //     onPressed: _addAvailabilityRow,
+                  //     child: isLoading
+                  //         ? const CircularProgressIndicator()
+                  //         : const Text(
+                  //             'Add',
+                  //             style: TextStyle(
+                  //               color: Colors.white,
+                  //             ),
+                  //           ),
+                  //     style: ElevatedButton.styleFrom(
+                  //       minimumSize: Size(20,35),
+                  //       backgroundColor: const Color(0xFF467BA1),
+                  //       textStyle: const TextStyle(
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(5),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),  
                   tourImage(),
-                  SizedBox(height: 10,),
+                  SizedBox(height: 20,),
                   brochure(),
                   SizedBox(height: 20,), 
                   Container(
@@ -381,7 +517,6 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                     height: 60,
                     child: ElevatedButton(
                       onPressed: (){},
-                      // onPressed: _addTourHighlightRow,
                       child: isLoading
                           ? const CircularProgressIndicator()
                           : const Text(
@@ -425,7 +560,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
         TextField(
           controller: _tourNameController,
           style: const TextStyle(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             fontSize: 14,
           ),
           decoration: InputDecoration(
@@ -468,7 +603,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
         TextField(
           controller: _travelAgencyController,
           style: const TextStyle(
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             fontSize: 14,
           ),
           decoration: InputDecoration(
@@ -681,8 +816,22 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                       ),
                       alignment: Alignment.center,
                     ),
-                    _buildTextFieldCell(_flightDepartDateControllers[i], 'Date picker'),
-                    _buildTextFieldCell(_flightReturnDateControllers[i], 'Date picker'),
+                    _buildDatePickerTextFieldCell(
+                      _flightDepartDateControllers[i],
+                      'Pick a date',
+                      onDateSelected: (DateTime selectedDate) {
+                        // Update the return date controller's first date
+                        DateTime firstReturnDate = selectedDate.add(const Duration(days: 1));
+                        _updateReturnDatePicker(i, firstReturnDate);
+                      },
+                    ),
+                    _buildDatePickerTextFieldCell(
+                      _flightReturnDateControllers[i],
+                      'Pick a date',
+                      firstDate: _getFirstReturnDate(i),
+                      isReturnDate: true,
+                      departDateSelected: _flightDepartDateControllers[i].text.isNotEmpty,
+                    ),
                     _buildTextFieldCell(_flightNameControllers[i], 'Flight name...'),
                     _buildDeleteButton(i, "flight"),                
                   ],
@@ -717,10 +866,10 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
           child: Table(
             columnWidths: const {
               0: FlexColumnWidth(0.4),
-              1: FlexColumnWidth(1.1),
-              2: FlexColumnWidth(0.6),
-              3: FlexColumnWidth(0.8),
-              4: FlexColumnWidth(0.4),
+              1: FlexColumnWidth(1.3),
+              2: FlexColumnWidth(0.5),
+              3: FlexColumnWidth(1.0),
+              // 4: FlexColumnWidth(0.4),
             },
             border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
             children: [
@@ -730,7 +879,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                   _buildTableHeaderCell("Date Range"),
                   _buildTableHeaderCell("Slot"),
                   _buildTableHeaderCell("Price"),
-                  _buildTableHeaderCell(""),
+                  // _buildTableHeaderCell(""),
                 ],
               ),
               for (int i = 0; i < _availability.length; i++)
@@ -748,10 +897,10 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                       ),
                       alignment: Alignment.center,
                     ),
-                    _buildTextFieldCell(_availableDateRangeControllers[i], 'Date range'),
+                    _buildDateRangeTextFieldCell(_availableDateRangeControllers[i], 'Date range'),
                     _buildTextFieldCell(_availableSlotControllers[i], 'Slot'),
-                    _buildTextFieldCell(_priceControllers[i], 'price'),
-                    _buildDeleteButton(i, "availability"),                                            
+                    _buildTextFieldCell(_priceControllers[i], '', isPriceField: true),
+                    // _buildDeleteButton(i, "availability"),                                            
                   ],
                 ),
             ],
@@ -765,7 +914,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Tour Profile",
+        const Text("Tour Package Cover",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -773,7 +922,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
             )),
         SizedBox(height: 5,),
         TextField(
-          // controller: _imageNameController,
+          controller: _imageNameController,
           readOnly: true,
           style: const TextStyle(
             fontSize: 14,
@@ -785,21 +934,18 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
@@ -813,7 +959,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                 size: 30,
               ),
               onPressed: () {
-                // selectImage();
+                selectImage();
               }
             ),
           ),
@@ -834,7 +980,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
             )),
         SizedBox(height: 5,),
         TextField(
-          // controller: _imageNameController,
+          controller: _brochureController,
           readOnly: true,
           style: const TextStyle(
             fontSize: 14,
@@ -842,25 +988,22 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
             color: Colors.black,
           ),
           decoration: InputDecoration(
-            hintText: 'Upload a pdf file...',
+            hintText: 'Upload a PDF file...',
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              // borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(
                 color: Color(0xFF467BA1),
                 width: 2.5,
@@ -874,7 +1017,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
                 size: 30,
               ),
               onPressed: () {
-                // selectImage();
+                selectPdfFile();
               }
             ),
           ),
@@ -914,9 +1057,71 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     );
   }
 
-  Widget _buildTextFieldCell(TextEditingController controller, String hintText) {
+  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false}) {
+
+    if (isPriceField == true){
+      return Container(
+        padding: const EdgeInsets.only(left: 5, right: 5),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+          ),
+        ),
+        child: TextField(
+          controller: controller,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hintText,
+            prefixText: "RM",
+            prefixStyle: TextStyle(
+              color: Colors.black,
+              fontSize: 15,
+              fontWeight: FontWeight.w900
+            ),
+            suffixText: ".00",
+            suffixStyle: TextStyle(
+              color: Colors.black,
+              fontSize: 15,
+              fontWeight: FontWeight.w900
+            )
+          ),
+          maxLines: 1, 
+          textAlign: TextAlign.end,
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.only(left: 5, right: 5),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+          ),
+        ),
+        child: TextField(
+          controller: controller,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: hintText,
+          ),
+          maxLines: null, // Allows multiline input
+        ),
+      );
+    }
+  }
+
+  Widget _buildDateRangeTextFieldCell(TextEditingController controller, String hintText) {
     return Container(
-      padding: const EdgeInsets.only(left: 10, right: 10),
+      padding: const EdgeInsets.only(left: 5, right: 5),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -926,7 +1131,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
       child: TextField(
         controller: controller,
         style: const TextStyle(
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           fontSize: 14,
         ),
         decoration: InputDecoration(
@@ -934,9 +1139,76 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
           hintText: hintText,
         ),
         maxLines: null, // Allows multiline input
+        readOnly: true,
       ),
     );
   }
+
+  Widget _buildDatePickerTextFieldCell(
+      TextEditingController controller, 
+      String hintText, 
+      {DateTime? firstDate, 
+      void Function(DateTime)? onDateSelected, 
+      bool isReturnDate = false, 
+      bool departDateSelected = true}) {
+
+    return Container(
+      padding: const EdgeInsets.only(left: 5, right: 5),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 14,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+        ),
+        readOnly: true, // Prevents keyboard from appearing
+        textAlign: TextAlign.center,
+        onTap: () async {
+          if (isReturnDate && !departDateSelected) {
+            // Show a message asking the user to select the departure date first
+            _showSelectDepartDateFirstMessage();
+            return;
+          }
+
+          DateTime initialDate = firstDate ?? DateTime.now();
+          DateTime firstAvailableDate = firstDate ?? DateTime.now();
+
+          // Show date picker with a minimum date constraint
+          DateTime? pickedDate = await showDatePicker(
+            context: context,
+            initialDate: initialDate,
+            firstDate: firstAvailableDate,
+            lastDate: DateTime(2101),
+          );
+
+          if (pickedDate != null) {
+            // Format the date
+            String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+            controller.text = formattedDate;
+            if (onDateSelected != null) {
+              onDateSelected(pickedDate);
+            }
+          }
+
+          if (isReturnDate && departDateSelected) {
+            setState(() {
+              _updateAvailabilityRanges();
+            });
+          }
+        },
+      ),
+    );
+  }
+
 
   Widget _buildDeleteButton(int index, String rowType) {
     return Container(
@@ -952,14 +1224,18 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
           color: Colors.black54,
           iconSize: 22,
           onPressed: () {
-            if (rowType == 'itinerary') {
-              _removeItineraryRow(index);
-            } else if (rowType == 'tourHighlight') {
-              _removeTourHighlightRow(index);
-            } else if (rowType == 'flight') {
-              _removeFlightRow(index);
-            } else if (rowType == 'availability'){
-              _removeAvailabilityRow(index);
+            if (index == 0 && _getRowCount(rowType) == 1){
+              _clearFirstRow(rowType);
+            } else{
+              if (rowType == 'itinerary') {
+                _removeItineraryRow(index);
+              } else if (rowType == 'tourHighlight') {
+                _removeTourHighlightRow(index);
+              } else if (rowType == 'flight') {
+                _removeFlightRow(index);
+              } else if (rowType == 'availability') {
+                _removeAvailabilityRow(index);
+              }
             }
           },
         ),
@@ -967,5 +1243,38 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     );
   }
 
+  // Method to get the row count for the given row type
+  int _getRowCount(String rowType) {
+    if (rowType == 'itinerary') {
+      return _itinerary.length;
+    } else if (rowType == 'tourHighlight') {
+      return _tourHighlights.length;
+    } else if (rowType == 'flight') {
+      return _flight.length;
+    } else if (rowType == 'availability') {
+      return _availability.length;
+    }
+    return 0;
+  }
+
+  // Method to clear the text in the first row
+  void _clearFirstRow(String rowType) {
+    if (rowType == 'itinerary') {
+      _itineraryTitleControllers[0].clear();
+      _itineraryDescriptionControllers[0].clear();
+      _itineraryRemarksControllers[0].clear();
+    } else if (rowType == 'tourHighlight') {
+      _tourHighlightControllers[0].clear();
+    } else if (rowType == 'flight') {
+      _flightDepartDateControllers[0].clear();
+      _flightReturnDateControllers[0].clear();
+      _flightNameControllers[0].clear();
+      _updateAvailabilityRanges();
+    } else if (rowType == 'availability') {
+      _availableDateRangeControllers[0].clear();
+      _availableSlotControllers[0].clear();
+      _priceControllers[0].clear();
+    }
+  }
 
 }

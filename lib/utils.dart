@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class ImageUtils {
   // Request permission to access photos
@@ -50,6 +52,28 @@ class ImageUtils {
     }
   }
 }
+
+class FileUtils {
+  // Select PDF file
+  static Future<File?> selectPdf(BuildContext context) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result != null && result.files.single.path != null) {
+        return File(result.files.single.path!);
+      } else {
+        print('No PDF selected');
+        return null;
+      }
+    } catch (e) {
+      print('Error selecting PDF: $e');
+      return null;
+    }
+  }
+}
+
 
 class Country{
   final String countryName;
