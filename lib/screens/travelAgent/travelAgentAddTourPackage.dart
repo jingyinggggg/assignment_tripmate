@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   final List<TextEditingController> _priceControllers = [];
   bool isLoading = false;
   Uint8List? _image;
-  File? _pdfFile;
+  File? _uploadedPdfFile;
 
   void _initControllers() {
     for (var i = 0; i < _tourHighlights.length; i++) {
@@ -338,13 +339,153 @@ void _addTourHighlightRow() {
   }
 
   void selectPdfFile() async {
-    File? pdfFile = await FileUtils.selectPdf(context);
+    File? pdfFile = await FileUtils.selectPdf();
     if (pdfFile != null) {
       // await uploadPdfToFirebase(pdfFile);
       setState(() {
+
         _brochureController.text = pdfFile.path.split('/').last;
       });
     }
+  }
+
+  Map<String, dynamic> convertToMap(String category, List<Map<String, String>> listName) {
+    switch (category) {
+      case "highlight":
+        return {
+          'tourHighlight': listName.map((entry) {
+            return {
+              'no': entry['no'],
+              'description': entry['description'],
+            };
+          }).toList(),
+        };
+
+      case "itinerary":
+        return {
+          'itinerary': listName.map((entry) {
+            return {
+              'day': entry['day'],
+              'title': entry['title'],
+              'description': entry['description'],
+              'remarks': entry['remarks'],
+            };
+          }).toList(),
+        };
+
+      case "flight":
+        return {
+          'flight_info': listName.map((entry) {
+            return {
+              'no': entry['no'],
+              'departDate': entry['depart'],
+              'returnDate': entry['return'],
+              'flightName': entry['flight'],
+            };
+          }).toList(),
+        };
+
+      case "availability":
+        return {
+          'availability': listName.map((entry) {
+            return {
+              'no': entry['no'],
+              'dateRange': entry['date'],
+              'slot': entry['slot'],
+              'price': entry['price'],
+            };
+          }).toList(),
+        };
+
+      default:
+        throw ArgumentError("Unknown category: $category");
+    }
+  }
+
+  Future<void> _addTour() async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
+    final firestore = FirebaseFirestore.instance;
+
+    // Convert list to map
+    final tourHighlightData = convertToMap('highlight', _tourHighlights);
+    final itineraryData = convertToMap('itinerary', _itinerary);
+    final flightData = convertToMap('flight', _flight);
+    final availabilityData = convertToMap('availability', _availability);
+
+    try {
+      if (_tourNameController.text.isNotEmpty && _travelAgencyController.text.isNotEmpty && _tourHighlights.isNotEmpty &&
+      _itinerary.isNotEmpty && _flight.isNotEmpty && _availability.isNotEmpty){
+        final usersSnapshot = await firestore.collection('tourPackage').get();
+        final tourid = 'TP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+        String resp = await StoreData().saveTourPackageData(
+          tourid: tourid, 
+          tourName: _tourNameController.text, 
+          countryName: widget.countryName, 
+          cityName: widget.cityName, 
+          agency: _travelAgencyController.text, 
+          tourHighlightData: tourHighlightData, 
+          itineraryData: itineraryData, 
+          flightData: flightData, 
+          availabilityData: availabilityData, 
+          tourCover: _image!, 
+          pdfFile: _uploadedPdfFile!
+        );
+
+      }
+
+      // Show success dialog
+      _showDialog(
+        title: 'Successful',
+        content: 'You have added the tour package successfully.',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the success dialog
+          Navigator.push(
+            context, 
+            MaterialPageRoute(builder: (context) => TravelAgentViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName,))
+          );
+        },
+      );
+    } catch (e) {
+      // Show error dialog
+      _showDialog(
+        title: 'Failed',
+        content: 'Failed to add tour package: $e',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the error dialog
+        },
+      );
+    } finally {
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+    }
+  }
+
+  // Method to show a dialog with a title and content
+  void _showDialog({
+    required String title,
+    required String content,
+    required VoidCallback onPressed,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: onPressed,
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // A list to store the first available dates for return date pickers
@@ -482,32 +623,7 @@ void _addTourHighlightRow() {
                     ),
                   ),   
                   availabilitySection(),
-                  const SizedBox(height: 20), 
-                  // Align(
-                  //   alignment: Alignment.topRight,
-                  //   child: ElevatedButton(
-                  //     onPressed: _addAvailabilityRow,
-                  //     child: isLoading
-                  //         ? const CircularProgressIndicator()
-                  //         : const Text(
-                  //             'Add',
-                  //             style: TextStyle(
-                  //               color: Colors.white,
-                  //             ),
-                  //           ),
-                  //     style: ElevatedButton.styleFrom(
-                  //       minimumSize: Size(20,35),
-                  //       backgroundColor: const Color(0xFF467BA1),
-                  //       textStyle: const TextStyle(
-                  //         fontSize: 16,
-                  //         fontWeight: FontWeight.bold,
-                  //       ),
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(5),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),  
+                  const SizedBox(height: 20),   
                   tourImage(),
                   SizedBox(height: 20,),
                   brochure(),
@@ -516,11 +632,11 @@ void _addTourHighlightRow() {
                     width: double.infinity,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: (){},
+                      onPressed: (){_addTour();},
                       child: isLoading
                           ? const CircularProgressIndicator()
                           : const Text(
-                              'Add',
+                              'Add Tour',
                               style: TextStyle(
                                 color: Colors.white,
                               ),
@@ -560,11 +676,15 @@ void _addTourHighlightRow() {
         TextField(
           controller: _tourNameController,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
           ),
           decoration: InputDecoration(
             hintText: 'Example: 9 DAYS SHANGHAI THEME PARK',
+            hintStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -603,9 +723,10 @@ void _addTourHighlightRow() {
         TextField(
           controller: _travelAgencyController,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
           ),
+          readOnly: true,
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
@@ -925,12 +1046,16 @@ void _addTourHighlightRow() {
           controller: _imageNameController,
           readOnly: true,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
             color: Colors.black,
           ),
           decoration: InputDecoration(
             hintText: 'Upload an image...',
+            hintStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -983,8 +1108,8 @@ void _addTourHighlightRow() {
           controller: _brochureController,
           readOnly: true,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
             color: Colors.black,
           ),
           decoration: InputDecoration(
@@ -1071,8 +1196,8 @@ void _addTourHighlightRow() {
         child: TextField(
           controller: controller,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
           ),
           decoration: InputDecoration(
             border: InputBorder.none,
@@ -1106,12 +1231,16 @@ void _addTourHighlightRow() {
         child: TextField(
           controller: controller,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
           ),
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
+            hintStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800
+            )
           ),
           maxLines: null, // Allows multiline input
         ),
@@ -1131,12 +1260,16 @@ void _addTourHighlightRow() {
       child: TextField(
         controller: controller,
         style: const TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
         ),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
+          hintStyle: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800
+          )
         ),
         maxLines: null, // Allows multiline input
         readOnly: true,
@@ -1163,12 +1296,16 @@ void _addTourHighlightRow() {
       child: TextField(
         controller: controller,
         style: const TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
         ),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
+          hintStyle: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800
+          )
         ),
         readOnly: true, // Prevents keyboard from appearing
         textAlign: TextAlign.center,

@@ -1,9 +1,10 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 
 class ImageUtils {
   // Request permission to access photos
@@ -54,26 +55,61 @@ class ImageUtils {
 }
 
 class FileUtils {
+  static Future<bool> _request_per(Permission permission) async{
+    AndroidDeviceInfo build = await DeviceInfoPlugin().androidInfo;
+    if(build.version.sdkInt>=30){
+      var re = await Permission.manageExternalStorage.request();
+      if(re.isGranted){
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else{
+      if(await permission.isGranted){
+        return true;
+      }
+      else{
+        var result = await permission.request();
+        if(result.isGranted){
+          return true;
+        }
+        else{
+          return false;
+        }
+      }
+    }
+    
+  }
+
   // Select PDF file
-  static Future<File?> selectPdf(BuildContext context) async {
+  static Future<File?> selectPdf() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-      if (result != null && result.files.single.path != null) {
-        return File(result.files.single.path!);
-      } else {
-        print('No PDF selected');
+      if (await _request_per(Permission.storage) == true){
+        print('Permission is granted');
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
+
+        if (result != null && result.files.isNotEmpty) {
+          return File(result.files.first.path!);
+        } else {
+          print('No file selected');
+          return null;
+        }
+      }
+      else{
+        print('Permission is not granted');
         return null;
       }
     } catch (e) {
-      print('Error selecting PDF: $e');
+      print('Error selecting PDF file: $e');
       return null;
     }
   }
 }
-
 
 class Country{
   final String countryName;

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -13,7 +14,28 @@ class StoreData {
     TaskSnapshot snapshot = await uploadTask;
     String downloadURL = await snapshot.ref.getDownloadURL();
     return downloadURL;
+  }
 
+  Future<String> uploadPdfToStorage(String childName, File file) async {
+    // Convert File to Uint8List
+    Uint8List fileData = await file.readAsBytes();
+
+    // Create a reference to the location you want to upload to in Firebase Storage
+    Reference ref = _storage.ref().child(childName);
+
+    // Start the upload task
+    UploadTask uploadTask = ref.putData(
+      fileData,
+      SettableMetadata(contentType: 'application/pdf'), // Set the content type as PDF
+    );
+
+    // Wait for the upload to complete and get the snapshot
+    TaskSnapshot snapshot = await uploadTask;
+
+    // Retrieve the download URL
+    String downloadURL = await snapshot.ref.getDownloadURL();
+
+    return downloadURL;
   }
 
   Future<String> updateUserProfile({
@@ -171,7 +193,8 @@ class StoreData {
         'password': password,
         'gender': gender,
         'accountApproved': 0,
-        'employeCardPath': imageURL
+        'employeCardPath': imageURL,
+        'profileImage': null
       });
       resp = "Success";
     } catch(err){
@@ -179,4 +202,56 @@ class StoreData {
     }
     return resp;
   }
+
+  Future<String> saveTourPackageData({
+    required String tourid, 
+    required String tourName, 
+    required String countryName,
+    required String cityName,
+    required String agency,
+    required Map tourHighlightData,
+    required Map itineraryData,
+    required Map flightData, 
+    required Map availabilityData,
+    required Uint8List tourCover,
+    required File pdfFile,
+  }) async {
+    String resp = "Some Error Occurred";
+    try {
+      String fileName = "$tourName.jpg"; 
+      String pdfFileName = "$tourName.pdf"; 
+
+      String imageURL;
+      String pdfURL;
+
+      if (cityName.isNotEmpty) {
+        imageURL = await uploadImageToStorage("tourPackage/$agency/$countryName/$cityName/$fileName", tourCover);
+        pdfURL = await uploadPdfToStorage("tourPackage/$agency/$countryName/$cityName/$pdfFileName", pdfFile);
+      } else {
+        imageURL = await uploadImageToStorage("tourPackage/$agency/$countryName/$fileName", tourCover);
+        pdfURL = await uploadPdfToStorage("tourPackage/$agency/$countryName/$pdfFileName", pdfFile);
+      }
+
+      // Add the converted list data to the Firestore document
+      await _firestore.collection("travelAgent").doc().set({
+        'tourID': tourid,
+        'tourName': tourName,
+        'agency': agency,
+        'countryName': countryName,
+        'cityName': cityName,
+        'tourCover': imageURL,
+        'brochure': pdfURL,
+        'tourHighlight': tourHighlightData['tourHighlight'],
+        'itinerary': itineraryData['itinerary'],
+        'flight_info': flightData['flight_info'],
+        'availability': availabilityData['availability'],
+      });
+
+      resp = "Success";
+    } catch (err) {
+      resp = err.toString();
+    }
+    return resp;
+  }
+
 }
