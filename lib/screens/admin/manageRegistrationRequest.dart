@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class AdminManageRegistrationRequestScreen extends StatefulWidget {
   final String userId;
-  final int TAId;
+  final String TAId;
 
   const AdminManageRegistrationRequestScreen({super.key, required this.userId, required this.TAId});
 

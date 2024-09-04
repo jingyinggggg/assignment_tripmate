@@ -127,10 +127,18 @@ class City{
   City(this.cityName, this.cityID, this.image);
 }
 
+class TourPackage{
+  final String tourName;
+  final String tourID;
+  final String image;
+
+  TourPackage(this.tourName, this.tourID, this.image);
+}
+
 class TravelAgent{
   final String name;
   final String companyName;
-  final int id;
+  final String id;
   final String image;
 
   TravelAgent(this.name, this.companyName, this.id, this.image);

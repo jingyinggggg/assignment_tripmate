@@ -41,6 +41,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   bool isLoading = false;
   Uint8List? _image;
   File? _uploadedPdfFile;
+  String? companyID;
 
   void _initControllers() {
     for (var i = 0; i < _tourHighlights.length; i++) {
@@ -86,7 +87,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   void initState() {
     super.initState();
     _initControllers();
-    fetchTravelAgencyName();
+    fetchTravelAgencyNameAndID();
   }
 
   @override
@@ -138,7 +139,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     super.dispose();
   }
 
-  Future<void> fetchTravelAgencyName() async {
+  Future<void> fetchTravelAgencyNameAndID() async {
     try {
       QuerySnapshot userQuery = await FirebaseFirestore.instance
         .collection('travelAgent')
@@ -151,29 +152,33 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
 
       setState(() {
         _travelAgencyController.text = agencyData['companyName'];
+        companyID = agencyData['companyID'];
       });
     } catch (e) {
       print("Error fetching agency details: $e");
     }
   }
 
-void _addTourHighlightRow() {
-  // Check if the last row's content is not empty
-  if (_tourHighlightControllers.isNotEmpty && _tourHighlightControllers.last.text.trim().isEmpty) {
-    // Show a message to the user to fill in the previous row first
-    showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
-  } else {
-    setState(() {
-      _tourHighlights.add({'no': '', 'description': ''});
-      _tourHighlightControllers.add(TextEditingController());
-    });
+  void _addTourHighlightRow() {
+    // Check if the last row's content is not empty
+    if (_tourHighlightControllers.isNotEmpty && _tourHighlightControllers.last.text.trim().isEmpty) {
+      // Show a message to the user to fill in the previous row first
+      showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+    } else {
+
+      setState(() {
+        _tourHighlights.add({'no': '', 'description': ''});
+        _tourHighlightControllers.add(TextEditingController());
+      });
+    }
   }
-}
 
   void _addItineraryRow() {
-    if(_itineraryTitleControllers.isNotEmpty && _itineraryDescriptionControllers.isNotEmpty && _itineraryRemarksControllers.isNotEmpty && 
-    (_itineraryTitleControllers.last.text.trim().isEmpty || _itineraryDescriptionControllers.last.text.trim().isEmpty || _itineraryRemarksControllers.last.text.trim().isEmpty)){
-      showSnackBar("Please ensure you have fill in the previous row before adding a new one.", context);
+    if (_itineraryTitleControllers.isNotEmpty &&
+        _itineraryDescriptionControllers.isNotEmpty &&
+        (_itineraryTitleControllers.last.text.trim().isEmpty ||
+        _itineraryDescriptionControllers.last.text.trim().isEmpty)) {
+      showSnackBar("Please ensure you have filled in the previous row before adding a new one.", context);
     } else {
       setState(() {
         _itinerary.add({'day': '', 'title': '', 'description': '', 'remarks': ''});
@@ -223,21 +228,24 @@ void _addTourHighlightRow() {
     });
   }
 
-  void _removeItineraryRow(int index) {
-    setState(() {
-      if (_itinerary.length > 1) {
-        _itinerary.removeAt(index);
-        
-        _itineraryTitleControllers[index].dispose();
-        _itineraryDescriptionControllers[index].dispose();
-        _itineraryRemarksControllers[index].dispose();
 
-        _itineraryTitleControllers.removeAt(index);
-        _itineraryDescriptionControllers.removeAt(index);
-        _itineraryRemarksControllers.removeAt(index);
-      }
-    });
-  }
+void _removeItineraryRow(int index) {
+  setState(() {
+    if (_itinerary.length > 1) {
+      // Remove the row
+      _itinerary.removeAt(index);
+
+      // Dispose of the text controllers and remove them from the list
+      _itineraryTitleControllers[index].dispose();
+      _itineraryDescriptionControllers[index].dispose();
+      _itineraryRemarksControllers[index].dispose();
+
+      _itineraryTitleControllers.removeAt(index);
+      _itineraryDescriptionControllers.removeAt(index);
+      _itineraryRemarksControllers.removeAt(index);
+    }
+  });
+}
 
   void _removeFlightRow(int index) {
     setState(() {
@@ -271,6 +279,43 @@ void _addTourHighlightRow() {
         _priceControllers.removeAt(index);
       }
     });
+  }
+
+  void _saveDataToList(String category){
+    switch (category) {
+      case "highlight":
+        for (int i = 0; i < _tourHighlightControllers.length; i++) {
+          _tourHighlights[i]['no'] = (i + 1).toString();
+          _tourHighlights[i]['description'] = _tourHighlightControllers[i].text.trim();
+        }
+
+      case "itinerary":
+        for (int i = 0; i < _itinerary.length; i++) {
+          _itinerary[i]['day'] = (i + 1).toString();
+          _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
+          _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
+          _itinerary[i]['remarks'] = _itineraryRemarksControllers[i].text.trim();
+        }
+
+      case "flight":
+        for (int i = 0; i < _flight.length; i++) {
+          _flight[i]['no'] = (i + 1).toString();
+          _flight[i]['depart'] = _flightDepartDateControllers[i].text.trim();
+          _flight[i]['return'] = _flightReturnDateControllers[i].text.trim();
+          _flight[i]['flight'] = _flightNameControllers[i].text.trim();
+        }
+
+      case "availability":
+        for (int i = 0; i < _availability.length; i++) {
+          _availability[i]['no'] = (i + 1).toString();
+          _availability[i]['date'] = _availableDateRangeControllers[i].text.trim();
+          _availability[i]['slot'] = _availableSlotControllers[i].text.trim();
+          _availability[i]['price'] = _priceControllers[i].text.trim();
+        }
+
+      default:
+        throw ArgumentError("Unknown category: $category");
+    }
   }
 
   void _updateReturnDatePicker(int index, DateTime firstDate) {
@@ -328,7 +373,7 @@ void _addTourHighlightRow() {
     });
   }
 
-  void selectImage() async {
+  Future<void> selectImage() async {
     Uint8List? img = await ImageUtils.selectImage(context);
     if (img != null) {
       setState(() {
@@ -338,12 +383,12 @@ void _addTourHighlightRow() {
     }
   }
 
-  void selectPdfFile() async {
+  Future<void> selectPdfFile() async {
     File? pdfFile = await FileUtils.selectPdf();
     if (pdfFile != null) {
       // await uploadPdfToFirebase(pdfFile);
       setState(() {
-
+        _uploadedPdfFile = pdfFile;
         _brochureController.text = pdfFile.path.split('/').last;
       });
     }
@@ -403,6 +448,11 @@ void _addTourHighlightRow() {
   }
 
   Future<void> _addTour() async {
+    _saveDataToList("highlight");
+    _saveDataToList("itinerary");
+    _saveDataToList("flight");
+    _saveDataToList("availability");
+
     setState(() {
       isLoading = true; // Start loading
     });
@@ -416,39 +466,60 @@ void _addTourHighlightRow() {
     final availabilityData = convertToMap('availability', _availability);
 
     try {
-      if (_tourNameController.text.isNotEmpty && _travelAgencyController.text.isNotEmpty && _tourHighlights.isNotEmpty &&
-      _itinerary.isNotEmpty && _flight.isNotEmpty && _availability.isNotEmpty){
+      if (_tourNameController.text.isNotEmpty &&
+          _travelAgencyController.text.isNotEmpty &&
+          _tourHighlights.isNotEmpty &&
+          _itinerary.isNotEmpty &&
+          _flight.isNotEmpty &&
+          _availability.isNotEmpty) {
         final usersSnapshot = await firestore.collection('tourPackage').get();
         final tourid = 'TP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
+        if (_image == null) {
+          throw Exception("Tour cover image is required.");
+        }
+        
+        if (_uploadedPdfFile == null) {
+          throw Exception("Brochure in PDF file is required.");
+        }
+
         String resp = await StoreData().saveTourPackageData(
-          tourid: tourid, 
-          tourName: _tourNameController.text, 
-          countryName: widget.countryName, 
-          cityName: widget.cityName, 
-          agency: _travelAgencyController.text, 
-          tourHighlightData: tourHighlightData, 
-          itineraryData: itineraryData, 
-          flightData: flightData, 
-          availabilityData: availabilityData, 
-          tourCover: _image!, 
-          pdfFile: _uploadedPdfFile!
+          tourid: tourid,
+          tourName: _tourNameController.text,
+          countryName: widget.countryName,
+          cityName: widget.cityName,
+          agency: _travelAgencyController.text,
+          companyID: widget.userId,
+          tourHighlightData: tourHighlightData,
+          itineraryData: itineraryData,
+          flightData: flightData,
+          availabilityData: availabilityData,
+          tourCover: _image!, // Safe to use ! now
+          pdfFile: _uploadedPdfFile!, // Safe to use ! now
+          isPublish: 0,
         );
 
+        // Show success dialog
+        _showDialog(
+          title: 'Successful',
+          content: 'You have added the tour package successfully.',
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the success dialog
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TravelAgentViewTourListScreen(
+                  userId: widget.userId,
+                  countryName: widget.countryName,
+                  cityName: widget.cityName,
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        throw Exception("All fields are required.");
       }
-
-      // Show success dialog
-      _showDialog(
-        title: 'Successful',
-        content: 'You have added the tour package successfully.',
-        onPressed: () {
-          Navigator.of(context).pop(); // Close the success dialog
-          Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => TravelAgentViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName,))
-          );
-        },
-      );
     } catch (e) {
       // Show error dialog
       _showDialog(
@@ -543,9 +614,7 @@ void _addTourHighlightRow() {
                     alignment: Alignment.topRight,
                     child: ElevatedButton(
                       onPressed: _addTourHighlightRow,
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text(
+                      child: Text(
                               'Add',
                               style: TextStyle(
                                 color: Colors.white,
@@ -570,9 +639,7 @@ void _addTourHighlightRow() {
                     alignment: Alignment.topRight,
                     child: ElevatedButton(
                       onPressed: _addItineraryRow,
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text(
+                      child: Text(
                               'Add',
                               style: TextStyle(
                                 color: Colors.white,
@@ -601,9 +668,7 @@ void _addTourHighlightRow() {
                         _addAvailabilityRow();
                       },
                       // _addFlightRow,
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text(
+                      child: Text(
                               'Add',
                               style: TextStyle(
                                 color: Colors.white,
@@ -1114,6 +1179,10 @@ void _addTourHighlightRow() {
           ),
           decoration: InputDecoration(
             hintText: 'Upload a PDF file...',
+            hintStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -1232,7 +1301,7 @@ void _addTourHighlightRow() {
           controller: controller,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 15,
+            fontSize: 14,
           ),
           decoration: InputDecoration(
             border: InputBorder.none,
@@ -1243,6 +1312,7 @@ void _addTourHighlightRow() {
             )
           ),
           maxLines: null, // Allows multiline input
+          textAlign: TextAlign.justify,
         ),
       );
     }
@@ -1261,7 +1331,7 @@ void _addTourHighlightRow() {
         controller: controller,
         style: const TextStyle(
           fontWeight: FontWeight.w500,
-          fontSize: 15,
+          fontSize: 14,
         ),
         decoration: InputDecoration(
           border: InputBorder.none,
@@ -1297,7 +1367,7 @@ void _addTourHighlightRow() {
         controller: controller,
         style: const TextStyle(
           fontWeight: FontWeight.w500,
-          fontSize: 15,
+          fontSize: 14,
         ),
         decoration: InputDecoration(
           border: InputBorder.none,

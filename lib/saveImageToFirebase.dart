@@ -209,12 +209,14 @@ class StoreData {
     required String countryName,
     required String cityName,
     required String agency,
+    required String companyID,
     required Map tourHighlightData,
     required Map itineraryData,
     required Map flightData, 
     required Map availabilityData,
     required Uint8List tourCover,
     required File pdfFile,
+    required int isPublish,
   }) async {
     String resp = "Some Error Occurred";
     try {
@@ -233,10 +235,11 @@ class StoreData {
       }
 
       // Add the converted list data to the Firestore document
-      await _firestore.collection("travelAgent").doc().set({
+      await _firestore.collection("tourPackage").doc(tourid).set({
         'tourID': tourid,
         'tourName': tourName,
         'agency': agency,
+        'companyID': companyID,
         'countryName': countryName,
         'cityName': cityName,
         'tourCover': imageURL,
@@ -245,6 +248,7 @@ class StoreData {
         'itinerary': itineraryData['itinerary'],
         'flight_info': flightData['flight_info'],
         'availability': availabilityData['availability'],
+        'isPublish': isPublish
       });
 
       resp = "Success";
