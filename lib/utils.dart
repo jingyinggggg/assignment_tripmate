@@ -131,8 +131,9 @@ class TourPackage{
   final String tourName;
   final String tourID;
   final String image;
+  final String agency;
 
-  TourPackage(this.tourName, this.tourID, this.image);
+  TourPackage(this.tourName, this.tourID, this.image, this.agency);
 }
 
 class TravelAgent{

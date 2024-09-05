@@ -1,57 +1,58 @@
 import 'package:assignment_tripmate/screens/admin/addCity.dart';
-import 'package:assignment_tripmate/screens/admin/adminViewTourList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class AdminManageCityListScreen extends StatefulWidget {
+class AdminViewTourListScreen extends StatefulWidget {
   final String userId;
   final String countryName;
+  final String cityName;
 
-  const AdminManageCityListScreen({super.key, required this.userId, required this.countryName});
+  const AdminViewTourListScreen({super.key, required this.userId, required this.countryName, required this.cityName});
 
   @override
-  State<AdminManageCityListScreen> createState() => _AdminManageCityListScreenState();
+  State<AdminViewTourListScreen> createState() => _AdminViewTourListScreenState();
 }
 
-class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
-  List<City> _cityList = [];
-  List<City> _foundedCity = [];
+class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
+  List<TourPackage> _tourList = [];
+  List<TourPackage> _foundedTour = [];
   bool hasCity = false;
   bool isLoading = true;  // Add a loading indicator flag
 
   @override
   void initState() {
     super.initState();
-    fetchCityList();
+    fetchTourList();
   }
 
-  Future<void> fetchCityList() async {
+  Future<void> fetchTourList() async {
     try {
       // Reference to the cities collection in Firestore
-      CollectionReference citiesRef = FirebaseFirestore.instance.collection('countries').doc(widget.countryName).collection("cities");
+      CollectionReference tourRef = FirebaseFirestore.instance.collection('tourPackage');
 
       // Fetch the documents from the cities collection
-      QuerySnapshot querySnapshot = await citiesRef.get();
+      QuerySnapshot querySnapshot = await tourRef.where('countryName', isEqualTo: widget.countryName).where('cityName', isEqualTo: widget.cityName).get();
 
       // Convert each document into a City object and add to _cityList
-      _cityList = querySnapshot.docs.map((doc) {
-        return City(
-          doc['city_name'],
-          doc['cityID'],
-          doc['cityImage'],
+      _tourList = querySnapshot.docs.map((doc) {
+        return TourPackage(
+          doc['tourName'],
+          doc['tourID'],
+          doc['tourCover'],
+          doc['agency'],
         );
       }).toList();
 
       setState(() {
-        _foundedCity = _cityList;
-        hasCity = _foundedCity.isNotEmpty;
+        _foundedTour = _tourList;
+        hasCity = _foundedTour.isNotEmpty;
         isLoading = false;  // Stop loading when the data is fetched
       });
     } catch (e) {
       // Handle any errors
-      print('Error fetching city list: $e');
+      print('Error fetching tour list: $e');
       setState(() {
         isLoading = false;  // Stop loading in case of an error
       });
@@ -60,7 +61,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
 
   void onSearch(String search) {
     setState(() {
-      _foundedCity = _cityList.where((city) => city.cityName.toUpperCase().contains(search.toUpperCase())).toList();
+      _foundedTour = _tourList.where((tourPackage) => tourPackage.tourName.toUpperCase().contains(search.toUpperCase())).toList();
     });
   }
 
@@ -69,7 +70,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text("City List"),
+        title: const Text("Tour List"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -81,10 +82,10 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-            );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId))
+            // );
           },
         ),
       ),
@@ -119,7 +120,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.red, width: 2),
                       ),
-                      hintText: "Search city...",
+                      hintText: "Search tour list...",
                       hintStyle: TextStyle(
                         fontSize: 16,
                         color: Colors.grey.shade500,
@@ -127,37 +128,6 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                       ),
                     ),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => AdminAddCityScreen(userId: widget.userId, country: widget.countryName))
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF467BA1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                        ),
-                      ),
-                      child: Text(
-                        "Add City",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],
@@ -168,9 +138,9 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
           ? Container(
               padding: EdgeInsets.only(right: 10, left: 15, top: 140),
               child: ListView.builder(
-                itemCount: _foundedCity.length,
+                itemCount: _foundedTour.length,
                 itemBuilder: (context, index) {
-                  return cityComponent(city: _foundedCity[index]);
+                  return tourComponent(tourPackage: _foundedTour[index]);
                 }
               ),
             )
@@ -178,7 +148,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
               alignment: Alignment.center,
               child: Center(
                 child: Text(
-                  "No cities available for the selected country.",
+                  "No tour package available for the selected cities or country.",
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.black,
@@ -193,7 +163,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
     );
   }
 
-  Widget cityComponent({required City city}) {
+  Widget tourComponent({required TourPackage tourPackage}) {
     return Container(
       padding: EdgeInsets.only(bottom: 15, top: 10),
       child: Row(
@@ -202,23 +172,36 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
           Row(
             children: [
               Container(
-                width: 90,
-                height: 70,
+                width: 70,
+                height: 90,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(0),
                   image: DecorationImage(
-                    image: NetworkImage(city.image),
+                    image: NetworkImage(tourPackage.image),
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
               SizedBox(width: 20),
-              Text(
-                city.cityName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Column(
+                children: [
+                  Text(
+                    tourPackage.tourName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    tourPackage.agency,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+
+                  ),
+                ],
               ),
             ],
           ),
@@ -226,10 +209,10 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
             children: [
               IconButton(
                 onPressed: (){
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: city.cityName,))
-                  );
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
+                  // );
                 }, 
                 icon: Icon(Icons.remove_red_eye),
                 iconSize: 25,
