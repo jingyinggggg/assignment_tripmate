@@ -221,12 +221,27 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
               ),
             ],
           ),
-          IconButton(
-            onPressed: (){},
-            icon: Icon(Icons.edit_document),
-            iconSize: 25,
-            color: Colors.grey.shade600,
-          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: (){
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
+                  // );
+                }, 
+                icon: Icon(Icons.remove_red_eye),
+                iconSize: 25,
+                color: Colors.grey.shade600,
+              ),
+              IconButton(
+                onPressed: (){},
+                icon: Icon(Icons.edit_document),
+                iconSize: 25,
+                color: Colors.grey.shade600,
+              ),
+            ],
+          )
         ],
       ),
     );

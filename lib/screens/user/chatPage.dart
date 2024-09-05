@@ -67,7 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: (){
                     Navigator.push(
                       context, 
-                      MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0002',))
+                      MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0001',))
                     );
                   }, 
                   style: ElevatedButton.styleFrom(

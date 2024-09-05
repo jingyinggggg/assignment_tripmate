@@ -250,7 +250,6 @@ class StoreData {
         'availability': availabilityData['availability'],
         'isPublish': isPublish
       });
-
       resp = "Success";
     } catch (err) {
       resp = err.toString();

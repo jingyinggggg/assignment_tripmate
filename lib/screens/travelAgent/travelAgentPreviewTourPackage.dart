@@ -39,8 +39,6 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
         // Extract data from the document
         Map<String, dynamic> data = docSnapshot.data() as Map<String, dynamic>;
 
-        print(data);
-
         setState(() {
           tourData = data;
         });
