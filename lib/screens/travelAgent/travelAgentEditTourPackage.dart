@@ -7,12 +7,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class TravelAgentAddTourPackageScreen extends StatefulWidget {
+class TravelAgentEditTourPackageScreen extends StatefulWidget {
   final String userId;
   final String countryName;
   final String cityName;
 
-  const TravelAgentAddTourPackageScreen({
+  const TravelAgentEditTourPackageScreen({
     super.key,
     required this.userId,
     required this.countryName,
@@ -20,10 +20,10 @@ class TravelAgentAddTourPackageScreen extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _TravelAgentAddTourPackageScreenState();
+  State<StatefulWidget> createState() => _TravelAgentEditTourPackageScreenState();
 }
 
-class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPackageScreen> {
+class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPackageScreen> {
   final TextEditingController _tourNameController = TextEditingController();
   final TextEditingController _travelAgencyController = TextEditingController();
   final TextEditingController _imageNameController = TextEditingController();
@@ -436,8 +436,8 @@ void _removeItineraryRow(int index) {
             return {
               'no': entry['no'],
               'dateRange': entry['date'],
-              'slot': int.tryParse(entry['slot'] ?? '') ?? 0,
-              'price': int.tryParse(entry['price'] ?? '') ?? 0,
+              'slot': entry['slot'],
+              'price': entry['price'],
             };
           }).toList(),
         };
@@ -1084,7 +1084,7 @@ void _removeItineraryRow(int index) {
                       alignment: Alignment.center,
                     ),
                     _buildDateRangeTextFieldCell(_availableDateRangeControllers[i], 'Date range'),
-                    _buildTextFieldCell(_availableSlotControllers[i], 'Slot', isSlotField: true),
+                    _buildTextFieldCell(_availableSlotControllers[i], 'Slot'),
                     _buildTextFieldCell(_priceControllers[i], '', isPriceField: true),
                     // _buildDeleteButton(i, "availability"),                                            
                   ],
@@ -1251,7 +1251,7 @@ void _removeItineraryRow(int index) {
     );
   }
 
-  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false, isSlotField = false}) {
+  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false}) {
 
     if (isPriceField == true){
       return Container(
@@ -1268,7 +1268,6 @@ void _removeItineraryRow(int index) {
             fontWeight: FontWeight.w500,
             fontSize: 15,
           ),
-          keyboardType: TextInputType.number,
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
@@ -1304,7 +1303,6 @@ void _removeItineraryRow(int index) {
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
-          keyboardType: isSlotField ? TextInputType.number : TextInputType.multiline,
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
@@ -1314,7 +1312,7 @@ void _removeItineraryRow(int index) {
             )
           ),
           maxLines: null, // Allows multiline input
-          textAlign: isSlotField ? TextAlign.center : TextAlign.justify,
+          textAlign: TextAlign.justify,
         ),
       );
     }

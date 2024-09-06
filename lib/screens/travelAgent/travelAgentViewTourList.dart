@@ -231,7 +231,7 @@ class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListS
                                       // Handle preview button press
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'])),
+                                        MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'], status: 0,)),
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
@@ -289,14 +289,88 @@ class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListS
 
                       var tourData = snapshot.data!.docs.map((doc) => doc.data()).toList();
 
-                      return ListView.builder(
-                        itemCount: tourData.length,
-                        itemBuilder: (context, index) {
-                          var tour = tourData[index];
-                          return ListTile(
-                            title: Text(tour['tourName'] ?? 'No Tour Name'),
-                          );
-                        },
+                      return Container(
+                        padding: EdgeInsets.only(top: 15, bottom: 15),
+                        child: ListView.builder(
+                          itemCount: tourData.length,
+                          itemBuilder: (context, index) {
+                            var tour = tourData[index];
+                            return ListTile(
+                              title: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Conditionally show the image
+                                  if (tour['tourCover'] != null)
+                                    Container(
+                                      width: 70,
+                                      height: 90,
+                                      margin: EdgeInsets.only(right: 10),
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: NetworkImage(tour['tourCover']),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  
+                                  // If imageUrl is null, show a placeholder
+                                  if (tour['tourCover'] == null)
+                                    Container(
+                                      width: 70,
+                                      height: 90,
+                                      margin: EdgeInsets.only(right: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.grey[200], // Placeholder color
+                                      ),
+                                      child: Icon(
+                                        Icons.image,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+
+                                  // Tour Name
+                                  Expanded(
+                                    child: Text(
+                                      tour['tourName'] ?? 'No Tour Name',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      // textAlign: TextAlign.justify,
+                                    ),
+                                  ),
+
+                                  // Preview Button
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Handle preview button press
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'], status: 1,)),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF467BA1),
+                                      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'View',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       );
                     },
                   ),                
@@ -305,70 +379,6 @@ class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListS
             )
           ],
         )
-      ),
-    );
-  }
-
-    Widget tourPackageComponent({required TourPackage tourPackage}) {
-    return Container(
-      // color: Colors.white,
-      padding: EdgeInsets.only(bottom: 15, top: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 90,
-                height: 70,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(0),
-                  image: DecorationImage(
-                    image: NetworkImage(tourPackage.image),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              SizedBox(width: 20), // Spacing between image and text
-              Text(
-                tourPackage.tourName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: (){
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
-                  // );
-                }, 
-                child: Text(
-                  'Preview',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(20,35),
-                  backgroundColor: const Color(0xFF467BA1),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
