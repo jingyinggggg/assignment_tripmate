@@ -46,6 +46,8 @@ dependencies:
   http: ^1.2.2
   file_picker: ^8.0.7
   device_info_plus: ^9.0.3
+  flutter_pdfview: ^1.2.7
+  flutter_downloader: ^1.11.8
 
 dev_dependencies:
   flutter_test:

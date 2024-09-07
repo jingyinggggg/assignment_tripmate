@@ -490,6 +490,7 @@ void _removeItineraryRow(int index) {
           cityName: widget.cityName,
           agency: _travelAgencyController.text,
           companyID: companyID?? '',
+          agentID: widget.userId,
           tourHighlightData: tourHighlightData,
           itineraryData: itineraryData,
           flightData: flightData,

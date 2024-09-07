@@ -1,5 +1,4 @@
-import 'package:assignment_tripmate/screens/admin/addCity.dart';
-import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
+import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -82,10 +81,10 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId))
-            // );
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.countryName,))
+            );
           },
         ),
       ),
