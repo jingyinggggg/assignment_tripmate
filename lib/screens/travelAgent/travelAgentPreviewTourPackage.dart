@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentEditTourPackage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -165,7 +166,7 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
           },
         ),
         actions: <Widget>[
-          if (widget.status == 0) // Use an if statement to conditionally include the button
+          if (widget.status == 0) 
             IconButton(
               icon: const Icon(
                 Icons.edit,
@@ -173,7 +174,19 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
                 size: 25,
               ),
               onPressed: () {
-                // Add navigation to edit screen here if needed
+                final tourID = tourData?['tourID'];
+
+                if (tourID != null){
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TravelAgentEditTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourID))
+                  );                  
+                } else {
+                  // Handle the case where receiverUserId is null
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Tour ID is not available')),
+                  );
+                }
               },
             ),
         ],

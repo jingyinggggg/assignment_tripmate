@@ -1,5 +1,5 @@
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/screens/user/viewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -109,7 +109,7 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TravelAgentViewTourListScreen(
+                builder: (context) => ViewTourListScreen(
                   userId: widget.userId,
                   countryName: widget.countryName,
                   cityName: widget.cityName,

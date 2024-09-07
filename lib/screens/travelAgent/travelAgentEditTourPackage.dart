@@ -11,12 +11,14 @@ class TravelAgentEditTourPackageScreen extends StatefulWidget {
   final String userId;
   final String countryName;
   final String cityName;
+  final String tourID;
 
   const TravelAgentEditTourPackageScreen({
     super.key,
     required this.userId,
     required this.countryName,
     required this.cityName,
+    required this.tourID
   });
 
   @override
@@ -138,6 +140,19 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
     // Call super.dispose() last
     super.dispose();
   }
+
+  // Future<void> fetchTourPackageDetails() async{
+  //   try{
+  //     QuerySnapshot tourPackageQuery = await FirebaseFirestore.instance
+  //       .collection('tourPackage')
+  //       .doc(widget.tourID)
+  //       .limit(1)
+  //       .get();
+
+  //   } catch(e){
+
+  //   }
+  // }
 
   Future<void> fetchTravelAgencyNameAndID() async {
     try {
@@ -436,8 +451,8 @@ void _removeItineraryRow(int index) {
             return {
               'no': entry['no'],
               'dateRange': entry['date'],
-              'slot': entry['slot'],
-              'price': entry['price'],
+              'slot': int.tryParse(entry['slot'] ?? '') ?? 0,
+              'price': int.tryParse(entry['price'] ?? '') ?? 0,
             };
           }).toList(),
         };
@@ -569,7 +584,7 @@ void _removeItineraryRow(int index) {
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text("Add Tour"),
+        title: const Text("Edit Tour"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -702,7 +717,7 @@ void _removeItineraryRow(int index) {
                       child: isLoading
                           ? const CircularProgressIndicator()
                           : const Text(
-                              'Add Tour',
+                              'Update Tour',
                               style: TextStyle(
                                 color: Colors.white,
                               ),
@@ -1085,7 +1100,7 @@ void _removeItineraryRow(int index) {
                       alignment: Alignment.center,
                     ),
                     _buildDateRangeTextFieldCell(_availableDateRangeControllers[i], 'Date range'),
-                    _buildTextFieldCell(_availableSlotControllers[i], 'Slot'),
+                    _buildTextFieldCell(_availableSlotControllers[i], 'Slot', isSlotField: true),
                     _buildTextFieldCell(_priceControllers[i], '', isPriceField: true),
                     // _buildDeleteButton(i, "availability"),                                            
                   ],
@@ -1252,7 +1267,7 @@ void _removeItineraryRow(int index) {
     );
   }
 
-  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false}) {
+  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false, isSlotField = false}) {
 
     if (isPriceField == true){
       return Container(
@@ -1269,6 +1284,7 @@ void _removeItineraryRow(int index) {
             fontWeight: FontWeight.w500,
             fontSize: 15,
           ),
+          keyboardType: TextInputType.number,
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
@@ -1304,6 +1320,7 @@ void _removeItineraryRow(int index) {
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
+          keyboardType: isSlotField ? TextInputType.number : TextInputType.multiline,
           decoration: InputDecoration(
             border: InputBorder.none,
             hintText: hintText,
@@ -1313,7 +1330,7 @@ void _removeItineraryRow(int index) {
             )
           ),
           maxLines: null, // Allows multiline input
-          textAlign: TextAlign.justify,
+          textAlign: isSlotField ? TextAlign.center : TextAlign.justify,
         ),
       );
     }
