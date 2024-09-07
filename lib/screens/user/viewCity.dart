@@ -1,4 +1,5 @@
 import "package:assignment_tripmate/screens/user/viewCountry.dart";
+import "package:assignment_tripmate/screens/user/viewTourList.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
@@ -186,10 +187,10 @@ class _ViewCityScreenState extends State<ViewCityScreen> {
             alignment: Alignment.center,
             child: ElevatedButton(
               onPressed: () {
-                // Navigator.push(
-                //   context, 
-                //   MaterialPageRoute(builder: (context) => ViewCityScreen(userId: widget.userId, countryName: country.countryName)),
-                // );
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => ViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: city.cityName,)),
+                );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,

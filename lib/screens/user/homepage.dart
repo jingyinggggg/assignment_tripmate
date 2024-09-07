@@ -76,8 +76,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                     Text(
                       "Car Rental",
                       style: TextStyle(
-                        fontFamily: "Inika",
-                        fontSize: 14,
+                        fontSize: 15,
                         color: Colors.white,
                       ),
                     ),
@@ -109,8 +108,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                     Text(
                       "Local Buddy",
                       style: TextStyle(
-                        fontFamily: "Inika",
-                        fontSize: 14,
+                        fontSize: 15,
                         color: Colors.white,
                       ),
                     ),
@@ -145,8 +143,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                     Text(
                       "Group Tour",
                       style: TextStyle(
-                        fontFamily: "Inika",
-                        fontSize: 14,
+                        fontSize: 15,
                         color: Colors.white,
                       ),
                     ),

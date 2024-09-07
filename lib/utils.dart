@@ -144,3 +144,14 @@ class TravelAgent{
 
   TravelAgent(this.name, this.companyName, this.id, this.image);
 }
+
+class UserViewTourList{
+  final String tourName;
+  final String tourID;
+  final String image;
+  final String agency;
+  final List<dynamic> tourHighlight;
+  final List<dynamic> availability;
+
+  UserViewTourList(this.tourName, this.tourID, this.image, this.agency, this.tourHighlight, this.availability);
+}
