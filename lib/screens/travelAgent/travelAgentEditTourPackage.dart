@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewPDF.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 
 class TravelAgentEditTourPackageScreen extends StatefulWidget {
   final String userId;
@@ -26,24 +29,28 @@ class TravelAgentEditTourPackageScreen extends StatefulWidget {
 }
 
 class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPackageScreen> {
-  final TextEditingController _tourNameController = TextEditingController();
-  final TextEditingController _travelAgencyController = TextEditingController();
-  final TextEditingController _imageNameController = TextEditingController();
-  final TextEditingController _brochureController = TextEditingController();
-  final List<TextEditingController> _tourHighlightControllers = [];
-  final List<TextEditingController> _itineraryTitleControllers = [];
-  final List<TextEditingController> _itineraryDescriptionControllers = [];
-  final List<TextEditingController> _itineraryOvernightControllers = [];
-  final List<TextEditingController> _flightDepartDateControllers = [];
-  final List<TextEditingController> _flightReturnDateControllers = [];
-  final List<TextEditingController> _flightNameControllers = [];
-  final List<TextEditingController> _availableDateRangeControllers = [];
-  final List<TextEditingController> _availableSlotControllers = [];
-  final List<TextEditingController> _priceControllers = [];
+  TextEditingController _tourNameController = TextEditingController();
+  TextEditingController _travelAgencyController = TextEditingController();
+  TextEditingController _imageNameController = TextEditingController();
+  TextEditingController _brochureController = TextEditingController();
+  List<TextEditingController> _tourHighlightControllers = [];
+  List<TextEditingController> _itineraryTitleControllers = [];
+  List<TextEditingController> _itineraryDescriptionControllers = [];
+  List<TextEditingController> _itineraryOvernightControllers = [];
+  List<TextEditingController> _flightDepartDateControllers = [];
+  List<TextEditingController> _flightReturnDateControllers = [];
+  List<TextEditingController> _flightNameControllers = [];
+  List<TextEditingController> _availableDateRangeControllers = [];
+  List<TextEditingController> _availableSlotControllers = [];
+  List<TextEditingController> _priceControllers = [];
   bool isLoading = false;
+  bool isFetchingLoading = false;
   Uint8List? _image;
+  String? existingImagePath;
   File? _uploadedPdfFile;
+  late String brochurePath;
   String? companyID;
+  Map<String, dynamic>? tourData;
 
   void _initControllers() {
     for (var i = 0; i < _tourHighlights.length; i++) {
@@ -69,19 +76,19 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
     }
   }
 
-  final List<Map<String, String>> _tourHighlights = [
+  List<Map<String, dynamic>> _tourHighlights = [
     {'no': '', 'description': ''},
   ];
 
-  final List<Map<String, String>> _itinerary = [
+  List<Map<String, dynamic>> _itinerary = [
     {'day': '', 'title': '', 'description': '', 'overnight': ''},
   ];
 
-  final List<Map<String, String>> _flight = [
+  List<Map<String, dynamic>> _flight = [
     {'no': '', 'depart': '', 'return': '', 'flight': ''},
   ];
 
-  final List<Map<String, String>> _availability = [
+  List<Map<String, dynamic>> _availability = [
     {'no': '', 'date': '', 'slot': '', 'price': ''},
   ];
 
@@ -89,7 +96,8 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
   void initState() {
     super.initState();
     _initControllers();
-    fetchTravelAgencyNameAndID();
+    fetchTravelAgencyName();
+    _fetchTourPackageDetails();
   }
 
   @override
@@ -141,20 +149,109 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
     super.dispose();
   }
 
-  // Future<void> fetchTourPackageDetails() async{
-  //   try{
-  //     QuerySnapshot tourPackageQuery = await FirebaseFirestore.instance
-  //       .collection('tourPackage')
-  //       .doc(widget.tourID)
-  //       .limit(1)
-  //       .get();
+  Future<void> _fetchTourPackageDetails() async {
+    setState(() {
+      isFetchingLoading = true;
+    });
 
-  //   } catch(e){
+    try{
+      DocumentReference TPref = FirebaseFirestore.instance.collection('tourPackage').doc(widget.tourID);
+      DocumentSnapshot TPsnapshot = await TPref.get();
 
-  //   }
-  // }
+      if(TPsnapshot.exists){
+        Map<String, dynamic>? data = TPsnapshot.data() as Map<String, dynamic>?;
 
-  Future<void> fetchTravelAgencyNameAndID() async {
+        setState(() {
+          tourData = data ?? {};
+          isFetchingLoading = false;
+
+          _tourNameController.text = tourData?['tourName'] ?? '';
+          // _travelAgencyController.text = tourData?['agency'];
+          existingImagePath = tourData?['tourCover'] ?? '';
+
+          // Retrieve pdf file name
+          if (tourData?['brochure'] != null && tourData!['brochure']!.isNotEmpty) {
+            brochurePath = tourData!['brochure'];
+            String brochureUrl = tourData!['brochure'];
+            Uri uri = Uri.parse(brochureUrl);
+            String fileName = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+            _brochureController.text = fileName.split('/').last;
+            // _brochureController.text = fileName;
+          } else {
+            _brochureController.text = '';
+          }
+
+          // Populate tour highlights
+          _tourHighlights = List<Map<String, dynamic>>.from(tourData?['tourHighlight'] ?? []);
+          _tourHighlightControllers = List.generate(
+            _tourHighlights.length, 
+            (index) => TextEditingController(text: _tourHighlights[index]['description'] ?? ''),
+          );
+
+          // Populate itinerary
+          _itinerary = List<Map<String, dynamic>>.from(tourData?['itinerary'] ?? []);
+          _itineraryTitleControllers = List.generate(
+            _itinerary.length, 
+            (index) => TextEditingController(text: _itinerary[index]['title'] ?? ''),
+          );
+          _itineraryDescriptionControllers = List.generate(
+            _itinerary.length, 
+            (index) => TextEditingController(text: _itinerary[index]['description'] ?? ''),
+          );
+          _itineraryOvernightControllers = List.generate(
+            _itinerary.length, 
+            (index) => TextEditingController(text: _itinerary[index]['overnight'] ?? ''),
+          );
+
+          // Populate flight info
+          _flight = List<Map<String, dynamic>>.from(tourData?['flight_info'] ?? []);
+          _flightDepartDateControllers = List.generate(
+            _flight.length, 
+            (index) => TextEditingController(text: _flight[index]['departDate'] ?? ''),
+          );
+          _flightReturnDateControllers = List.generate(
+            _flight.length, 
+            (index) => TextEditingController(text: _flight[index]['returnDate'] ?? ''),
+          );
+          _flightNameControllers = List.generate(
+            _flight.length, 
+            (index) => TextEditingController(text: _flight[index]['flightName'] ?? ''),
+          );
+
+          // Populate availability
+          _availability = List<Map<String, dynamic>>.from(tourData?['availability'] ?? []);
+          _availableDateRangeControllers = List.generate(
+            _availability.length, 
+            (index) => TextEditingController(text: _availability[index]['dateRange'] ?? ''),
+          );
+          _availableSlotControllers = List.generate(
+            _availability.length, 
+            (index) => TextEditingController(text: _availability[index]['slot'].toString()),
+          );
+          _priceControllers = List.generate(
+            _availability.length, 
+            (index) => TextEditingController(text: _availability[index]['price'].toString()),
+          );
+
+        });
+      } else{
+        setState(() {
+          isFetchingLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Selected tour package does not exists in the system')),
+        );
+        // print("Selected tour package does not exists in the system");
+      }
+    }catch(e){
+      setState(() {
+        isFetchingLoading = false;
+      });
+      print("Error fetch tour package details: $e");
+    }
+  }
+
+  Future<void> fetchTravelAgencyName() async {
     try {
       QuerySnapshot userQuery = await FirebaseFirestore.instance
         .collection('travelAgent')
@@ -166,8 +263,7 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
       var agencyData = userDoc.data() as Map<String, dynamic>;
 
       setState(() {
-        _travelAgencyController.text = agencyData['companyName'];
-        companyID = agencyData['companyID'];
+        _travelAgencyController.text = agencyData['companyName'] ?? '';
       });
     } catch (e) {
       print("Error fetching agency details: $e");
@@ -375,6 +471,7 @@ void _removeItineraryRow(int index) {
           print("Updating date range");
 
           String formattedDateRange = "$departDate - $returnDate";
+          _availability[i]['dateRange'] = formattedDateRange; // Update _availability
 
           if (i < _availableDateRangeControllers.length) {
             _availableDateRangeControllers[i].text = formattedDateRange;
@@ -382,18 +479,46 @@ void _removeItineraryRow(int index) {
             print("Index $i is out of bounds for _availableDateRangeControllers");
           }
         } else {
+          // Set the date range to an empty string if either date is missing
+          _availability[i]['dateRange'] = ''; // Clear date range in _availability
+
+          if (i < _availableDateRangeControllers.length) {
+            _availableDateRangeControllers[i].text = '';
+          } else {
             print("Index $i is out of bounds for _availableDateRangeControllers");
+          }
         }
       }
     });
   }
+
+  void _updateTextField(
+    List<TextEditingController> controllers, 
+    int index, 
+    dynamic newValue, 
+    List<Map<String, dynamic>> listName, 
+    String fieldName
+  ) {
+    setState(() {
+      // Update the specific field of the existing item in the list
+      Map<String, dynamic> updatedItem = Map.from(listName[index]);
+      updatedItem[fieldName] = newValue;
+
+      // Replace the old item with the updated one
+      listName[index] = updatedItem;
+
+      // Also update the corresponding TextEditingController
+      controllers[index].text = newValue;
+    });
+  }
+
 
   Future<void> selectImage() async {
     Uint8List? img = await ImageUtils.selectImage(context);
     if (img != null) {
       setState(() {
         _image = img;
-        _imageNameController.text = 'Image Selected'; 
+        existingImagePath = null;
       });
     }
   }
@@ -409,7 +534,7 @@ void _removeItineraryRow(int index) {
     }
   }
 
-  Map<String, dynamic> convertToMap(String category, List<Map<String, String>> listName) {
+  Map<String, dynamic> convertToMap(String category, List<Map<String, dynamic>> listName) {
     switch (category) {
       case "highlight":
         return {
@@ -462,7 +587,12 @@ void _removeItineraryRow(int index) {
     }
   }
 
-  Future<void> _addTour() async {
+  Future<Uint8List> _getImageFromURL(String imageUrl) async {
+    final response = await http.get(Uri.parse(imageUrl));
+    return response.bodyBytes;
+  }
+
+  Future<void> _updateTour() async {
     _saveDataToList("highlight");
     _saveDataToList("itinerary");
     _saveDataToList("flight");
@@ -487,38 +617,45 @@ void _removeItineraryRow(int index) {
           _itinerary.isNotEmpty &&
           _flight.isNotEmpty &&
           _availability.isNotEmpty) {
-        final usersSnapshot = await firestore.collection('tourPackage').get();
-        final tourid = 'TP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
-        if (_image == null) {
+        Uint8List? tourCoverToUpload;
+        File? pdfToUpload;
+
+        // Check if a new image or PDF is uploaded, otherwise retain the existing ones.
+        if (_image != null) {
+          tourCoverToUpload = _image!;
+        } else if (existingImagePath != null && existingImagePath!.isNotEmpty) {
+          // Fetch the existing image from URL
+          tourCoverToUpload = await _getImageFromURL(existingImagePath!);
+        } else {
+          // Handle case where no image is provided
           throw Exception("Tour cover image is required.");
         }
-        
-        if (_uploadedPdfFile == null) {
-          throw Exception("Brochure in PDF file is required.");
+
+        if (_uploadedPdfFile != null) {
+          pdfToUpload = _uploadedPdfFile;
+        } else {
+          pdfToUpload = null;
         }
 
-        String resp = await StoreData().saveTourPackageData(
-          tourid: tourid,
-          tourName: _tourNameController.text,
-          countryName: widget.countryName,
-          cityName: widget.cityName,
-          agency: _travelAgencyController.text,
-          companyID: companyID?? '',
-          agentID: widget.userId,
-          tourHighlightData: tourHighlightData,
-          itineraryData: itineraryData,
-          flightData: flightData,
-          availabilityData: availabilityData,
-          tourCover: _image!, // Safe to use ! now
-          pdfFile: _uploadedPdfFile!, // Safe to use ! now
-          isPublish: 0,
+        String resp = await StoreData().updateTourPackageData(
+          tourid: widget.tourID, 
+          tourName: _tourNameController.text, 
+          countryName: widget.countryName, 
+          cityName: widget.cityName, 
+          agency: _travelAgencyController.text, 
+          tourHighlightData: tourHighlightData, 
+          itineraryData: itineraryData, 
+          flightData: flightData, 
+          availabilityData: availabilityData, 
+          tourCover: tourCoverToUpload, 
+          pdfFile: pdfToUpload
         );
 
         // Show success dialog
         _showDialog(
           title: 'Successful',
-          content: 'You have added the tour package successfully.',
+          content: 'You have updated the tour package successfully.',
           onPressed: () {
             Navigator.of(context).pop(); // Close the success dialog
             Navigator.push(
@@ -540,7 +677,7 @@ void _removeItineraryRow(int index) {
       // Show error dialog
       _showDialog(
         title: 'Failed',
-        content: 'Failed to add tour package: $e',
+        content: 'Failed to update tour package: $e',
         onPressed: () {
           Navigator.of(context).pop(); // Close the error dialog
         },
@@ -602,142 +739,151 @@ void _removeItineraryRow(int index) {
       ),
       body: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.only(
-                left: 15, right: 15, top: 10, bottom: 30),
-            width: double.infinity,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Tour Information",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black,
-                      fontSize: 16,
+          // Main content
+          if (!isFetchingLoading)
+            Container(
+              padding: const EdgeInsets.only(
+                  left: 15, right: 15, top: 10, bottom: 30),
+              width: double.infinity,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Tour Information",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  tourName(),
-                  const SizedBox(height: 20),
-                  travelAgency(),
-                  const SizedBox(height: 20),
-                  tourHighlightsSection(),
-                  const SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton(
-                      onPressed: _addTourHighlightRow,
-                      child: Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(20,35),
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 10),
+                    tourName(),
+                    const SizedBox(height: 20),
+                    travelAgency(),
+                    const SizedBox(height: 20),
+                    tourHighlightsSection(),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: ElevatedButton(
+                        onPressed: _addTourHighlightRow,
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(20, 35),
+                          backgroundColor: const Color(0xFF467BA1),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  itinerarySection(),
-                  const SizedBox(height: 10), 
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton(
-                      onPressed: _addItineraryRow,
-                      child: Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(20,35),
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    itinerarySection(),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: ElevatedButton(
+                        onPressed: _addItineraryRow,
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  flightSection(),
-                  const SizedBox(height: 10), 
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: ElevatedButton(
-                      onPressed: (){
-                        _addFlightRow();
-                        _addAvailabilityRow();
-                      },
-                      // _addFlightRow,
-                      child: Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(20,35),
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(20, 35),
+                          backgroundColor: const Color(0xFF467BA1),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
                     ),
-                  ),   
-                  availabilitySection(),
-                  const SizedBox(height: 20),   
-                  tourImage(),
-                  SizedBox(height: 20,),
-                  brochure(),
-                  SizedBox(height: 20,), 
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: (){_addTour();},
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text(
-                              'Update Tour',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                    flightSection(),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _addFlightRow();
+                          _addAvailabilityRow();
+                        },
+                        child: Text(
+                          'Add',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(20, 35),
+                          backgroundColor: const Color(0xFF467BA1),
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
                     ),
-                  ) 
-                ],
+                    availabilitySection(),
+                    const SizedBox(height: 20),
+                    tourImage(),
+                    SizedBox(height: 20),
+                    brochure(),
+                    SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _updateTour();
+                        },
+                        child: isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text(
+                                'Update Tour',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF467BA1),
+                          textStyle: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
-          ),
+          
+          // Centered loading indicator
+          if (isFetchingLoading)
+            Center(
+              child: CircularProgressIndicator(),
+            ),
         ],
       ),
     );
@@ -883,10 +1029,20 @@ void _removeItineraryRow(int index) {
                       ),
                       alignment: Alignment.center,
                     ),
-                    _buildTextFieldCell(
-                      _tourHighlightControllers[i],
-                      'Description...',
+                    _buildTextField(
+                      controller: _tourHighlightControllers[i], 
+                      isPriceField: false, 
+                      isSlotField: false, 
+                      text: _tourHighlights[i]['description'] ?? '', 
+                      hintText: 'Description...',
+                      onChanged: (newText) => _updateTextField(
+                        _tourHighlightControllers, 
+                        i, 
+                        newText, 
+                        _tourHighlights, 
+                        'description')
                     ),
+                    // _displayDataInTextField(_tourHighlightControllers[i], _tourHighlights[i]['description'] ?? '', 'description'),
                     _buildDeleteButton(i, "tourHighlight"),
                   ],
                 ),
@@ -951,9 +1107,48 @@ void _removeItineraryRow(int index) {
                       ),
                       alignment: Alignment.center,
                     ),
-                    _buildTextFieldCell(_itineraryTitleControllers[i], 'Title...'),
-                    _buildTextFieldCell(_itineraryDescriptionControllers[i], 'Description...'),
-                    _buildTextFieldCell(_itineraryOvernightControllers[i], 'City...'),
+                    _buildTextField(
+                      controller: _itineraryTitleControllers[i], 
+                      isPriceField: false, 
+                      isSlotField: false, 
+                      text: _itinerary[i]['title'] ?? '', 
+                      hintText: 'Title...',
+                      onChanged: (newText) => _updateTextField(
+                        _itineraryTitleControllers, 
+                        i, 
+                        newText, 
+                        _itinerary, 
+                        'title')
+                    ),
+                    _buildTextField(
+                      controller: _itineraryDescriptionControllers[i], 
+                      isPriceField: false, 
+                      isSlotField: false, 
+                      text: _itinerary[i]['description'] ?? '', 
+                      hintText: 'Description...',
+                      onChanged: (newText) => _updateTextField(
+                        _itineraryDescriptionControllers, 
+                        i, 
+                        newText, 
+                        _itinerary, 
+                        'description')
+                    ),
+                    _buildTextField(
+                      controller: _itineraryOvernightControllers[i], 
+                      isPriceField: false, 
+                      isSlotField: false, 
+                      text: _itinerary[i]['overnight'] ?? '', 
+                      hintText: 'City...',
+                      onChanged: (newText) => _updateTextField(
+                        _itineraryOvernightControllers, 
+                        i, 
+                        newText, 
+                        _itinerary, 
+                        'overnight')
+                    ),
+                    // _displayDataInTextField(_itineraryTitleControllers[i], _itinerary[i]['title'] ?? '', 'Title...'),
+                    // _displayDataInTextField(_itineraryDescriptionControllers[i], _itinerary[i]['description'] ?? '', 'Description...'),
+                    // _displayDataInTextField(_itineraryOvernightControllers[i], _itinerary[i]['overnight'] ?? '', 'City...'),
                     _buildDeleteButton(i, "itinerary"),
                   ],
                 ),
@@ -1019,8 +1214,11 @@ void _removeItineraryRow(int index) {
                       alignment: Alignment.center,
                     ),
                     _buildDatePickerTextFieldCell(
-                      _flightDepartDateControllers[i],
+                      _flightDepartDateControllers[i], 
+                      _flight[i]['departDate'] ?? '', 
                       'Pick a date',
+                      index: i,
+                      flightList: _flight,
                       onDateSelected: (DateTime selectedDate) {
                         // Update the return date controller's first date
                         DateTime firstReturnDate = selectedDate.add(const Duration(days: 1));
@@ -1028,14 +1226,29 @@ void _removeItineraryRow(int index) {
                       },
                     ),
                     _buildDatePickerTextFieldCell(
-                      _flightReturnDateControllers[i],
+                      _flightReturnDateControllers[i], 
+                      _flight[i]['returnDate'] ?? '', 
                       'Pick a date',
+                      index: i,
+                      flightList: _flight,
                       firstDate: _getFirstReturnDate(i),
                       isReturnDate: true,
                       departDateSelected: _flightDepartDateControllers[i].text.isNotEmpty,
                     ),
-                    _buildTextFieldCell(_flightNameControllers[i], 'Flight name...'),
-                    _buildDeleteButton(i, "flight"),                
+                    _buildTextField(
+                      controller: _flightNameControllers[i], 
+                      isPriceField: false, 
+                      isSlotField: false, 
+                      text: _flight[i]['flightName'] ?? '', 
+                      hintText: 'Flight name...',
+                      onChanged: (newText) => _updateTextField(
+                        _flightNameControllers, 
+                        i, 
+                        newText, 
+                        _flight, 
+                        'flightName')
+                    ),
+                    _buildDeleteButton(i, "flight"),
                   ],
                 ),
             ],
@@ -1057,7 +1270,7 @@ void _removeItineraryRow(int index) {
             color: Colors.black,
           ),
         ),
-        SizedBox(height: 10,),
+        const SizedBox(height: 10),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -1071,7 +1284,6 @@ void _removeItineraryRow(int index) {
               1: FlexColumnWidth(1.0),
               2: FlexColumnWidth(0.6),
               3: FlexColumnWidth(1.1),
-              // 4: FlexColumnWidth(0.4),
             },
             border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
             children: [
@@ -1081,30 +1293,55 @@ void _removeItineraryRow(int index) {
                   _buildTableHeaderCell("Date Range"),
                   _buildTableHeaderCell("Slot"),
                   _buildTableHeaderCell("Price"),
-                  // _buildTableHeaderCell(""),
                 ],
               ),
               for (int i = 0; i < _availability.length; i++)
-                TableRow(
-                  children: [
-                    _buildTableCell(
-                      content: Text(
-                        (i + 1).toString(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
+                if (i < _availableDateRangeControllers.length && 
+                    i < _availableSlotControllers.length && 
+                    i < _priceControllers.length)
+                  TableRow(
+                    children: [
+                      _buildTableCell(
+                        content: Text(
+                          (i + 1).toString(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
+                        alignment: Alignment.center,
                       ),
-                      alignment: Alignment.center,
-                    ),
-                    _buildDateRangeTextFieldCell(_availableDateRangeControllers[i], 'Date range'),
-                    _buildTextFieldCell(_availableSlotControllers[i], 'Slot', isSlotField: true),
-                    _buildTextFieldCell(_priceControllers[i], '', isPriceField: true),
-                    // _buildDeleteButton(i, "availability"),                                            
-                  ],
-                ),
+                      _buildDateRangeTextFieldCell(_availableDateRangeControllers[i], _availability[i]['dateRange'] ?? '', 'Date range'),
+                      _buildTextField(
+                        controller: _availableSlotControllers[i],
+                        isPriceField: false,
+                        isSlotField: true,
+                        text: _availability[i]['slot'].toString(),
+                        hintText: 'Slot',
+                        onChanged: (newText) => _updateTextField(
+                          _availableSlotControllers, 
+                          i, 
+                          newText, 
+                          _availability, 
+                          'slot')
+                      ),
+                      _buildTextField(
+                        controller: _priceControllers[i],
+                        isPriceField: true,
+                        isSlotField: false,
+                        text: _availability[i]['price'].toString(),
+                        hintText: 'Price',
+                        onChanged: (newText) => _updateTextField(
+                          _priceControllers, 
+                          i, 
+                          newText, 
+                          _availability, 
+                          'price')
+                      ),
+                    ],
+                  ),
             ],
           ),
         ),
@@ -1116,60 +1353,82 @@ void _removeItineraryRow(int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Tour Package Cover",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            )),
-        SizedBox(height: 5,),
-        TextField(
-          controller: _imageNameController,
-          readOnly: true,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-          decoration: InputDecoration(
-            hintText: 'Upload an image...',
-            hintStyle: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Tour Package Cover",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
               ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            suffixIcon: IconButton(
+            IconButton(
+              onPressed: () async {
+                // Select a new image
+                await selectImage();
+              },
               icon: const Icon(
-                Icons.image,
+                Icons.edit,
+                size: 25,
                 color: Color(0xFF467BA1),
-                size: 30,
               ),
-              onPressed: () {
-                selectImage();
-              }
             ),
-          ),
-        )
+          ],
+        ),
+        _image != null // If a new image is selected from memory
+          ? Container(
+              width: double.infinity,
+              height: 200,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: const Color(0xFF467BA1), width: 3),
+              ),
+              child: Image.memory(
+                _image!,
+                fit: BoxFit.cover,
+              ),
+            )
+          : (existingImagePath != null && existingImagePath!.isNotEmpty)
+            ? Container( // If there's a network image to display
+                width: double.infinity,
+                height: 200,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: const Color(0xFF467BA1), width: 3),
+                ),
+                child: Image.network(
+                  existingImagePath!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Container( // Placeholder if no image is available
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.image, size: 50, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text(
+                        'Insert image to preview',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
       ],
     );
   }
@@ -1178,13 +1437,30 @@ void _removeItineraryRow(int index) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Brochure",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            )),
-        SizedBox(height: 5,),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Brochure",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              onPressed: () async {
+                // Select a new image
+                await selectPdfFile();
+              },
+              icon: const Icon(
+                Icons.edit,
+                size: 25,
+                color: Color(0xFF467BA1),
+              ),
+            ),
+          ],
+        ),
         TextField(
           controller: _brochureController,
           readOnly: true,
@@ -1227,7 +1503,10 @@ void _removeItineraryRow(int index) {
                 size: 30,
               ),
               onPressed: () {
-                selectPdfFile();
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => TravelAgentViewPDFScreen(pdfPath: brochurePath))
+                );
               }
             ),
           ),
@@ -1267,76 +1546,83 @@ void _removeItineraryRow(int index) {
     );
   }
 
-  Widget _buildTextFieldCell(TextEditingController controller, String hintText, {bool isPriceField = false, isSlotField = false}) {
-
-    if (isPriceField == true){
-      return Container(
-        padding: const EdgeInsets.only(left: 5, right: 5),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-          ),
-        ),
-        child: TextField(
-          controller: controller,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 15,
-          ),
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText,
-            prefixText: "RM",
-            prefixStyle: TextStyle(
-              color: Colors.black,
-              fontSize: 15,
-              fontWeight: FontWeight.w900
-            ),
-            suffixText: ".00",
-            suffixStyle: TextStyle(
-              color: Colors.black,
-              fontSize: 15,
-              fontWeight: FontWeight.w900
-            )
-          ),
-          maxLines: 1, 
-          textAlign: TextAlign.end,
-        ),
-      );
-    } else {
-      return Container(
-        padding: const EdgeInsets.only(left: 5, right: 5),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
-          ),
-        ),
-        child: TextField(
-          controller: controller,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
-          keyboardType: isSlotField ? TextInputType.number : TextInputType.multiline,
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            hintText: hintText,
-            hintStyle: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800
-            )
-          ),
-          maxLines: null, // Allows multiline input
-          textAlign: isSlotField ? TextAlign.center : TextAlign.justify,
-        ),
-      );
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required bool isPriceField,
+    required bool isSlotField,
+    dynamic text,
+    required String hintText,
+    required Function(String) onChanged,
+  }) {
+    // Only set controller text if `text` is a non-empty String
+    if (text != null) {
+      if (text is String && text.isNotEmpty) {
+        controller.text = text;
+      } else if (text is int || text is double) {
+        controller.text = text.toString();
+      }
     }
+
+    // Common container decoration
+    final containerDecoration = const BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        left: BorderSide(color: Color(0xFF467BA1), width: 1.0),
+      ),
+    );
+
+    // Common text styles
+    final commonTextStyle = const TextStyle(
+      fontWeight: FontWeight.w500,
+    );
+
+    // Return the TextField widget based on the conditions
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: containerDecoration,
+      child: TextField(
+        controller: controller,
+        style: commonTextStyle.copyWith(fontSize: isPriceField ? 15 : 14),
+        keyboardType: isPriceField || isSlotField ? TextInputType.number : TextInputType.multiline,
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+          prefixText: isPriceField ? "RM" : '',
+          prefixStyle: isPriceField
+              ? const TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                )
+              : null,
+          suffixText: isPriceField ? ".00" : '',
+          suffixStyle: isPriceField
+              ? const TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                )
+              : null,
+        ),
+        maxLines: isSlotField ? 1 : null, // Multiline or single line based on slot field
+        textAlign: isPriceField
+            ? TextAlign.end
+            : (isSlotField ? TextAlign.center : TextAlign.justify),
+        onChanged: onChanged,
+      ),
+    );
   }
 
-  Widget _buildDateRangeTextFieldCell(TextEditingController controller, String hintText) {
+  Widget _buildDateRangeTextFieldCell(TextEditingController controller, dynamic text, String hintText) {
+    // Only set controller text if `text` is not empty
+    if (text != null && text.isNotEmpty) {
+      controller.text = text.toString();
+    }
+
     return Container(
       padding: const EdgeInsets.only(left: 5, right: 5),
       decoration: const BoxDecoration(
@@ -1367,11 +1653,19 @@ void _removeItineraryRow(int index) {
 
   Widget _buildDatePickerTextFieldCell(
       TextEditingController controller, 
+      String text,
       String hintText, 
       {DateTime? firstDate, 
       void Function(DateTime)? onDateSelected, 
       bool isReturnDate = false, 
-      bool departDateSelected = true}) {
+      bool departDateSelected = true,
+      required int index, 
+      required List<Map<String, dynamic>> flightList}) 
+  {
+    // Only set controller text if `text` is not empty
+    if (text.isNotEmpty) {
+      controller.text = text;
+    }
 
     return Container(
       padding: const EdgeInsets.only(left: 5, right: 5),
@@ -1390,7 +1684,7 @@ void _removeItineraryRow(int index) {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
-          hintStyle: TextStyle(
+          hintStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w800
           )
@@ -1418,15 +1712,27 @@ void _removeItineraryRow(int index) {
           if (pickedDate != null) {
             // Format the date
             String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-            controller.text = formattedDate;
-            if (onDateSelected != null) {
-              onDateSelected(pickedDate);
-            }
-          }
-
-          if (isReturnDate && departDateSelected) {
             setState(() {
-              _updateAvailabilityRanges();
+              controller.text = formattedDate;
+
+              if (isReturnDate) {
+                flightList[index]['returnDate'] = formattedDate;
+                _updateAvailabilityRanges(); // Update availability ranges
+              } else {
+                // Check if the new depart date is after the current return date
+                DateTime? returnDate = _parseDate(flightList[index]['returnDate']);
+                if (returnDate != null && returnDate.isBefore(pickedDate)) {
+                  // Clear the return date if it's before the new depart date
+                  flightList[index]['returnDate'] = '';
+                  _flightReturnDateControllers[index].clear();
+                }
+                flightList[index]['departDate'] = formattedDate;
+                _updateAvailabilityRanges(); // Update availability ranges
+              }
+
+              if (onDateSelected != null) {
+                onDateSelected(pickedDate);
+              }
             });
           }
         },
@@ -1434,6 +1740,18 @@ void _removeItineraryRow(int index) {
     );
   }
 
+
+  DateTime? _parseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) {
+      return null;
+    }
+    try {
+      return DateFormat('dd/MM/yyyy').parse(dateStr);
+    } catch (e) {
+      print("Error parsing date: $e");
+      return null;
+    }
+  }
 
   Widget _buildDeleteButton(int index, String rowType) {
     return Container(

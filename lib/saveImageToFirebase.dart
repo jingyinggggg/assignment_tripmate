@@ -259,4 +259,63 @@ class StoreData {
     return resp;
   }
 
+  Future<String> updateTourPackageData({
+    required String tourid,
+    required String tourName,
+    required String countryName,
+    required String cityName,
+    required String agency,
+    required Map<String, dynamic> tourHighlightData,
+    required Map<String, dynamic> itineraryData,
+    required Map<String, dynamic> flightData,
+    required Map<String, dynamic> availabilityData,
+    required Uint8List tourCover,
+    File? pdfFile, // Make pdfFile nullable
+  }) async {
+    String resp = "Some Error Occurred";
+    try {
+      String fileName = "$tourName.jpg";
+      String pdfFileName = "$tourName.pdf";
+
+      String imageURL;
+      String? pdfURL; // Make pdfURL nullable
+
+      // Upload image
+      if (cityName.isNotEmpty) {
+        imageURL = await uploadImageToStorage("tourPackage/$agency/$countryName/$cityName/$fileName", tourCover);
+      } else {
+        imageURL = await uploadImageToStorage("tourPackage/$agency/$countryName/$fileName", tourCover);
+      }
+
+      // Conditionally upload PDF
+      if (pdfFile != null) {
+        pdfURL = await uploadPdfToStorage("tourPackage/$agency/$countryName/$cityName/$pdfFileName", pdfFile);
+      }
+
+      // Prepare the data to update
+      final updateData = {
+        'tourName': tourName,
+        'agency': agency,
+        'tourCover': imageURL,
+        'tourHighlight': tourHighlightData['tourHighlight'],
+        'itinerary': itineraryData['itinerary'],
+        'flight_info': flightData['flight_info'],
+        'availability': availabilityData['availability'],
+      };
+
+      // Add PDF URL only if it's not null
+      if (pdfURL != null) {
+        updateData['brochure'] = pdfURL;
+      }
+
+      // Perform the update
+      await _firestore.collection("tourPackage").doc(tourid).update(updateData);
+      resp = "Success";
+    } catch (err) {
+      resp = err.toString();
+    }
+    return resp;
+  }
+
+
 }

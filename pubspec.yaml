@@ -48,6 +48,8 @@ dependencies:
   device_info_plus: ^9.0.3
   flutter_pdfview: ^1.2.7
   flutter_downloader: ^1.11.8
+  syncfusion_flutter_pdfviewer: ^26.1.41
+  path_provider: ^2.0.11
 
 dev_dependencies:
   flutter_test:

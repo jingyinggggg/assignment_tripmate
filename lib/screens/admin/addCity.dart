@@ -42,6 +42,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Add City"),
