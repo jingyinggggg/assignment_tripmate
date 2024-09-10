@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:assignment_tripmate/screens/user/viewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class ViewTourDetailsScreen extends StatefulWidget {
   final String userId;
@@ -25,6 +29,7 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
   Map<String, dynamic>? tourData;
   bool isLoading = false;
   bool isButtonLoading = false;
+  bool isOpenFile = false;
 
   @override
   void initState() {
@@ -86,6 +91,46 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
         );
       },
     );
+  }
+
+  Future openFile({required String url, String? fileName}) async {
+    setState(() {
+      isOpenFile = true;
+    });
+    final file = await downloadFile(url, fileName!);
+
+    if(file == null) return;
+    print('Path: ${file.path}');
+    OpenFile.open(file.path);
+
+    setState(() {
+      isOpenFile = false;
+    });
+  }
+
+  // Download file into private foler not visible to user
+  Future<File?> downloadFile(String url, String name) async {
+    final appStorage = await getApplicationDocumentsDirectory();
+    final file = File('${appStorage.path}/$name');
+
+    try{
+      final response = await Dio().get(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: false,
+          receiveTimeout: Duration(seconds: 10),
+        )
+      );
+
+      final raf = file.openSync(mode: FileMode.write);
+      raf.writeFromSync(response.data);
+      await raf.close();
+
+      return file;
+    } catch(e){
+      return null;
+    }
   }
 
   @override
@@ -205,26 +250,29 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const ImageIcon(
-                                    AssetImage("images/download-pdf.png"),
+                                  icon: isOpenFile
+                                      ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
+                                      : const ImageIcon(
+                                          AssetImage("images/download-pdf.png"),
+                                          size: 23,
+                                          color: Colors.black,
+                                        ),
+                                  onPressed: isOpenFile
+                                      ? null // Disable button when loading
+                                      : () {
+                                          openFile(
+                                            url: tourData?['brochure'],
+                                            fileName: '${tourData?['tourName']}.pdf',
+                                          );
+                                        },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.favorite_border,
                                     size: 23,
                                     color: Colors.black,
                                   ),
-                                  onPressed: () {
-                                    // Add PDF download functionality here if needed
-                                  },
-                                ),
-                                SizedBox(width: 10),
-                                Icon(
-                                  Icons.favorite_border,
-                                  size: 23,
-                                  color: Colors.black,
-                                ),
-                                SizedBox(width: 10),
-                                Icon(
-                                  Icons.share_rounded,
-                                  size: 23,
-                                  color: Colors.black,
+                                  onPressed: (){},
                                 ),
                               ],
                             ),

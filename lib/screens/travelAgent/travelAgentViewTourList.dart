@@ -1,7 +1,6 @@
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAddTourPackage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentPreviewTourPackage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCity.dart';
-import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 

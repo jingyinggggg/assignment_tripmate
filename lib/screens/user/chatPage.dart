@@ -60,35 +60,35 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
 
-              Container(
-                width: 180,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: (){
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0001',))
-                    );
-                  }, 
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF467BA1),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    "Chat Details",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+              // Container(
+              //   width: 180,
+              //   height: 60,
+              //   child: ElevatedButton(
+              //     onPressed: (){
+              //       Navigator.push(
+              //         context, 
+              //         MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0001',))
+              //       );
+              //     }, 
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: Color(0xFF467BA1),
+              //       textStyle: const TextStyle(
+              //         fontSize: 18,
+              //         fontWeight: FontWeight.bold,
+              //       ),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(10),
+              //       ),
+              //     ),
+              //     child: Text(
+              //       "Chat Details",
+              //       style: TextStyle(
+              //         color: Colors.white,
+              //       ),
 
-                  )
-                ),
-              )
+              //     )
+              //   ),
+              // )
             ],
           )
         ],

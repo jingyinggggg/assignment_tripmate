@@ -27,125 +27,93 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
-                child: Container(
-                  height: 60,
-                  child: TextField(
-                    // onChanged: (value) => onSearch(value),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      // fillColor: Color.fromARGB(255, 218, 232, 243),
-                      contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Set the border color to black
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Black border when not focused
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Color(0xFF467BA1), width: 2), // Black border when focused
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.red, width: 2), // Red border for error state
-                      ),
-                      hintText: "Search",
-                      hintStyle: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.bold,
-                      ),
+  Widget build(BuildContext content) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
+              child: Container(
+                height: 60,
+                child: TextField(
+                  // controller: _searchController, // Bind search controller
+                  // onChanged: (value) {
+                  //   setState(() {}); // Trigger the UI update on text change
+                  // },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.red, width: 2),
+                    ),
+                    hintText: "Search bookings ...",
+                    hintStyle: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              Container(
-                padding: EdgeInsets.only(left: 10, right: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: (){}, 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "Completed",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+            ),
 
-                      )
-                    ),
-                    ElevatedButton(
-                      onPressed: (){}, 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "Upcoming",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+            const TabBar(
+              labelColor: Color(0xFF467BA1),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Color(0xFF467BA1),
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600
+              ),
+              tabs: [
+                Tab(text: "Completed"),
+                Tab(text: "Upcoming"),
+                Tab(text: "Canceled"),
+              ],
+            ),
 
-                      )
-                    ),
-                    ElevatedButton(
-                      onPressed: (){}, 
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "Canceled",
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
+            Expanded(
+              child: TabBarView(
+                children: [
 
-                      )
-                    ),
-                  ],
-                ),
-              ),  
-            ],
-          ),
-        ],
+                  Center(child: Icon(Icons.done)),
+                  Center(child: Icon(Icons.upcoming)),
+                  Center(child: Icon(Icons.cancel)),
+                  // // Unpublished Tab
+                  // _buildTourList(isPublished: false),
+
+                  // // Published Tab
+                  // _buildTourList(isPublished: true),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
-      
     );
   }
 
