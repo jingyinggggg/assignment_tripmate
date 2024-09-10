@@ -8,7 +8,6 @@ import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 
 class TravelAgentEditTourPackageScreen extends StatefulWidget {
   final String userId;

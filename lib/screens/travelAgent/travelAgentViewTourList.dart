@@ -19,6 +19,7 @@ class TravelAgentViewTourListScreen extends StatefulWidget {
 class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListScreen> {
   bool isLoading = true; 
   String? companyId;
+  TextEditingController _searchController = TextEditingController(); // Add this
 
   @override
   void initState() {
@@ -96,6 +97,10 @@ class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListS
               child: Container(
                 height: 60,
                 child: TextField(
+                  controller: _searchController, // Bind search controller
+                  onChanged: (value) {
+                    setState(() {}); // Trigger the UI update on text change
+                  },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -142,244 +147,138 @@ class _TravelAgentViewTourListScreenState extends State<TravelAgentViewTourListS
               child: TabBarView(
                 children: [
                   // Unpublished Tab
-                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('tourPackage')
-                        .where('countryName', isEqualTo: widget.countryName)
-                        .where('cityName', isEqualTo: widget.cityName)
-                        .where('companyID', isEqualTo: companyId)
-                        .where('isPublish', isEqualTo: 0)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 20, right: 20),
-                            child: Text(
-                              "No unpublished tour package in the selected cities.",
-                              style: TextStyle(
-                                fontSize: 16
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }
-
-                      var tourData = snapshot.data!.docs.map((doc) => doc.data()).toList();
-
-                      return Container(
-                        padding: EdgeInsets.only(top: 15, bottom: 15),
-                        child: ListView.builder(
-                          itemCount: tourData.length,
-                          itemBuilder: (context, index) {
-                            var tour = tourData[index];
-                            return ListTile(
-                              title: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Conditionally show the image
-                                  if (tour['tourCover'] != null)
-                                    Container(
-                                      width: 70,
-                                      height: 90,
-                                      margin: EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: NetworkImage(tour['tourCover']),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  
-                                  // If imageUrl is null, show a placeholder
-                                  if (tour['tourCover'] == null)
-                                    Container(
-                                      width: 70,
-                                      height: 90,
-                                      margin: EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.grey[200], // Placeholder color
-                                      ),
-                                      child: Icon(
-                                        Icons.image,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-
-                                  // Tour Name
-                                  Expanded(
-                                    child: Text(
-                                      tour['tourName'] ?? 'No Tour Name',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      // textAlign: TextAlign.justify,
-                                    ),
-                                  ),
-
-                                  // Preview Button
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // Handle preview button press
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'], status: 0,)),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFF467BA1),
-                                      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Preview',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                  _buildTourList(isPublished: false),
 
                   // Published Tab
-                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('tourPackage')
-                        .where('countryName', isEqualTo: widget.countryName)
-                        .where('cityName', isEqualTo: widget.cityName)
-                        .where('companyID', isEqualTo: companyId)
-                        .where('isPublish', isEqualTo: 1)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 20, right: 20),
-                            child: Text(
-                              "No published tour package uploaded in the selected cities.",
-                              style: TextStyle(
-                                fontSize: 16
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }
-
-                      var tourData = snapshot.data!.docs.map((doc) => doc.data()).toList();
-
-                      return Container(
-                        padding: EdgeInsets.only(top: 15, bottom: 15),
-                        child: ListView.builder(
-                          itemCount: tourData.length,
-                          itemBuilder: (context, index) {
-                            var tour = tourData[index];
-                            return ListTile(
-                              title: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // Conditionally show the image
-                                  if (tour['tourCover'] != null)
-                                    Container(
-                                      width: 70,
-                                      height: 90,
-                                      margin: EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                          image: NetworkImage(tour['tourCover']),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  
-                                  // If imageUrl is null, show a placeholder
-                                  if (tour['tourCover'] == null)
-                                    Container(
-                                      width: 70,
-                                      height: 90,
-                                      margin: EdgeInsets.only(right: 10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.grey[200], // Placeholder color
-                                      ),
-                                      child: Icon(
-                                        Icons.image,
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-
-                                  // Tour Name
-                                  Expanded(
-                                    child: Text(
-                                      tour['tourName'] ?? 'No Tour Name',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      // textAlign: TextAlign.justify,
-                                    ),
-                                  ),
-
-                                  // Preview Button
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // Handle preview button press
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'], status: 1,)),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFF467BA1),
-                                      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'View',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),                
+                  _buildTourList(isPublished: true),
                 ],
               ),
             )
           ],
-        )
+        ),
       ),
+    );
+  }
+
+  // Helper function to build the tour list
+  Widget _buildTourList({required bool isPublished}) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('tourPackage')
+          .where('countryName', isEqualTo: widget.countryName)
+          .where('cityName', isEqualTo: widget.cityName)
+          .where('companyID', isEqualTo: companyId)
+          .where('isPublish', isEqualTo: isPublished ? 1 : 0)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.only(left: 20, right: 20),
+              child: Text(
+                "No tour package available.",
+                style: TextStyle(
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        // Filter the tours based on search query
+        var tourData = snapshot.data!.docs.map((doc) => doc.data()).where((tour) {
+          String tourName = tour['tourName']?.toLowerCase() ?? '';
+          return tourName.contains(_searchController.text.toLowerCase());
+        }).toList();
+
+        return Container(
+          padding: EdgeInsets.only(top: 15, bottom: 15),
+          child: ListView.builder(
+            itemCount: tourData.length,
+            itemBuilder: (context, index) {
+              var tour = tourData[index];
+              return ListTile(
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Conditionally show the image
+                    if (tour['tourCover'] != null)
+                      Container(
+                        width: 70,
+                        height: 90,
+                        margin: EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(tour['tourCover']),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    
+                    // If imageUrl is null, show a placeholder
+                    if (tour['tourCover'] == null)
+                      Container(
+                        width: 70,
+                        height: 90,
+                        margin: EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[200], // Placeholder color
+                        ),
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+
+                    // Tour Name
+                    Expanded(
+                      child: Text(
+                        tour['tourName'] ?? 'No Tour Name',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    // Preview Button
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle preview button press
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => TravelAgentPreviewTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour['tourID'], status: isPublished ? 1 : 0)),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF467BA1),
+                        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        isPublished ? 'View' : 'Preview',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
