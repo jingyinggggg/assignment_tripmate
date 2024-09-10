@@ -155,3 +155,12 @@ class UserViewTourList{
 
   UserViewTourList(this.tourName, this.tourID, this.image, this.agency, this.tourHighlight, this.availability);
 }
+
+class MessageList{
+  final String receiverName;
+  final String receiverProfile;
+  final String receiverID;
+  final String latestMessage;
+
+  MessageList(this.receiverName, this.receiverProfile, this.receiverID, this.latestMessage);
+}

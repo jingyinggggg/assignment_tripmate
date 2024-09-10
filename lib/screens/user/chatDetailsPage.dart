@@ -22,8 +22,8 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
 
   String? senderName;
   String? receiverName;
-  Uint8List? senderProfileImage;
-  Uint8List? receiverProfileImage;
+  String? senderProfileImage;
+  String? receiverProfileImage;
 
   @override
   void initState() {
@@ -47,19 +47,56 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
 
   Future<void> fetchSenderDetails() async {
     try {
-      QuerySnapshot userQuery = await FirebaseFirestore.instance
-        .collection('users')
-        .where('id', isEqualTo: widget.userId)
-        .limit(1)
-        .get();
-      
-      DocumentSnapshot userDoc = userQuery.docs.first;
-      var senderData = userDoc.data() as Map<String, dynamic>;
+      QuerySnapshot userQuery;
 
-      setState(() {
-        senderName = senderData['name'];
-        // senderProfileImage = senderData['profileImage'];
-      });
+      if (widget.userId.startsWith('U')) {
+        // Search in 'users' collection
+        userQuery = await FirebaseFirestore.instance
+            .collection('users')
+            .where('id', isEqualTo: widget.userId)
+            .limit(1)
+            .get();
+      } else if (widget.userId.startsWith('TA')) {
+        // Search in 'travelAgent' collection
+        userQuery = await FirebaseFirestore.instance
+            .collection('travelAgent')
+            .where('id', isEqualTo: widget.userId)
+            .limit(1)
+            .get();
+      } else {
+        // Search in 'admin' collection
+        userQuery = await FirebaseFirestore.instance
+            .collection('admin')
+            .where('id', isEqualTo: widget.userId)
+            .limit(1)
+            .get();
+      }
+
+      if (userQuery.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = userQuery.docs.first;
+        var receiverData = userDoc.data() as Map<String, dynamic>;
+
+        setState(() {
+          senderName = receiverData['name'];
+          senderProfileImage = receiverData['profileImage'];
+        });
+      } else {
+        print("No user found with the given ID.");
+      }
+
+      // QuerySnapshot userQuery = await FirebaseFirestore.instance
+      //   .collection('users')
+      //   .where('id', isEqualTo: widget.userId)
+      //   .limit(1)
+      //   .get();
+      
+      // DocumentSnapshot userDoc = userQuery.docs.first;
+      // var senderData = userDoc.data() as Map<String, dynamic>;
+
+      // setState(() {
+      //   senderName = senderData['name'];
+      //   // senderProfileImage = senderData['profileImage'];
+      // });
     } catch (e) {
       print("Error fetching sender details: $e");
     }
@@ -98,7 +135,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
 
         setState(() {
           receiverName = receiverData['name'];
-          // receiverProfileImage = receiverData['profileImage'];
+          receiverProfileImage = receiverData['profileImage'];
         });
       } else {
         print("No user found with the given ID.");
@@ -125,13 +162,28 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         ),
         title: Row(
           children: [
-            // Image widget
-            // CircleAvatar(
-            //   radius: 20, // Adjust size as needed
-            //   backgroundImage: NetworkImage('URL_OF_THE_IMAGE'), // Replace with the actual image URL
-            //   backgroundColor: Colors.transparent,
-            // ),
-            const SizedBox(width: 10), // Space between image and name
+            Container(
+              width: 45, 
+              height: 45,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.black, // Set your desired border color
+                  width: 1.5, // Set your desired border width
+                ),
+              ),
+              child: receiverProfileImage != null
+              ? CircleAvatar(
+                radius: 30,
+                backgroundImage: NetworkImage(receiverProfileImage ?? ''),
+              )
+              : CircleAvatar(
+                  radius: 30,
+                  backgroundImage: AssetImage("images/profile.png"),
+                  backgroundColor: Colors.white,
+                ),
+            ),
+            const SizedBox(width: 20), // Space between image and name
             // Name text
             Text(
               receiverName ?? '', // Use empty string as fallback if receiverName is null
@@ -143,7 +195,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
             ),
           ],
         ),
-        centerTitle: true,
+        // centerTitle: true,
         backgroundColor: Colors.white,
         titleTextStyle: const TextStyle(
           color: Colors.black,
@@ -196,25 +248,49 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> data = document.data() as Map<String, dynamic>;
 
-    // align the messages to the right of the sender is the current user, otherwise to the left
-    var alignment = (data['senderId'] == widget.userId) 
-        ? Alignment.centerRight 
-        : Alignment.centerLeft;
-    
+    // Check if the current user is the sender or receiver
+    bool isSender = data['senderId'] == widget.userId;
+
+    // Determine message alignment and profile image based on sender/receiver
     return Container(
-      alignment: alignment,
-      padding: EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: (data['senderId'] == widget.userId) ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        mainAxisAlignment: (data['senderId'] == widget.userId) ? MainAxisAlignment.end : MainAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      alignment: isSender ? Alignment.centerRight : Alignment.centerLeft,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align at the top
+        mainAxisAlignment: isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          Text(data['senderId'] == widget.userId ? 'You' : data['senderName']),
-          SizedBox(height: 5),
-          ChatBubble(message: data['message']),
+          if (!isSender) // Show receiver's profile image if the current user is not the sender
+            CircleAvatar(
+              radius: 25, // Adjust the size as needed
+              backgroundImage: receiverProfileImage != null && receiverProfileImage!.isNotEmpty
+              ? NetworkImage(receiverProfileImage!)
+              : AssetImage("images/profile.png")
+            ),
+          if (!isSender) SizedBox(width: 10), // Add space between profile and bubble
+          Column(
+            crossAxisAlignment: isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Text(
+                isSender ? 'You' : data['senderName'],
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 5),
+              ChatBubble(message: data['message']), // Chat bubble
+            ],
+          ),
+          if (isSender) SizedBox(width: 10), // Add space between bubble and profile
+          if (isSender) // Show sender's profile image if the current user is the sender
+            CircleAvatar(
+              radius: 25, // Adjust the size as needed
+              backgroundImage: senderProfileImage != null && senderProfileImage!.isNotEmpty
+              ? NetworkImage(senderProfileImage ?? '')
+              : AssetImage("images/profile.png")
+            ),
         ],
       ),
     );
   }
+
 
   Widget _buildMessageInput() {
     return Container(

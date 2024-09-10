@@ -164,8 +164,8 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Color(0xFF467BA1), // Set your desired border color
-                    width: 2.0, // Set your desired border width
+                    color: Color(0xFF467BA1), 
+                    width: 2.0, 
                   ),
                 ),
                 child: CircleAvatar(
