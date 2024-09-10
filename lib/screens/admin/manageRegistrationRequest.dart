@@ -93,14 +93,10 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           : travelAgentData == null
               ? Center(child: Text('No travel agent details available.'))
               : Padding(
-                  padding: const EdgeInsets.all(15.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(10),
-                        // decoration: BoxDecoration(
-                        //   border: Border.all(color: Color(0xFF467BA1), width: 2),
-                        // ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -211,7 +207,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(5),
                                 side: BorderSide(color: Colors.green, width: 2),
                               ),
                             ),
@@ -230,7 +226,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(5),
                                 side: BorderSide(color: Colors.red, width: 2),
                               ),
                             ),
