@@ -1505,7 +1505,10 @@ void _removeItineraryRow(int index) {
               onPressed: () {
                 Navigator.push(
                   context, 
-                  MaterialPageRoute(builder: (context) => TravelAgentViewPDFScreen(pdfPath: brochurePath))
+                  MaterialPageRoute(
+                    builder: (context) => TravelAgentViewPDFScreen(
+                      pdfPath: _uploadedPdfFile != null ? _uploadedPdfFile!.path : brochurePath,
+                      savedToFirebase: _uploadedPdfFile != null ? false : true))
                 );
               }
             ),

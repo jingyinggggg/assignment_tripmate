@@ -1,10 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class TravelAgentViewPDFScreen extends StatefulWidget {
   final String pdfPath;
+  final bool savedToFirebase;
 
-  const TravelAgentViewPDFScreen({super.key, required this.pdfPath});
+  const TravelAgentViewPDFScreen({super.key, required this.pdfPath, required this.savedToFirebase});
 
   @override
   State<TravelAgentViewPDFScreen> createState() => _TravelAgentViewPDFScreenState();
@@ -36,10 +39,13 @@ class _TravelAgentViewPDFScreenState extends State<TravelAgentViewPDFScreen> {
         ),
         ],
       ),
-      body: 
-        SfPdfViewer.network(
-          widget.pdfPath
-        )
+      body: widget.savedToFirebase == true
+          ? SfPdfViewer.network(
+              widget.pdfPath,
+            )
+          : SfPdfViewer.file(
+              File(widget.pdfPath), // Assuming widget.pdfPath is the local file path
+            ),
     );
   }
 }
