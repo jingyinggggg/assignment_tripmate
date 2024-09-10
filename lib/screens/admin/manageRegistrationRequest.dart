@@ -97,10 +97,10 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                   child: Column(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xFF467BA1), width: 2),
-                        ),
+                        padding: EdgeInsets.all(10),
+                        // decoration: BoxDecoration(
+                        //   border: Border.all(color: Color(0xFF467BA1), width: 2),
+                        // ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
