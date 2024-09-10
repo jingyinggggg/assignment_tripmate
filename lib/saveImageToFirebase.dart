@@ -193,7 +193,7 @@ class StoreData {
         'password': password,
         'gender': gender,
         'accountApproved': 0,
-        'employeCardPath': imageURL,
+        'employeeCardPath': imageURL,
         'profileImage': null
       });
       resp = "Success";
