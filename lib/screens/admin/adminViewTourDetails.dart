@@ -1,29 +1,27 @@
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentEditTourPackage.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewTourList.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class TravelAgentPreviewTourPackageScreen extends StatefulWidget {
+class AdminTourPackageDetailsScreen extends StatefulWidget {
   final String userId;
   final String countryName;
   final String cityName;
   final String tourID;
-  final int status;
 
-  const TravelAgentPreviewTourPackageScreen({
+  const AdminTourPackageDetailsScreen({
     super.key,
     required this.userId,
     required this.countryName,
     required this.cityName,
     required this.tourID,
-    required this.status,
   });
 
   @override
-  State<StatefulWidget> createState() => _TravelAgentPreviewTourPackageScreenState();
+  State<StatefulWidget> createState() => _AdminTourPackageDetailsScreenState();
 }
 
-class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreviewTourPackageScreen> {
+class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsScreen> {
   Map<String, dynamic>? tourData;
   bool isLoading = false;
   bool isButtonLoading = false;
@@ -68,73 +66,6 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
     }
   }
 
-  Future<void> _publishTour() async{
-    setState(() {
-      isButtonLoading = true; // Start loading
-    });
-
-    try{
-      int setPublishStatus;
-
-      if(widget.status == 0){
-        setPublishStatus = 1;
-      } else{
-        setPublishStatus = 0;
-      }
-
-      await FirebaseFirestore.instance.collection('tourPackage').doc(widget.tourID).update({
-        'isPublish': setPublishStatus,
-      });
-
-      _showDialog(
-        title: 'Success',
-        content: setPublishStatus == 1 ? 'Tour package published successfully!' : 'You have set the tour package unavailable for users.',
-        onPressed: () {
-          Navigator.of(context).pop();
-          Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => TravelAgentViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName))
-          );
-        },
-      );
-
-    } catch(e){
-      _showDialog(
-        title: 'Error',
-        content: 'An error occurred: $e',
-        onPressed: () {
-          Navigator.of(context).pop();
-        },
-      );
-    } finally {
-      setState(() {
-        isButtonLoading = false; // Stop loading
-      });
-    }
-  }
-
-  void _showDialog({
-    required String title,
-    required String content,
-    required VoidCallback onPressed,
-  }) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: [
-            TextButton(
-              onPressed: onPressed,
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,7 +87,7 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TravelAgentViewTourListScreen(
+                builder: (context) => AdminViewTourListScreen(
                   userId: widget.userId,
                   countryName: widget.countryName,
                   cityName: widget.cityName,
@@ -165,31 +96,6 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
             );
           },
         ),
-        actions: <Widget>[
-          if (widget.status == 0) 
-            IconButton(
-              icon: const Icon(
-                Icons.edit,
-                color: Colors.white,
-                size: 25,
-              ),
-              onPressed: () {
-                final tourID = tourData?['tourID'];
-
-                if (tourID != null){
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TravelAgentEditTourPackageScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourID))
-                  );                  
-                } else {
-                  // Handle the case where receiverUserId is null
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Tour ID is not available')),
-                  );
-                }
-              },
-            ),
-        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator()) // Show a loading indicator while data is being fetched
@@ -419,54 +325,6 @@ class _TravelAgentPreviewTourPackageScreenState extends State<TravelAgentPreview
 
                         SizedBox(height:30),
 
-                        Container(
-                          width: double.infinity,
-                          height: 60,
-                          child: ElevatedButton(
-                            onPressed: (){_publishTour();},
-                            child: isLoading
-                                ? const CircularProgressIndicator()
-                                : Text(
-                                    widget.status == 0 ? 'Publish' : 'Unpublish',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF467BA1),
-                              textStyle: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ) 
-
-                        // ElevatedButton(
-                        //   onPressed: _publishTour,
-                        //   child: isButtonLoading 
-                        //   ? CircularProgressIndicator() 
-                        //   : Text(
-                        //     widget.status == 0 ? 'Publish' : 'Unpublish',
-                        //     style: TextStyle(
-                        //       color: Colors.white,
-                        //     ),
-                        //   ),
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: const Color(0xFF467BA1),
-                        //     padding: const EdgeInsets.symmetric(vertical: 15),
-                        //     textStyle: const TextStyle(
-                        //       fontSize: 20,
-                        //       fontWeight: FontWeight.bold,
-                        //     ),
-                        //     shape: RoundedRectangleBorder(
-                        //       borderRadius: BorderRadius.circular(8),
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),

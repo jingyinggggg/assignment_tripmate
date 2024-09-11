@@ -66,6 +66,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Country List"),

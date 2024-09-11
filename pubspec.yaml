@@ -53,6 +53,7 @@ dependencies:
   downloads_path_provider_28: ^0.1.2  #Download file
   open_file: ^3.2.1
   photo_view: ^0.15.0
+  cached_network_image: ^3.2.3
 
 dev_dependencies:
   flutter_test:

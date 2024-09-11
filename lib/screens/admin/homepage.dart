@@ -53,6 +53,17 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
               ),
               _buildMenuButton(
                 context,
+                icon: "images/CarRentalIcon.png",
+                label: "Car Listing",
+                onPressed: () {
+                  // Navigator.push(
+                  //   context, 
+                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
+                  // );
+                },
+              ),
+              _buildMenuButton(
+                context,
                 icon: "images/registration_request.png",
                 label: "Registration",
                 onPressed: () {

@@ -67,6 +67,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("City List"),

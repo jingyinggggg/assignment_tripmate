@@ -1,9 +1,9 @@
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 
 class AdminManageRegistrationRequestScreen extends StatefulWidget {
   final String userId;
@@ -18,32 +18,33 @@ class AdminManageRegistrationRequestScreen extends StatefulWidget {
 class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegistrationRequestScreen>{
   Map<String, dynamic>? travelAgentData;
   bool isLoading = false;
-  bool isActionLoading = false;
+  bool isApproveLoading = false;
+  bool isRejectLoading = false;
+  TextEditingController _rejectReasonController = TextEditingController();
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _fetchTAData();
   }
 
-  Future<void> _fetchTAData() async{
+  Future<void> _fetchTAData() async {
     setState(() {
       isLoading = true;
     });
 
-    try{
-      print(widget.TAId);
+    try {
       DocumentReference TARef = FirebaseFirestore.instance.collection('travelAgent').doc(widget.TAId);
       DocumentSnapshot docSnapshot = await TARef.get();
 
-      if(docSnapshot.exists){
+      if (docSnapshot.exists) {
         Map<String, dynamic>? data = docSnapshot.data() as Map<String, dynamic>?;
 
         setState(() {
           travelAgentData = data ?? {};
           isLoading = false;
         });
-      } else{
+      } else {
         setState(() {
           isLoading = false;
         });
@@ -51,7 +52,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           SnackBar(content: Text('No travel agent details found with the given id.')),
         );
       }
-    }catch(e){
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
@@ -59,6 +60,145 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
         SnackBar(content: Text('Error fetching tour data: $e')),
       );
     }
+  }
+
+  Future<void> _approveRequest() async {
+    try {
+      setState(() {
+        isApproveLoading = true;
+      });
+
+      await FirebaseFirestore.instance.collection('travelAgent').doc(widget.TAId).update({
+        'accountApproved': 1,
+      });
+
+      _showDialog(
+        title: 'Success',
+        content: 'You have approved the registration request successfully.',
+        onPressed: () {
+          Navigator.of(context).pop();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RegistrationRequestScreen(userId: widget.userId)),
+          );
+        },
+      );
+
+      setState(() {
+        isApproveLoading = false; // Stop loading
+      });
+    } catch (e) {
+      _showDialog(
+        title: 'Error',
+        content: 'An error occurred: $e',
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+    } finally {
+      setState(() {
+        isApproveLoading = false; // Stop loading
+      });
+    }
+  }
+
+  Future<void> _rejectRequest(String reason) async {
+    try {
+      setState(() {
+        isRejectLoading = true;
+      });
+
+      await FirebaseFirestore.instance.collection('travelAgent').doc(widget.TAId).update({
+        'accountApproved': 2,
+        'rejectReason': reason,
+      });
+
+      _showDialog(
+        title: 'Rejected',
+        content: 'You have rejected the registration request.',
+        onPressed: () {
+          Navigator.of(context).pop();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RegistrationRequestScreen(userId: widget.userId)),
+          );
+        },
+      );
+    } catch (e) {
+      _showDialog(
+        title: 'Error',
+        content: 'An error occurred: $e',
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+    } finally {
+      setState(() {
+        isRejectLoading = false; // Stop loading
+      });
+    }
+  }
+
+  void _showRejectDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reject Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please provide a reason for rejection:'),
+              TextField(
+                controller: _rejectReasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter rejection reason...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _rejectRequest(_rejectReasonController.text); // Perform reject request
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDialog({
+    required String title,
+    required String content,
+    required VoidCallback onPressed,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: onPressed,
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -92,7 +232,8 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           ? Center(child: CircularProgressIndicator())
           : travelAgentData == null
               ? Center(child: Text('No travel agent details available.'))
-              : Padding(
+              : SingleChildScrollView( 
+                child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
@@ -195,40 +336,68 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           ElevatedButton(
-                            onPressed: (){}, 
-                            child: Text(
-                              'Approve',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16
-                              ),
-                            ),
+                            onPressed: isApproveLoading
+                                ? null // Disable the button if it's loading
+                                : () {
+                                    _approveRequest();
+                                  },
+                            child: isApproveLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.green,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Approve',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                                 side: BorderSide(color: Colors.green, width: 2),
                               ),
+                              minimumSize: Size(100, 40)
                             ),
                           ),
                           SizedBox(width: 20),
                           ElevatedButton(
-                            onPressed: (){}, 
-                            child: Text(
-                              'Reject',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16
-                              ),
-                            ),
+                            onPressed: isRejectLoading
+                                ? null
+                                : () {
+                                    _showRejectDialog();
+                                  },
+                            child: isRejectLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.red,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Reject',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                                 side: BorderSide(color: Colors.red, width: 2),
                               ),
+                              minimumSize: Size(100, 40),
                             ),
                           )
                         ]
@@ -236,6 +405,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                     ],
                   ),
                 ),
+              ),
     );
   }
 
@@ -256,7 +426,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           builder: (context) {
             return Dialog(
               child: PhotoView(
-                imageProvider: NetworkImage(imageUrl),
+                imageProvider: CachedNetworkImageProvider(imageUrl),
                 minScale: PhotoViewComputedScale.contained,
                 maxScale: PhotoViewComputedScale.covered * 2,
                 backgroundDecoration: BoxDecoration(
@@ -267,11 +437,14 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           },
         );
       },
-      child: Image.network(
-        imageUrl,
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
         width: width,
         height: height,
-        errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+        placeholder: (context, url) => Center(
+          child: CircularProgressIndicator(),
+        ),
+        errorWidget: (context, url, error) => Icon(Icons.error),
         fit: BoxFit.fill,
       ),
     );

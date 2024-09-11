@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/screens/admin/adminViewTourDetails.dart';
 import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -67,6 +68,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Tour List"),
@@ -135,7 +137,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
           ? Center(child: CircularProgressIndicator())  // Show loading indicator while fetching data
           : hasCity
           ? Container(
-              padding: EdgeInsets.only(right: 10, left: 15, top: 140),
+              padding: EdgeInsets.only(right: 10, left: 15, top: 100),
               child: ListView.builder(
                 itemCount: _foundedTour.length,
                 itemBuilder: (context, index) {
@@ -164,7 +166,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
 
   Widget tourComponent({required TourPackage tourPackage}) {
     return Container(
-      padding: EdgeInsets.only(bottom: 15, top: 10),
+      padding: const EdgeInsets.only(bottom: 15, top: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -181,52 +183,65 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
                   ),
                 ),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 10),
+
               Column(
                 children: [
-                  Text(
-                    tourPackage.tourName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 200,  // Set a fixed width for the tour name
+                    child: Text(
+                      tourPackage.tourName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: null,
+                      overflow: TextOverflow.visible, // Ensure long text doesn't overflow
                     ),
                   ),
-                  SizedBox(height: 5),
-                  Text(
-                    tourPackage.agency,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 5),
+                  Container(
+                    width: 200,  // Set a fixed width for the agency
+                    child: Text(
+                      tourPackage.agency,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: null,
+                      overflow: TextOverflow.visible, // Ensure long text doesn't overflow
                     ),
-
                   ),
                 ],
-              ),
+              )
             ],
           ),
           Row(
             children: [
               IconButton(
-                onPressed: (){
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
-                  // );
-                }, 
-                icon: Icon(Icons.remove_red_eye),
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminTourPackageDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourPackage.tourID))
+                  );
+                },
+                icon: const Icon(Icons.remove_red_eye),
                 iconSize: 25,
                 color: Colors.grey.shade600,
               ),
               IconButton(
-                onPressed: (){},
-                icon: Icon(Icons.edit_document),
+                onPressed: () {
+                  // Handle edit button action
+                },
+                icon: const Icon(Icons.edit_document),
                 iconSize: 25,
                 color: Colors.grey.shade600,
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
+
 }
