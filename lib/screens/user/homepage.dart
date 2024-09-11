@@ -2,6 +2,7 @@ import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
+import 'package:assignment_tripmate/screens/user/languageTranslator.dart';
 import 'package:assignment_tripmate/screens/user/viewCountry.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/user/bottom_nav_bar.dart';
@@ -152,6 +153,56 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                 ),
               ),
             ],
+          ),
+          SizedBox(height:50),
+          ElevatedButton(
+            onPressed: () {
+              // Handle navigation or other actions here.
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LanguageTranslatorScreen(userId: widget.userId))
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF749CB9), // Button background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10), // Rounded corners
+                side: BorderSide(color: Color(0xFF467BA1), width: 2),
+              ),
+              minimumSize: const Size(120, 70),
+            ),
+            child: Text(
+              "Language translator",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          SizedBox(height:50),
+          ElevatedButton(
+            onPressed: () {
+              // Handle navigation or other actions here.
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LanguageTranslatorScreen(userId: widget.userId))
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF749CB9), // Button background color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10), // Rounded corners
+                side: BorderSide(color: Color(0xFF467BA1), width: 2),
+              ),
+              minimumSize: const Size(120, 70),
+            ),
+            child: Text(
+              "Currency converter",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
