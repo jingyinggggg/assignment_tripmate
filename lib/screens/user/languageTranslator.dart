@@ -80,10 +80,73 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (languages.isNotEmpty)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Wrap the first DropdownButton in a SizedBox with a specific width
+                      SizedBox(
+                        width: 120,  // Adjust the width as needed
+                        child: DropdownButton<String>(
+                          value: inputLanguage,
+                          isExpanded: true,
+                          underline: Container(
+                            height: 2,  // Height of the underline
+                            color: Color(0xFF467BA1),  // Color of the underline
+                          ),
+                          onChanged: (newValue) {
+                            setState(() {
+                              inputLanguage = newValue!;
+                            });
+                          },
+                          // Dropdown items with background color
+                          items: languages.map<DropdownMenuItem<String>>((lang) {
+                            return DropdownMenuItem<String>(
+                              value: lang['code'],
+                              child: Text(lang['name']!),
+                            );
+                          }).toList(),
+                          dropdownColor: Colors.blue.shade100, // Sets dropdown background color
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      const Icon(Icons.arrow_forward_rounded),
+                      SizedBox(width: 10),
+                      // Wrap the second DropdownButton in a SizedBox with a specific width
+                      SizedBox(
+                        width: 120,  // Adjust the width as needed
+                        child: DropdownButton<String>(
+                          value: outputLanguage,
+                          isExpanded: true,  // Allows the text to wrap inside the dropdown
+                          underline: Container(
+                            height: 2,  // Height of the underline
+                            color: Color(0xFF467BA1),  // Color of the underline
+                          ),
+                          onChanged: (newValue) {
+                            setState(() {
+                              outputLanguage = newValue!;
+                            });
+                          },
+                          items: languages.map<DropdownMenuItem<String>>((lang) {
+                            return DropdownMenuItem<String>(
+                              value: lang['code'],
+                              child: Text(lang['name']!),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  )
+
+                else
+                  const Center(child: CircularProgressIndicator()),
+
+                SizedBox(height: 20),
+
                 TextField(
                   maxLines: 5,
                   decoration: InputDecoration(
@@ -94,7 +157,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   ),
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                   onChanged: (value) {
@@ -103,55 +166,17 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                     });
                   },
                 ),
+
                 const SizedBox(height: 20),
-                if (languages.isNotEmpty)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      DropdownButton<String>(
-                        value: inputLanguage,
-                        onChanged: (newValue) {
-                          setState(() {
-                            inputLanguage = newValue!;
-                          });
-                        },
-                        items: languages.map<DropdownMenuItem<String>>((lang) {
-                          return DropdownMenuItem<String>(
-                            value: lang['code'],
-                            child: Text(lang['name']!),
-                          );
-                        }).toList(),
-                      ),
-                      const Icon(Icons.arrow_forward_rounded),
-                      DropdownButton<String>(
-                        value: outputLanguage,
-                        onChanged: (newValue) {
-                          setState(() {
-                            outputLanguage = newValue!;
-                          });
-                        },
-                        items: languages.map<DropdownMenuItem<String>>((lang) {
-                          return DropdownMenuItem<String>(
-                            value: lang['code'],
-                            child: Text(lang['name']!),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  )
-                else
-                  const Center(child: CircularProgressIndicator()),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: translateText,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF467BA1),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(55),
+
+                Container(
+                  child: Icon(
+                    Icons.arrow_downward_rounded
                   ),
-                  child: const Text("Translate"),
                 ),
+
                 const SizedBox(height: 20),
+
                 TextField(
                   controller: outputController,
                   readOnly: true,
@@ -163,8 +188,31 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   ),
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                ElevatedButton(
+                  onPressed: translateText,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF467BA1),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
+                    ),
+                  ),
+                  child: const Text(
+                    "Translate",
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
