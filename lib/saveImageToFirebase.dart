@@ -317,5 +317,26 @@ class StoreData {
     return resp;
   }
 
+  Future<String> saveCarBrandData({
+    required String carBrandName, 
+    required String carBrandID, 
+    required Uint8List carBrandImage,
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$carBrandName.jpg"; 
+      String imageURL = await uploadImageToStorage("carBrand/$carBrandName/$fileName", carBrandImage);
+      await _firestore.collection("carBrand").doc(carBrandID).set({
+        'carBrandName': carBrandName,
+        'carBrandID': carBrandID,
+        'carBrandImage': imageURL
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  }
+
 
 }

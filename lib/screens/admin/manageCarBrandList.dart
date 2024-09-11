@@ -1,3 +1,5 @@
+import 'package:assignment_tripmate/screens/admin/addCarBrand.dart';
+import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -14,16 +16,19 @@ class AdminManageCarBrandScreen extends StatefulWidget{
 class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
   List<CarBrand> _carBrandList = [];
   List<CarBrand> _foundedCarBrand = [];
-  bool isLoading = true;  // Add a loading indicator flag
+  bool isLoading = false;  // Add a loading indicator flag
 
   @override
   void initState() {
     super.initState();
-    // fetchCityList();
+    fetchCarBrandList();
   }
 
   Future<void> fetchCarBrandList() async {
     try {
+      setState(() {
+        isLoading = true;
+      });
       // Reference to the cities collection in Firestore
       CollectionReference citiesRef = FirebaseFirestore.instance.collection('carBrand');
 
@@ -52,11 +57,11 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
     }
   }
 
-  // void onSearch(String search) {
-  //   setState(() {
-  //     _foundedCity = _cityList.where((city) => city.cityName.toUpperCase().contains(search.toUpperCase())).toList();
-  //   });
-  // }
+  void onSearch(String search) {
+    setState(() {
+      _foundedCarBrand = _carBrandList.where((carBrand) => carBrand.carName.toUpperCase().contains(search.toUpperCase())).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +81,10 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            // Navigate back
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AdminHomepageScreen(userId: widget.userId))
+            );
           },
         ),
       ),
@@ -89,7 +97,7 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                 child: Container(
                   height: 60,
                   child: TextField(
-                    // onChanged: (value) => onSearch(value),
+                    onChanged: (value) => onSearch(value),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -129,6 +137,10 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                     ElevatedButton(
                       onPressed: () {
                         // Add new brand action
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AdminAddCarBrandScreen(userId: widget.userId))
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF467BA1),
@@ -158,27 +170,21 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                 : _carBrandList.isEmpty
                     ? Center(
                         child: Text(
-                          "No car brand available in the system",
+                          "No car brand available in the system.",
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey.shade700,
+                            color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ) // Show message if list is empty
-                    : Padding(
-                        padding: const EdgeInsets.only(right: 10, left: 10, top: 100, bottom: 30),
-                        child: GridView.builder(
+                    : Container(
+                        padding: EdgeInsets.only(right: 10, left: 15, top:130),
+                        child: ListView.builder(
                           itemCount: _foundedCarBrand.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2, // Number of columns in the grid
-                            crossAxisSpacing: 20.0,
-                            mainAxisSpacing: 20.0,
-                            childAspectRatio: 1.0, // Aspect ratio of each item (width/height)
-                          ),
                           itemBuilder: (context, index) {
                             return carBrandComponent(carBrand: _foundedCarBrand[index]);
-                          },
+                          }
                         ),
                       ),
           ),
@@ -187,34 +193,73 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
     );
   }
 
-  Widget carBrandComponent({required CarBrand carBrand}) {
-    return Container(
-      padding: EdgeInsets.only(bottom: 15, top: 10),
-      child: Column(
-        children: [
-          Container(
-            width: 75,
-            height: 75,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(0),
-              image: DecorationImage(
-                image: NetworkImage(carBrand.carImage),
-                fit: BoxFit.cover,
+Widget carBrandComponent({required CarBrand carBrand}) {
+  return Container(
+    padding: EdgeInsets.only(bottom: 15, top: 10),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 60, 
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white, // Set background color to white
+                border: Border.all(color: Colors.grey.shade300, width: 1), // Optional: border around the circle
+              ),
+              child: ClipOval(
+                child: FittedBox(
+                  fit: BoxFit.contain, // Adjusts the image size to fit within the circle
+                  child: Image.network(carBrand.carImage),
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 20),
-          Text(
-            carBrand.carName,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold
+            SizedBox(width: 20), // Spacing between image and text
+            Text(
+              carBrand.carName,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          )
-        ],
-      )
-    );
-  }
+          ],
+        ),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                // Handle view action
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => CarBrandDetailScreen(carBrand: carBrand)),
+                // );
+              },
+              icon: Icon(Icons.remove_red_eye),
+              iconSize: 25,
+              color: Colors.grey.shade600,
+            ),
+            IconButton(
+              onPressed: () {
+                // Handle edit action
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(builder: (context) => EditCarBrandScreen(carBrand: carBrand)),
+                // );
+              },
+              icon: Icon(Icons.edit),
+              iconSize: 25,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+
+
 }
 

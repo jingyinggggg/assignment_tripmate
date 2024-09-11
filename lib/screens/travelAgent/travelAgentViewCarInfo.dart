@@ -21,7 +21,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
             appBar: AppBar(
-        title: const Text("Car Rental"),
+        title: const Text("Car Listing"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -50,6 +50,48 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
             },
           ),
         ]
+      ),
+
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
+            child: Container(
+              height: 60,
+              child: TextField(
+                // onChanged: (value) => onSearch(value),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.red, width: 2),
+                  ),
+                  hintText: "Search car listing...",
+                  hintStyle: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

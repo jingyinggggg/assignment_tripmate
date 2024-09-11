@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/screens/admin/manageCarBrandList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,6 +43,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Add Car Brand"),
@@ -88,7 +90,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
                 else
                   ElevatedButton(
                     onPressed: () {
-                      // _addCountry();
+                      _addCarBrand();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF467BA1),
@@ -124,14 +126,9 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
         fontWeight: FontWeight.w800,
         fontSize: 17,
       ),
-      // onChanged: (value) {
-      //   setState(() {
-      //     previewCountryName = value;
-      //   });
-      // },
       decoration: InputDecoration(
-        hintText: 'Enter Car Brand Name',
-        labelText: 'Car Brand Name',
+        hintText: 'Enter Car Brand',
+        labelText: 'Car Brand',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -238,14 +235,15 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
         width: double.infinity,
         height: 300,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Color(0xFF467BA1), width: 1.5)
         ),
         child: const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.image, size: 50, color: Colors.grey),
+              Icon(Icons.image, size: 100, color: Colors.grey),
               SizedBox(height: 10),
               Text(
                 'Insert name and image to preview',
@@ -261,22 +259,20 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
     } else {
       return Container(
         width: double.infinity,
-        height: 300,
+        height: 250,
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          // image: DecorationImage(
-          //   image: MemoryImage(_image!),
-          //   fit: BoxFit.cover,
-          // ),
+          border: Border.all(color: Color(0xFF467BA1), width: 1.5)
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image(
               image: MemoryImage(_image!),
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
+              width: 100,
+              height: 100,
+              fit: BoxFit.fitWidth,
             ),
             SizedBox(height: 20),
             Text(
@@ -293,65 +289,65 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
     }
   }
 
-  // Future<void> _addCountry() async {
-  //   if (_countryNameController.text.isEmpty || _image == null) {
-  //     _showDialog(
-  //       title: 'Failed',
-  //       content: 'Please make sure you have inserted the country name and uploaded an image!',
-  //       onPressed: () {
-  //         Navigator.of(context).pop(); // Close the dialog
-  //       },
-  //     );
-  //     return; // Exit the method early
-  //   }
+  Future<void> _addCarBrand() async {
+    if (_carBrandNameController.text.isEmpty || _image == null) {
+      _showDialog(
+        title: 'Failed',
+        content: 'Please make sure you have inserted the car brand and uploaded an image!',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the dialog
+        },
+      );
+      return; // Exit the method early
+    }
 
-  //   setState(() {
-  //     _isLoading = true; // Start loading
-  //   });
+    setState(() {
+      _isLoading = true; // Start loading
+    });
 
-  //   try {
-  //     // Get the count of existing countries
-  //     final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').get();
-  //     final countryCount = countriesSnapshot.size;
+    try {
+      // Get the count of existing car brands
+      final carBrandSnapshot = await FirebaseFirestore.instance.collection('carBrand').get();
+      final carBrandCount = carBrandSnapshot.size;
 
-  //     // Generate new country ID
-  //     final newCountryID = 'C${(countryCount + 1).toString().padLeft(4, '0')}';
+      // Generate new car brand ID
+      final newCarBrandID = 'B${(carBrandCount + 1).toString().padLeft(4, '0')}';
 
-  //     // Save the country data
-  //     String resp = await StoreData().saveCountryData(
-  //       country: _countryNameController.text, 
-  //       countryID: newCountryID, // Use the generated ID
-  //       file: _image!,
-  //     );
+      // Save the car brand data
+      String resp = await StoreData().saveCarBrandData(
+        carBrandName: _carBrandNameController.text, 
+        carBrandID: newCarBrandID, // Use the generated ID
+        carBrandImage: _image!,
+      );
 
-  //     // Show success dialog
-  //     _showDialog(
-  //       title: 'Successful',
-  //       content: 'The country has been added successfully.',
-  //       onPressed: () {
-  //         Navigator.push(
-  //           context,
-  //           MaterialPageRoute(
-  //               builder: (context) =>
-  //                   AdminManageCountryListScreen(userId: widget.userId)),
-  //         );
-  //       },
-  //     );
-  //   } catch (e) {
-  //     // Handle errors
-  //     _showDialog(
-  //       title: 'Failed',
-  //       content: 'An error occurred: $e',
-  //       onPressed: () {
-  //         Navigator.of(context).pop(); // Close the error dialog
-  //       },
-  //     );
-  //   } finally {
-  //     setState(() {
-  //       _isLoading = false; // Stop loading
-  //     });
-  //   }
-  // }
+      // Show success dialog
+      _showDialog(
+        title: 'Successful',
+        content: 'The car brand has been added successfully.',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    AdminManageCarBrandScreen(userId: widget.userId)),
+          );
+        },
+      );
+    } catch (e) {
+      // Handle errors
+      _showDialog(
+        title: 'Failed',
+        content: 'An error occurred: $e',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the error dialog
+        },
+      );
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
+    }
+  }
 
   void _showDialog({
     required String title,
