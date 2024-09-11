@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
+import 'package:assignment_tripmate/screens/admin/manageCarBrandList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
@@ -56,10 +57,10 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                 icon: "images/CarRentalIcon.png",
                 label: "Car Listing",
                 onPressed: () {
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                  // );
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => AdminManageCarBrandScreen(userId: widget.userId))
+                  );
                 },
               ),
               _buildMenuButton(

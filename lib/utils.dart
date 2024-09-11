@@ -164,3 +164,11 @@ class MessageList{
 
   MessageList(this.receiverName, this.receiverProfile, this.receiverID, this.latestMessage);
 }
+
+class CarBrand{
+  final String carId;
+  final String carImage;
+  final String carName;
+
+  CarBrand(this.carId, this.carImage, this.carName);
+}

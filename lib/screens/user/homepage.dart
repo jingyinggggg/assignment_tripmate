@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
+import 'package:assignment_tripmate/screens/user/currencyConverter.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:assignment_tripmate/screens/user/languageTranslator.dart';
@@ -185,7 +186,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
               // Handle navigation or other actions here.
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LanguageTranslatorScreen(userId: widget.userId))
+                MaterialPageRoute(builder: (context) => CurrencyConverterScreen(userId: widget.userId))
               );
             },
             style: ElevatedButton.styleFrom(
