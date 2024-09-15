@@ -1,9 +1,7 @@
-// ignore_for_file: prefer_const_constructors, sort_child_properties_last, non_constant_identifier_names
-
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,14 +16,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmNewPasswordController = TextEditingController();
 
-    @override
+  @override
   void dispose() {
     emailController.dispose();
     newPasswordController.dispose();
     confirmNewPasswordController.dispose();
     super.dispose();
   }
-
 
   bool newPasswordVisible = true;
   bool confirmNewPasswordVisible = true;
@@ -165,9 +162,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
-
-
-    // Method to show a dialog with a title and content
+  // Method to show a dialog with a title and content
   void _showDialog({
     required String title,
     required String content,
@@ -197,7 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter your email',
@@ -232,7 +227,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -254,7 +249,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: "Enter your new password",
@@ -301,7 +296,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -315,7 +310,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-   // Define a method to create the confirm new password TextField
+  // Define a method to create the confirm new password TextField
   Widget confirm_new_password() {
     return TextField(
       controller: confirmNewPasswordController,
@@ -323,7 +318,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: "Enter your new password again",
@@ -370,7 +365,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -386,6 +381,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Stack(
@@ -405,85 +403,87 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: const Color(0xFFEDF2F6).withOpacity(0.6),
             child: SafeArea(
               child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Back arrow icon aligned to the left
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const LoginScreen()),
-                            );
-                          },
-                          icon: Icon(Icons.arrow_back_outlined),
-                          iconSize: 25,
-                          color: Colors.black,
-                          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 60),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-                      child: Column(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05), // Responsive padding
+                  child: Column(
+                    children: [
+                      // Back arrow icon aligned to the left
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Center(
-                            child: Image.asset(
-                              'images/logo.png',
-                              height: 100,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Center(
-                            child: Text(
-                              'TripMate',
-                              style: TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                fontFamily: 'Inika',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          email(),
-                          const SizedBox(height: 20),
-                          new_password(),
-                          const SizedBox(height: 20),
-                          confirm_new_password(),
-                          const SizedBox(height: 40),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                _resetPassword();
-                              },
-                              child: const Text(
-                                'Reset Password',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF467BA1),
-                                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                                textStyle: const TextStyle(
-                                  fontSize: 22,
-                                  fontFamily: 'Inika',
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
+                          IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                              );
+                            },
+                            icon: Icon(Icons.arrow_back_outlined),
+                            iconSize: screenWidth * 0.08, // Responsive icon size
+                            color: Colors.black,
+                            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.02), // Responsive padding
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      SizedBox(height: screenHeight * 0.07), // Responsive height
+                      Container(
+                        child: Column(
+                          children: [
+                            Center(
+                              child: Image.asset(
+                                'images/logo.png',
+                                height: screenWidth * 0.3, // Responsive image height
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.03), // Responsive height
+                            const Center(
+                              child: Text(
+                                'TripMate',
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  fontFamily: 'Inika',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.03), // Responsive height
+                            email(),
+                            SizedBox(height: screenHeight * 0.03), // Responsive height
+                            new_password(),
+                            SizedBox(height: screenHeight * 0.03), // Responsive height
+                            confirm_new_password(),
+                            SizedBox(height: screenHeight * 0.05), // Responsive height
+                            Container(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  _resetPassword();
+                                },
+                                child: const Text(
+                                  'Reset Password',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF467BA1),
+                                  padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02), // Responsive vertical padding
+                                  textStyle: TextStyle(
+                                    fontSize: screenWidth * 0.05, // Responsive font size
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

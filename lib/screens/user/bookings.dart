@@ -38,7 +38,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
             Padding(
               padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
               child: Container(
-                height: 60,
+                height: 50,
                 child: TextField(
                   // controller: _searchController, // Bind search controller
                   // onChanged: (value) {
@@ -47,8 +47,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 20),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: Colors.blueGrey, width: 2),
@@ -67,7 +67,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     ),
                     hintText: "Search bookings ...",
                     hintStyle: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       color: Colors.grey.shade500,
                       fontWeight: FontWeight.bold,
                     ),
@@ -82,11 +82,11 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
               indicatorColor: Color(0xFF467BA1),
               indicatorSize: TabBarIndicatorSize.tab,
               labelStyle: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900
+                fontSize: 15,
+                fontWeight: FontWeight.bold
               ),
               unselectedLabelStyle: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w600
               ),
               tabs: [

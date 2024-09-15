@@ -168,7 +168,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       obscureText: obscureText,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: hintText,
@@ -176,15 +176,15 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
         prefixIcon: const Icon(
           Icons.lock,
           color: Color(0xFF467BA1),
+          size: 18,
         ),
         suffixIcon: IconButton(
           onPressed: onVisibilityToggle,
           icon: Icon(
             isVisible ? Icons.visibility_off : Icons.visibility,
+            size: 18,
           ),
         ),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(
@@ -208,7 +208,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -245,7 +245,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 40),
+        padding: const EdgeInsets.only(left: 10, right: 10, top: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -287,7 +287,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               },
               isVisible: confirmNewPasswordVisible,
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: isLoading ? null : _updatePassword,
               child: isLoading
@@ -302,8 +302,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 backgroundColor: const Color(0xFF467BA1),
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 textStyle: const TextStyle(
-                  fontSize: 22,
-                  fontFamily: 'Inika',
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
                 shape: RoundedRectangleBorder(

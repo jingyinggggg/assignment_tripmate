@@ -251,6 +251,9 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Stack(
@@ -330,60 +333,64 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
                       Center(child: CircularProgressIndicator(),
                       )
                     else
-                    ElevatedButton(
-                      onPressed: () {
-                        _saveUserData();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 22,
-                          fontFamily: 'Inika',
-                          fontWeight: FontWeight.bold,
-                        ),
-                        minimumSize: Size(380, 60),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 15, right: 15, bottom: 20),
+                        child: Column(
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                _saveUserData();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF467BA1),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                minimumSize: Size(screenWidth, screenHeight * 0.08),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
 
-                    SizedBox(height: 10),
+                            SizedBox(height: 10),
 
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF467BA1),
-                        textStyle: const TextStyle(
-                          fontSize: 22,
-                          fontFamily: 'Inika',
-                          fontWeight: FontWeight.bold,
-                        ),
-                        minimumSize: Size(380, 60),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF467BA1),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                minimumSize: Size(screenWidth, screenHeight * 0.08),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                'Back',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ]
+                        )
+                      )
+                    
                   ],
                 ),
               ),
@@ -400,7 +407,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Name',
@@ -431,7 +438,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -451,7 +458,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Email',
@@ -482,7 +489,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -508,7 +515,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         style: TextStyle(
           fontFamily: 'Inika',
           fontWeight: FontWeight.w800,
-          fontSize: 17,
+          fontSize: 14,
           color: _selectedDate == null ? Colors.grey.shade600 : Colors.black,
         ),
         readOnly: true,
@@ -541,7 +548,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           floatingLabelBehavior: FloatingLabelBehavior.always,
           labelStyle: const TextStyle(
             fontFamily: 'Inika',
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
             shadows: [
@@ -555,6 +562,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
             icon: const Icon(
               Icons.calendar_today_outlined,
               color: Color(0xFF467BA1),
+              size: 20,
             ),
             onPressed: () => _selectDate(context),
           ),
@@ -595,7 +603,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -624,7 +632,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.bold,
-        fontSize: 17,
+        fontSize: 14,
         color: Colors.black,
       ),
     );
@@ -636,7 +644,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Company Contact Number',
@@ -667,7 +675,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -687,7 +695,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Company Name',
@@ -718,7 +726,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -737,7 +745,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       controller: _companyAddressController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
         fontFamily: "inika",
       ),
       decoration: InputDecoration(
@@ -768,7 +776,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           fontFamily: "inika",
@@ -792,7 +800,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Password',
@@ -823,7 +831,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -837,6 +845,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           icon: Icon(
             passwordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.black54,
+            size: 20,
           ),
           onPressed: () {
             setState(() {
@@ -855,7 +864,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Confirm Password',
@@ -886,7 +895,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -900,6 +909,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           icon: Icon(
             confirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.black54,
+            size: 20,
           ),
           onPressed: () {
             setState(() {
@@ -918,7 +928,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
         color: Colors.black54
       ),
       decoration: InputDecoration(
@@ -950,7 +960,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -964,7 +974,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
           icon: const Icon(
             Icons.image,
             color: Color(0xFF467BA1),
-            size: 30,
+            size: 25,
           ),
           onPressed: () {
             selectImage();

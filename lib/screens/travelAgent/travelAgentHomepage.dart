@@ -32,61 +32,62 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _screens = [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-        child: Center(
-          child: Wrap(
-            spacing: 20, // Horizontal space between buttons
-            runSpacing: 25, // Vertical space between rows
-            alignment: WrapAlignment.start, 
-            children: [
-              _buildMenuButton(
-                context,
-                icon: "images/countries.png",
-                label: "Tour",
-                onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => TravelAgentViewCountryScreen(userId: widget.userId))
-                  );
-                },
-              ),
-              _buildMenuButton(
-                context,
-                icon: "images/registration_request.png",
-                label: "Car Rental",
-                onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => TravelAgentViewCarListingScreen(userId: widget.userId))
-                  );
-                },
-              ),
-              _buildMenuButton(
-                context,
-                icon: "images/manage_booking.png",
-                label: "Booking",
-                onPressed: () {
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                  // );
-                },
-              ),
-              _buildMenuButton(
-                context,
-                icon: "images/posting.png",
-                label: "Analytics Report",
-                onPressed: () {
-                  // Navigator.push(
-                  //   context, 
-                  //   MaterialPageRoute(builder: (context) => AdminManageCountryListScreen(userId: widget.userId))
-                  // );
-                },
-              ),
-            ],
-          ),
+      GridView.builder( // GridView replaces Wrap for scrollable grid
+        padding: const EdgeInsets.all(20.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // Two buttons per row
+          crossAxisSpacing: 20, // Horizontal spacing between buttons
+          mainAxisSpacing: 25,  // Vertical spacing between buttons
+          childAspectRatio: 1, // Keep square buttons
         ),
+        itemCount: 4, // Number of items (buttons) in grid
+        itemBuilder: (context, index) {
+          final menuItems = [
+            {
+              'icon': 'images/countries.png',
+              'label': 'Tour',
+              'onPressed': () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TravelAgentViewCountryScreen(userId: widget.userId)),
+                );
+              }
+            },
+            {
+              'icon': 'images/registration_request.png',
+              'label': 'Car Rental',
+              'onPressed': () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => TravelAgentViewCarListingScreen(userId: widget.userId)),
+                );
+              }
+            },
+            {
+              'icon': 'images/manage_booking.png',
+              'label': 'Booking',
+              'onPressed': () {
+                // Placeholder for Booking screen
+              }
+            },
+            {
+              'icon': 'images/posting.png',
+              'label': 'Analytics Report',
+              'onPressed': () {
+                // Placeholder for Analytics Report screen
+              }
+            }
+          ];
+
+          return _buildMenuButton(
+            context,
+            icon: menuItems[index]['icon'] as String,
+            label: menuItems[index]['label'] as String,
+            onPressed: menuItems[index]['onPressed'] as VoidCallback,
+          );
+        },
       ),
       ChatScreen(userId: widget.userId),
       TravelAgentAccountScreen(userId: widget.userId),
@@ -99,7 +100,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
         title: Text(_screenTitles[currentPageIndex]),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
@@ -119,32 +120,34 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
   }
 
   Widget _buildMenuButton(BuildContext context, {required String icon, required String label, required VoidCallback onPressed}) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Color(0xFF467BA1), width: 2),
+          side: const BorderSide(color: Color(0xFF467BA1), width: 2),
         ),
-        minimumSize: const Size(175, 175), // Adjust the size as needed
         elevation: 10,
-        shadowColor: Color(0xFF467BA1),
+        shadowColor: const Color(0xFF467BA1),
+        minimumSize: Size(screenWidth * 0.4, screenWidth * 0.4)
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image(
             image: AssetImage(icon),
-            width: 80,
-            height: 80,
+            width: screenWidth * 0.2, 
+            height: screenWidth * 0.2, 
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
             label,
-            textAlign: TextAlign.center, // Center text if it wraps to the next line
-            style: TextStyle(
-              fontSize: 17,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
               color: Color(0xFF467BA1),
               fontWeight: FontWeight.bold,
             ),

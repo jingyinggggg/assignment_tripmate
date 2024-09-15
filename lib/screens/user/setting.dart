@@ -15,6 +15,9 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -66,85 +69,87 @@ class _SettingScreenState extends State<SettingScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 30, left: 20),
+                padding: EdgeInsets.only(
+                  top: screenHeight * 0.03,
+                  left: screenWidth * 0.05,
+                ),
                 child: Container(
-                  width: 150,
-                  height: 170,
+                  width: screenWidth * 0.4,
+                  height: screenHeight * 0.25,
                   alignment: Alignment.center,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        userData['username'] ?? 'Please update your username',
-                        style: const TextStyle(
-                          fontSize: 19,
+                        userData['username'] ?? userData['name'],
+                        style: TextStyle(
+                          fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 10,),
+                      SizedBox(height: 10),
                       Container(
-                        width: 128,  // Width and height should match the CircleAvatar's diameter (2 * radius)
-                        height: 128,
+                        width: screenWidth * 0.25,
+                        height: screenWidth * 0.25,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Color(0xFF467BA1),  // Border color
-                            width: 3.0,  // Border width
+                            color: const Color(0xFF467BA1),
+                            width: 3.0,
                           ),
                         ),
                         child: userData['profileImage'] != null
                             ? CircleAvatar(
-                                radius: 64,
+                                radius: screenWidth * 0.125,
                                 backgroundImage: NetworkImage(userData['profileImage']),
                               )
-                            : const CircleAvatar(
-                                radius: 64,
-                                backgroundImage: AssetImage("images/profile.png"),
+                            : CircleAvatar(
+                                radius: screenWidth * 0.125,
+                                backgroundImage: const AssetImage("images/profile.png"),
                                 backgroundColor: Colors.white,
                               ),
-                      )
-
-                    ]
+                      ),
+                    ],
                   ),
                 ),
               ),
               Positioned(
-                top: 75,
-                left: 30,
-                child: const Image(
+                top: screenHeight * 0.07,
+                left: screenWidth * 0.1,
+                child: Image(
                   image: AssetImage("images/route line.png"),
-                  height: 200,
-                  width: 340,
+                  height: screenHeight * 0.25,
+                  width: screenWidth * 0.75,
                 ),
               ),
               Positioned(
-                top: 60,
-                left: 321,
+                top: screenHeight * 0.06,
+                left: screenWidth * 0.745,
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       "Setting",
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
                     Image.asset(
                       'images/location-pin.png',
-                      width: 50,
-                      height: 50,
+                      width: screenWidth * 0.1,
+                      height: screenWidth * 0.1,
                     ),
                   ],
                 ),
               ),
-
               Padding(
-                padding: const EdgeInsets.only(top: 260, left: 10, right: 10), // Space before the container
+                padding: EdgeInsets.only(top: screenHeight * 0.35, left: 10, right: 10),
                 child: Column(
                   children: [
-                    ElevatedButton(
+                    _buildButton(
+                      icon: Icons.lock,
+                      text: "Change Password",
                       onPressed: () {
                         Navigator.push(
                           context, 
@@ -153,135 +158,63 @@ class _SettingScreenState extends State<SettingScreen> {
                           )
                         );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF467BA1), width: 3),
-                        ),
-                        minimumSize: const Size(120, 65),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: const [
-                          Icon(
-                            Icons.lock,
-                            color: Colors.black,
-                            size: 25,
-                          ),
-                          SizedBox(width: 15),
-
-                          SizedBox(
-                            width: 270,
-                            child: Text(
-                              "Change Password",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.black,
-                          ),
-                        ],
-                      ),
                     ),
-
                     SizedBox(height: 20),
-
-                    ElevatedButton(
+                    _buildButton(
+                      icon: Icons.delete_forever,
+                      text: "Delete Account",
                       onPressed: () {
                         // Handle navigation or other actions here.
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF467BA1), width: 3),
-                        ),
-                        minimumSize: const Size(120, 65),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: const [
-                          Icon(
-                            Icons.delete_forever,
-                            color: Colors.black,
-                            size: 25,
-                          ),
-                          SizedBox(width: 15),
-
-                          SizedBox(
-                            width: 270,
-                            child: Text(
-                              "Delete Account",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.black,
-                          ),
-                        ],
-                      ),
                     ),
-
                     SizedBox(height: 20),
-
-                    ElevatedButton(
+                    _buildButton(
+                      icon: AssetImage("images/leave_feedback.png"),
+                      text: "Leave a feedback",
                       onPressed: () {
                         // Handle navigation or other actions here.
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF467BA1), width: 3),
-                        ),
-                        minimumSize: const Size(120, 65),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: const [
-                          ImageIcon(
-                            AssetImage("images/leave_feedback.png"),  // The path to your image asset
-                            color: Colors.black,  // Set the color of the image icon
-                            size: 25,  // Set the size of the image icon
-                          ),
-
-                          SizedBox(width: 15),
-
-                          SizedBox(
-                            width: 270,
-                            child: Text(
-                              "Leave a feedback",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.black,
-                          ),
-                        ],
-                      ),
                     ),
                   ],
-                )
+                ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildButton({required dynamic icon, required String text, required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: Color(0xFF467BA1), width: 3),
+          ),
+          minimumSize: const Size.fromHeight(55),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            if (icon is IconData)
+              Icon(icon, color: Colors.black, size: 20)
+            else if (icon is ImageProvider)
+              ImageIcon(icon, color: Colors.black, size: 20),
+            SizedBox(width: 15),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_rounded, color: Colors.black, size: 20),
+          ],
+        ),
       ),
     );
   }

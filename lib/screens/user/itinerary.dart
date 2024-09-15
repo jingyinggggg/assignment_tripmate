@@ -26,8 +26,8 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
               children: [
                 Image(
                   image: AssetImage("images/itineraryPic.png"),
-                  width: 200,
-                  height: 200,
+                  width: MediaQuery.of(context).size.width * 0.5,
+                  height: MediaQuery.of(context).size.width * 0.5,
                 ),
                 SizedBox(height: 20,),
                 Container(
@@ -44,18 +44,19 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                 ),
                 SizedBox(height: 40),
                 Container(
+                  padding: EdgeInsets.only(left: 10, right: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Container(
-                        width: 180,
-                        height: 60,
+                        width: 150,
+                        height: 50,
                         child: ElevatedButton(
                           onPressed: (){}, 
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF467BA1),
                             textStyle: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                             shape: RoundedRectangleBorder(
@@ -72,14 +73,14 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                         ),
                       ),
                       Container(
-                        width: 180,
-                        height: 60,
+                        width: 150,
+                        height: 50,
                         child: ElevatedButton(
                           onPressed: (){}, 
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF467BA1),
                             textStyle: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                             shape: RoundedRectangleBorder(

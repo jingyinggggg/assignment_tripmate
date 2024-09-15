@@ -126,7 +126,7 @@ class _ViewCityScreenState extends State<ViewCityScreen> {
                       ),
                       hintText: "Search city...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -155,7 +155,7 @@ class _ViewCityScreenState extends State<ViewCityScreen> {
                 child: Text(
                   "No cities available for the selected country.",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
@@ -209,7 +209,7 @@ class _ViewCityScreenState extends State<ViewCityScreen> {
                   city.cityName, 
                   style: const TextStyle(
                     color: Colors.black,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(

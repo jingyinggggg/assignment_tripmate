@@ -34,7 +34,6 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _emailController = TextEditingController();
     _contactController = TextEditingController();
     _addressController = TextEditingController();
-    _selectedGender = null;
   }
 
   @override
@@ -58,6 +57,8 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -93,14 +94,7 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
 
           var userData = snapshot.data!.data() as Map<String, dynamic>;
 
-          // Set initial data only once
-          if (_nameController.text.isEmpty &&
-              _usernameController.text.isEmpty &&
-              _emailController.text.isEmpty &&
-              _contactController.text.isEmpty &&
-              _addressController.text.isEmpty &&
-              _selectedGender == null &&
-              _selectedDate == null) {
+          if (_nameController.text.isEmpty) {
             _nameController.text = userData['name'] ?? '';
             _usernameController.text = userData['username'] ?? '';
             _emailController.text = userData['email'] ?? '';
@@ -126,77 +120,65 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                padding: const EdgeInsets.all(10),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 30),
+                      padding: const EdgeInsets.symmetric(vertical: 30),
                       child: Column(
                         children: [
                           Stack(
                             children: [
-                              _image != null
-                                  ? CircleAvatar(
-                                      radius: 64,
-                                      backgroundImage: MemoryImage(_image!),
-                                    )
-                                  : userData['profileImage'] != null
-                                      ? CircleAvatar(
-                                          radius: 64,
-                                          backgroundImage: NetworkImage(userData['profileImage']),
-                                        )
-                                      : const CircleAvatar(
-                                          radius: 64,
-                                          backgroundImage: AssetImage("images/profile.png"),
-                                          backgroundColor: Colors.white,
-                                        ),
+                              CircleAvatar(
+                                radius: screenWidth * 0.15,
+                                backgroundImage: _image != null
+                                    ? MemoryImage(_image!)
+                                    : userData['profileImage'] != null
+                                        ? NetworkImage(userData['profileImage'])
+                                        : const AssetImage("images/profile.png"),
+                                backgroundColor: Colors.white,
+                              ),
                               Positioned(
+                                bottom: -13,
+                                left: 70,
                                 child: IconButton(
                                   icon: const Icon(
                                     Icons.add_a_photo,
                                     color: Colors.black,
+                                    size: 20,
                                   ),
                                   onPressed: selectImage,
                                 ),
-                                bottom: -13,
-                                left: 80,
                               ),
                             ],
                           ),
                           const SizedBox(height: 40),
-                          username(),
+                          _buildTextField(_nameController, 'Name', 'Please update your name...'),
                           const SizedBox(height: 20),
-                          name(),
+                          _buildTextField(_usernameController, 'Username', 'Please update your username...', maxLength: 12),
                           const SizedBox(height: 20),
-                          email(),
+                          _buildTextField(_emailController, 'Email', 'Please update your email...'),
                           const SizedBox(height: 20),
-                          contact(),
+                          _buildTextField(_contactController, 'Contact', 'Please update your contact...'),
                           const SizedBox(height: 20),
-                          dob(),
+                          _buildReadOnlyTextField('Date of Birth', _selectedDate != null ? DateFormat('dd/MM/yyyy').format(_selectedDate!) : 'Select Date of Birth'),
                           const SizedBox(height: 20),
-                          gender(),
+                          _buildReadOnlyTextField('Gender', _selectedGender ?? 'Not Specified'),
                           const SizedBox(height: 20),
-                          address(),
+                          _buildTextField(_addressController, 'Address', 'Please update your address...', maxLines: null),
                           const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: isUpdating ? null : _updateProfile,
-                            child: const Text(
-                              'Update',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF467BA1),
-                              padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 15),
-                              textStyle: const TextStyle(
-                                fontSize: 22,
-                                fontFamily: 'Inika',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: isUpdating ? null : _updateProfile,
+                              child: const Text('Update', style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF467BA1),
+                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ),
@@ -206,10 +188,9 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                   ],
                 ),
               ),
-              if (isUpdating) // Display the loading indicator if isUpdating is true
+              if (isUpdating)
                 Center(
                   child: Container(
-                    // color: Colors.black.withOpacity(0.5), // Optional: semi-transparent background
                     child: const CircularProgressIndicator(),
                   ),
                 ),
@@ -220,363 +201,49 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     );
   }
 
-  Widget name() {
+  Widget _buildTextField(TextEditingController controller, String label, String hintText, {int? maxLength, int? maxLines}) {
     return TextField(
-      controller: _nameController,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-        color: Colors.black
-      ),
-      decoration: InputDecoration(
-        hintText: 'Please update your name...',
-        labelText: 'Name',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
+      controller: controller,
+      maxLength: maxLength,
+      maxLines: maxLines,
+      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+      decoration: _inputDecoration(label, hintText),
     );
   }
 
-  Widget username() {
-    return TextField(
-      controller: _usernameController,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-      ),
-      maxLength: 12,
-      decoration: InputDecoration(
-        hintText: 'Please update your username...',
-        labelText: 'Username',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget email() {
-    return TextField(
-      controller: _emailController,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-      ),
-      decoration: InputDecoration(
-        hintText: 'Please update your email...',
-        labelText: 'Email',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget contact() {
-    return TextField(
-      controller: _contactController,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-      ),
-      decoration: InputDecoration(
-        hintText: 'Please update your contact...',
-        labelText: 'Contact',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget address() {
-    return TextField(
-      controller: _addressController,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-      ),
-      textAlign: TextAlign.justify,
-      decoration: InputDecoration(
-        hintText: 'Please update your address...',
-        labelText: 'Address',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
-      keyboardType: TextInputType.multiline,
-      maxLines: null, 
-    );
-  }
-
-  Widget gender() {
+  Widget _buildReadOnlyTextField(String label, String text) {
     return TextFormField(
       readOnly: true,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 17,
-        color: Colors.black54
-      ),
-      decoration: InputDecoration(
-        labelText: 'Gender',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
-            ),
-          ],
-        ),
-      ),
-      controller: TextEditingController(
-        text: _selectedGender ?? 'Not Specified',
-      ),
+      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Colors.black54),
+      decoration: _inputDecoration(label, text),
+      controller: TextEditingController(text: text),
     );
   }
 
-
-  Widget dob() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 0), // Adjust padding as needed
-      child: TextFormField(
-        readOnly: true,
-        style: const TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 17,
-          color: Colors.black54
-        ),
-        decoration: InputDecoration(
-          hintText: 'Date of Birth',
-          labelText: 'Date of Birth',
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          labelStyle: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-            shadows: [
-              Shadow(
-                offset: Offset(0.5, 0.5),
-                color: Colors.black87,
-              ),
-            ],
-          ),
-        ),
-        controller: TextEditingController(
-          text: _selectedDate != null
-              ? DateFormat('dd/MM/yyyy').format(_selectedDate!)
-              : 'Select Date of Birth',
-        ),
+  InputDecoration _inputDecoration(String label, String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+      ),
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      labelStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+        shadows: [Shadow(offset: Offset(0.5, 0.5), color: Colors.black87)],
       ),
     );
   }

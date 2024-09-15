@@ -12,10 +12,13 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMixin {
   List<MessageList> _MessageList = [];
   List<MessageList> _foundedMessageList = [];
   bool isLoading = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState(){
@@ -125,14 +128,14 @@ class _ChatScreenState extends State<ChatScreen> {
               Padding(
                 padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
                 child: Container(
-                  height: 60,
+                  height: 50,
                   child: TextField(
                     onChanged: (value) => onSearch(value),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                      contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 20,),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide(color: Colors.blueGrey, width: 2), 
@@ -151,7 +154,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       hintText: "Search chat...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),

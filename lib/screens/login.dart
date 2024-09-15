@@ -235,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter your email',
@@ -243,6 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
         prefixIcon: const Icon(
           Icons.email,
           color: Color(0xFF467BA1),
+          size: 20,
         ),
         filled: true,
         fillColor: Colors.white.withOpacity(0.5),
@@ -270,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -292,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
       style: const TextStyle(
         fontFamily: 'Inika',
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: "Enter your password",
@@ -300,6 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
         prefixIcon: const Icon(
           Icons.lock,
           color: Color(0xFF467BA1),
+          size: 20,
         ),
         suffixIcon: IconButton(
           onPressed: () {
@@ -309,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
           icon: Icon(
             passwordVisible ? Icons.visibility_off : Icons.visibility,
+            size: 20,
           ),
         ),
         filled: true,
@@ -337,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
           fontFamily: 'Inika',
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -366,6 +369,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true, // Allow the screen to resize when the keyboard appears
       body: Stack(
@@ -389,23 +395,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   children: [
                     // Logo
-                    SizedBox(height: 170), // Adjust the top position as needed
+                    SizedBox(height: screenHeight * 0.2), // Adjust the top position as needed
                     Center(
                       child: Image.asset(
-                        'images/logo.png', // Your logo asset
-                        height: 100,
+                        'images/logo.png',
+                        height: screenWidth * 0.3, // Responsive image height
                       ),
                     ),
-
-                    // App name
-                    const SizedBox(height: 20), // Adjust the space as needed
+                    SizedBox(height: screenHeight * 0.03), // Responsive height
                     const Center(
                       child: Text(
                         'TripMate',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black, // Change the text color to black
+                          color: Colors.black,
                           fontFamily: 'Inika',
                         ),
                       ),
@@ -430,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const Text(
                               "Remember me",
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 12,
                                 fontFamily: 'Inika',
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black87,
@@ -449,7 +453,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             "Forgot password?",
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 12,
                               fontFamily: 'Inika',
                               fontWeight: FontWeight.w900,
                               color: Colors.black87,
@@ -466,10 +470,11 @@ class _LoginScreenState extends State<LoginScreen> {
                      // Show loading indicator or login button
                     isLoading
                       ? const CircularProgressIndicator() // Show loading indicator
-                      : Center(
+                      : Container(
+                          width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              _login(); // Call _login method
+                              _login();
                             },
                             child: const Text(
                               'Login',
@@ -479,11 +484,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF467BA1),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 150, vertical: 15),
-                              textStyle: const TextStyle(
-                                fontSize: 22,
-                                fontFamily: 'Inika',
+                              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02), // Responsive vertical padding
+                              textStyle: TextStyle(
+                                fontSize: screenWidth * 0.05, // Responsive font size
                                 fontWeight: FontWeight.bold,
                               ),
                               shape: RoundedRectangleBorder(

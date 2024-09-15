@@ -122,7 +122,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                       ),
                       hintText: "Search country...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -191,7 +191,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
                   country.countryName, 
                   style: const TextStyle(
                     color: Colors.black,
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     shadows: [
                       Shadow(

@@ -269,7 +269,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                                   ),
                                   child: _buildImage(travelAgentData?['profileImage'], 75, 110),
                                 ),
-                                SizedBox(width: 20),
+                                SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,7 +497,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
   String _formatDate(dynamic date) {
     if (date is Timestamp) {
       DateTime dt = date.toDate();
-      return DateFormat('yyyy-MM-dd').format(dt);
+      return DateFormat('dd-MM-yyyy').format(dt);
     }
     return date?.toString() ?? 'N/A';
   }

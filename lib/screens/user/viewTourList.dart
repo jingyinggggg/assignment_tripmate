@@ -156,7 +156,7 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 20,),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Colors.blueGrey, width: 2),
@@ -173,7 +173,7 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Colors.red, width: 2),
                       ),
-                      hintText: "Search tour package available with agency name...",
+                      hintText: "Search tour package with agency name...",
                       hintStyle: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade500,
@@ -196,7 +196,7 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
                   'No Image Available',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

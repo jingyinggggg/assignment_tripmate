@@ -1074,9 +1074,9 @@ void _removeItineraryRow(int index) {
           ),
           child: Table(
             columnWidths: const {
-              0: FlexColumnWidth(0.45),
-              1: FlexColumnWidth(0.95),
-              2: FlexColumnWidth(1.25),
+              0: FlexColumnWidth(0.5),
+              1: FlexColumnWidth(0.85),
+              2: FlexColumnWidth(1.2),
               3: FlexColumnWidth(0.95),
               4: FlexColumnWidth(0.4),
             },
@@ -1180,10 +1180,10 @@ void _removeItineraryRow(int index) {
           ),
           child: Table(
             columnWidths: const {
-              0: FlexColumnWidth(0.4),
+              0: FlexColumnWidth(0.45),
               1: FlexColumnWidth(1.0),
               2: FlexColumnWidth(1.0),
-              3: FlexColumnWidth(1.25),
+              3: FlexColumnWidth(1.1),
               4: FlexColumnWidth(0.4),
             },
             border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
