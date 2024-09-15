@@ -16,6 +16,9 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -75,26 +78,28 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                 color: const Color(0xFFEDF2F6).withOpacity(0.6),
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 30, left: 20),
+                padding: EdgeInsets.only(
+                  top: screenHeight * 0.03,
+                  left: screenWidth * 0.05,
+                ),
                 child: Container(
-                  width: 150,
-                  height: 170,
+                  width: screenWidth * 0.4,
+                  height: screenHeight * 0.25,
                   alignment: Alignment.center,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         userData['username'] ?? userData['name'],
                         style: const TextStyle(
-                          fontSize: 19,
+                          fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 10,),
                       Container(
-                        width: 128,  // Width and height should match the CircleAvatar's diameter (2 * radius)
-                        height: 128,
+                        width: screenWidth * 0.25,
+                        height: screenWidth * 0.25,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -104,11 +109,11 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                         ),
                         child: userData['profileImage'] != null
                             ? CircleAvatar(
-                                radius: 64,
+                                radius: screenWidth * 0.125,
                                 backgroundImage: NetworkImage(userData['profileImage']),
                               )
-                            : const CircleAvatar(
-                                radius: 64,
+                            : CircleAvatar(
+                                radius: screenWidth * 0.125,
                                 backgroundImage: AssetImage("images/profile.png"),
                                 backgroundColor: Colors.white,
                               ),
@@ -119,103 +124,94 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                 ),
               ),
               Positioned(
-                top: 75,
-                left: 30,
-                child: const Image(
+                top: screenHeight * 0.07,
+                left: screenWidth * 0.1,
+                child: Image(
                   image: AssetImage("images/route line.png"),
-                  height: 200,
-                  width: 340,
+                  height: screenHeight * 0.25,
+                  width: screenWidth * 0.75,
                 ),
               ),
               Positioned(
-                top: 60,
-                left: 322,
+                top: screenHeight * 0.06,
+                left: screenWidth * 0.745,
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       "Profile",
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.bold,
                         color: Colors.black,
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
                     Image.asset(
                       'images/location-pin.png',
-                      width: 50,
-                      height: 50,
+                      width: screenWidth * 0.1,
+                      height: screenWidth * 0.1,
                     ),
                   ],
                 ),
               ),
 
               Positioned(
-                top:270,
-                left: 10,
-                right: 10,
+                top: screenHeight * 0.3,
+                left: screenWidth * 0.05,
+                right: screenWidth * 0.05,
                 child: Container(
-                  width: 390, // Make the container take the full width of its parent
                   decoration: BoxDecoration(
-                    color: Color(0xFF467BA1), // Blue color
-                    borderRadius: BorderRadius.circular(20), // Adjust the border radius
+                    color: Color(0xFF467BA1), 
+                    borderRadius: BorderRadius.circular(15), 
                   ),
-                  // padding: EdgeInsets.only(left: 10, right: 10),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, // Let the column size adjust based on its children
+                    mainAxisSize: MainAxisSize.min, 
                     children: [
                       // The top blue part
                       Container(
-                        padding: EdgeInsets.all(10), // Add padding if needed
+                        padding: EdgeInsets.all(screenWidth * 0.03),
                         decoration: BoxDecoration(
                           color: Color(0xFF467BA1), // Same blue color
                           borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15),
                           ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
+                          children: [
                             Text(
                               "ACCOUNT INFO",
                               style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white),
                             ),
-                            SizedBox(width: 110),
+                            Spacer(),
                             Icon(
                               Icons.airplane_ticket_outlined,
                               color: Colors.white,
-                              size: 25,
+                              size: screenWidth * 0.05,
                             )
                           ],
                         ),
                       ),
 
-                      // The middle white part, which will expand or shrink based on content
-                      Flexible(
-                        child: Container(
-                          padding: EdgeInsets.all(10),
-                          color: Colors.white,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                               Row(
-                                children: [
-                                  Container(
-                                    width: 260,
+                      Container(
+                        padding: EdgeInsets.all(screenWidth * 0.03),
+                        color: Colors.white,
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 7,
+                                  child: Container(
+                                    padding: EdgeInsets.only(right: 5),
                                     decoration: BoxDecoration(
-                                      border: Border(
-                                        right: BorderSide(
-                                          color: Color(0xFF467BA1),
-                                          width: 2
-                                        )
-                                      )
+                                      border: Border(right: BorderSide(color: Color(0xFF467BA1), width: 2))
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
@@ -223,17 +219,20 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             const Text(
                                               "Name: ",
                                               style: TextStyle(
-                                                  fontSize: 15,
+                                                  fontSize: 12,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               userData['name'] ?? '',
                                               style: const TextStyle(
-                                                fontSize: 15,
+                                                fontSize: 12,
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.w500
                                               ),
+                                              textAlign: TextAlign.justify,
+                                              maxLines: null,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ],
                                         ),
@@ -243,14 +242,14 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             const Text(
                                               "DOB: ",
                                               style: TextStyle(
-                                                  fontSize: 15,
+                                                  fontSize: 12,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               dob != null ? formatDate(dob) : '',
                                               style: const TextStyle(
-                                                fontSize: 15,
+                                                fontSize: 12,
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.w500
                                               ),
@@ -263,17 +262,20 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             const Text(
                                               "Email: ",
                                               style: TextStyle(
-                                                  fontSize: 15,
+                                                  fontSize: 12,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold),
                                             ),
                                             Text(
                                               userData['email'] ?? '',
                                               style: const TextStyle(
-                                                fontSize: 15,
+                                                fontSize: 12,
                                                 color: Colors.black,
                                                 fontWeight: FontWeight.w500
                                               ),
+                                              textAlign: TextAlign.justify,
+                                              maxLines: null,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ],
                                         ),
@@ -283,7 +285,7 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             const Text(
                                               "Account Status: ",
                                               style: TextStyle(
-                                                  fontSize: 15,
+                                                  fontSize: 12,
                                                   color: Colors.black,
                                                   fontWeight: FontWeight.bold),
                                             ),
@@ -295,13 +297,13 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                                       Text(
                                                         "Reviewing",
                                                         style: TextStyle(
-                                                          fontSize: 15,
+                                                          fontSize: 12,
                                                           color: Colors.orange, // You can change the color as needed
                                                           fontWeight: FontWeight.w900,
                                                         ),
                                                       ),
                                                       SizedBox(width: 5),
-                                                      Icon(Icons.hourglass_empty, color: Colors.orange), // Icon for reviewing
+                                                      Icon(Icons.hourglass_empty, color: Colors.orange, size: 20), // Icon for reviewing
                                                     ],
                                                   )
                                                 else if (userData['accountApproved'] == 1)
@@ -310,13 +312,13 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                                       Text(
                                                         "Approved",
                                                         style: TextStyle(
-                                                          fontSize: 15,
+                                                          fontSize: 12,
                                                           color: Colors.green, // You can change the color as needed
                                                           fontWeight: FontWeight.w500,
                                                         ),
                                                       ),
                                                       SizedBox(width: 5),
-                                                      Icon(Icons.check_circle, color: Colors.green), // Icon for approved
+                                                      Icon(Icons.check_circle, color: Colors.green, size: 20), // Icon for approved
                                                     ],
                                                   )
                                                 else
@@ -329,26 +331,26 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                         ),
                                       ],
                                     ),
-                                  ),
-
-                                  SizedBox(width: 10),
-
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
+                                  )
+                                ),
+                                SizedBox(width: 5),
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         "Username:",
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 15,
+                                          fontSize: 12,
                                           color: Colors.black,
                                         ),
                                       ),
                                       Text(
                                         userData['username']?? '-',
                                         style: TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 12,
                                           color: Colors.black,
                                           fontWeight: FontWeight.w500
                                         ),
@@ -357,116 +359,120 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                       Text(
                                         "Gender: ",
                                         style: TextStyle(
-                                            fontSize: 15,
+                                            fontSize: 12,
                                             color: Colors.black,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text(
                                         userData['gender'] ?? 'Null',
                                         style: const TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 12,
                                           color: Colors.black,
                                           fontWeight: FontWeight.w500
                                         ),
                                       ),
-
                                     ],
                                   ),
-                                ]
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    top: BorderSide(
-                                      color: Color(0xFF467BA1),
-                                      width: 2,
-                                    )
-                                  )
                                 ),
-                                padding: EdgeInsets.symmetric(vertical: 10),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          "Company Name: ",
-                                          style: TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          userData['companyName'] ?? '',
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
 
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          "Company Contact: ",
-                                          style: TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          userData['companyContact'] ?? '',
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          "Company Address: ",
-                                          style: TextStyle(
-                                              fontSize: 15,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          userData['companyAddress'] ?? '',
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.w500
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(
+                                    color: Color(0xFF467BA1),
+                                    width: 2,
+                                  )
                                 )
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Company Name: ",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        userData['companyName'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500
+                                        ),
+                                        textAlign: TextAlign.justify,
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    ],
+                                  ),
 
-                      // The bottom blue part
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Company Contact: ",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        userData['companyContact'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        "Company Address: ",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        userData['companyAddress'] ?? '',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500
+                                        ),
+                                        textAlign: TextAlign.justify,
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            ),
+
+                          ],
+                        ), 
+                        
+                      ),
                       Container(
-                        height:25,
-                        padding: EdgeInsets.all(10), // Add padding if needed
+                        height: screenHeight * 0.04,
+                        padding: EdgeInsets.all(screenWidth * 0.03),
                         decoration: BoxDecoration(
-                          color: Color(0xFF467BA1), // Same blue color
+                          color: const Color(0xFF467BA1),
                           borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
                           ),
                         ),
                       ),
@@ -475,10 +481,11 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                 ),
               ),
 
-              Padding(
-                padding: const EdgeInsetsDirectional.only(top: 500),
-                child: Container(
-                  alignment: Alignment.center,
+              Positioned(
+                bottom: screenHeight * 0.08,
+                left: 0, // Remove left positioning
+                right: 0, // Remove right positioning
+                child: Center(
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -494,11 +501,12 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF467BA1),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 70, vertical: 15),
-                      textStyle: const TextStyle(
-                        fontSize: 22,
-                        fontFamily: 'Inika',
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.15,
+                        vertical: screenHeight * 0.02,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                       shape: RoundedRectangleBorder(
@@ -507,7 +515,7 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                     ),
                   ),
                 ),
-              )
+              ),
             ],
           );
         },

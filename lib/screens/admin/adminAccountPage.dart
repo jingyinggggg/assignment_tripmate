@@ -1,8 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/adminProfile.dart';
 import 'package:assignment_tripmate/screens/admin/adminSetting.dart';
 import 'package:assignment_tripmate/screens/login.dart';
-// import 'package:assignment_tripmate/screens/user/profile.dart';
-// import 'package:assignment_tripmate/screens/user/setting.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,6 +19,9 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: StreamBuilder<DocumentSnapshot>(
@@ -58,26 +59,23 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
               ),
 
               Padding(
-                padding: const EdgeInsets.only(top: 30, left: 10),
+                padding: EdgeInsets.only(top: screenHeight * 0.02, left: screenWidth * 0.08 ,),
                 child: Container(
-                  width: 150,
-                  height: 170,
-                  alignment: Alignment.center,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
                         username,
                         style: const TextStyle(
-                          fontSize: 19,
+                          fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 10),
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: screenWidth * 0.25,  
+                        height: screenWidth * 0.25,
                         decoration: BoxDecoration(
                           color: Colors.white, // Set background color
                           shape: BoxShape.circle,
@@ -101,17 +99,17 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
               Stack(
                 children: [
                   Positioned(
-                    top: 120,
-                    left: 30,
+                    top: screenHeight * 0.115,
+                    left: screenWidth * 0.06,
                     child: Image(
                       image: AssetImage("images/flight_line.png"),
-                      height: 500,
-                      width: 330,
+                      height: screenHeight * 0.6,
+                      width: screenWidth * 0.75,
                     ),
                   ),
                   Positioned(
-                    top: 160,
-                    left: 260,
+                    top: screenHeight * 0.18,
+                    left: screenWidth * 0.6,
                     child: Column(
                       children: [
                         const Text(
@@ -119,7 +117,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
-                              fontSize: 16),
+                              fontSize: 14),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -132,8 +130,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           },
                           child: Image.asset(
                             'images/location-pin.png',
-                            width: 50,
-                            height: 50,
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
                           ),
                         ),
                       ],
@@ -170,8 +168,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: 320,
-                    left: 160,
+                    top: screenHeight * 0.37,
+                    left: screenWidth * 0.26,
                     child: Column(
                       children: [
                         const Text(
@@ -180,7 +178,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
-                              fontSize: 16),
+                              fontSize: 14),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -193,8 +191,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           },
                           child: Image.asset(
                             'images/location-pin.png',
-                            width: 50,
-                            height: 50,
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
                           ),
                         ),
                       ],
@@ -261,8 +259,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: 500,
-                    left: 70,
+                    top: screenHeight * 0.58,
+                    left: screenWidth * 0.12,
                     child: Column(
                       children: [
                         const Text(
@@ -270,7 +268,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
-                              fontSize: 16),
+                              fontSize: 14),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -283,8 +281,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           },
                           child: Image.asset(
                             'images/location-pin.png',
-                            width: 50,
-                            height: 50,
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
                           ),
                         ),
                       ],
@@ -321,8 +319,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: 520,
-                    left: 330,
+                    top: screenHeight * 0.61,
+                    left: screenWidth * 0.74,
                     child: Column(
                       children: [
                         const Text(
@@ -330,7 +328,7 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
-                              fontSize: 16),
+                              fontSize: 14),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -344,20 +342,20 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                           },
                           child: Image.asset(
                             'images/location-pin.png',
-                            width: 50,
-                            height: 50,
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Positioned(
-                    top: 600,
-                    left: 355,
+                    top: screenHeight * 0.68,
+                    left: screenWidth * 0.81,
                     child: Image.asset(
                       'images/flag.png',
-                      width: 50,
-                      height: 50,
+                      width: screenWidth * 0.1,
+                      height: screenWidth * 0.1,
                     ),
                   ),
                 ],

@@ -20,10 +20,11 @@ class AdminCustomBottomNavBar extends StatelessWidget {
             return const TextStyle(
               fontWeight: FontWeight.w800,
               color: Colors.white,
-              fontFamily: "inika"
+              fontFamily: "inika",
+              fontSize: 12,
             );
           }
-          return const TextStyle(color: Colors.white, fontFamily: "inika");
+          return const TextStyle(color: Colors.white, fontFamily: "inika",fontSize: 12,);
         }),
         iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((Set<WidgetState> states) {
           if (states.contains(WidgetState.selected)) {
@@ -38,15 +39,15 @@ class AdminCustomBottomNavBar extends StatelessWidget {
         backgroundColor: const Color(0xFF749CB9),
         destinations: const [
           NavigationDestination(
-            icon: ImageIcon(AssetImage("images/home.png")),
+            icon: ImageIcon(AssetImage("images/home.png"), size: 20),
             label: "Home",
           ),
           NavigationDestination(
-            icon: ImageIcon(AssetImage("images/chat.png")),
+            icon: ImageIcon(AssetImage("images/chat.png"), size: 20),
             label: 'Messages',
           ),
           NavigationDestination(
-            icon: ImageIcon(AssetImage("images/account.png")),
+            icon: ImageIcon(AssetImage("images/account.png"), size: 20),
             label: 'Account',
           ),
         ],

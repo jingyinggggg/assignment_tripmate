@@ -168,7 +168,7 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
       obscureText: obscureText,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: hintText,
@@ -176,11 +176,13 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
         prefixIcon: const Icon(
           Icons.lock,
           color: Color(0xFF467BA1),
+          size: 18,
         ),
         suffixIcon: IconButton(
           onPressed: onVisibilityToggle,
           icon: Icon(
             isVisible ? Icons.visibility_off : Icons.visibility,
+            size: 18,
           ),
         ),
         filled: true,
@@ -208,7 +210,7 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -301,8 +303,7 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
                 backgroundColor: const Color(0xFF467BA1),
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 textStyle: const TextStyle(
-                  fontSize: 22,
-                  fontFamily: 'Inika',
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
                 shape: RoundedRectangleBorder(

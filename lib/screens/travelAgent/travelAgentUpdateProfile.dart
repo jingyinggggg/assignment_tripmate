@@ -16,27 +16,23 @@ class TravelAgentUpdateProfileScreen extends StatefulWidget {
 }
 
 class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfileScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _usernameController;
-  late TextEditingController _emailController;
-  late TextEditingController _companyNameController;
-  late TextEditingController _companyContactController;
-  late TextEditingController _companyAddressController;
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _companyNameController = TextEditingController();
+  TextEditingController _companyContactController = TextEditingController();
+  TextEditingController _companyAddressController = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedGender;
+  String? existingProfielURL;
   Uint8List? _image;
   bool isUpdating = false;
+  bool _isDataInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _usernameController = TextEditingController();
-    _emailController = TextEditingController();
-    _companyNameController = TextEditingController();
-    _companyContactController = TextEditingController();
-    _companyAddressController = TextEditingController();
-    _selectedGender = null;
+    _fetchTravelAgentData();
   }
 
   @override
@@ -59,8 +55,50 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
     }
   }
 
+  Future<void> _fetchTravelAgentData() async{
+    setState(() {
+      _isDataInitialized = true;
+    });
+    try{
+      DocumentReference TARef = FirebaseFirestore.instance.collection('travelAgent').doc(widget.userId);
+      DocumentSnapshot TASnapshot = await TARef.get();
+
+      if(TASnapshot.exists){
+        Map<String, dynamic>? data = TASnapshot.data() as Map<String, dynamic>?;
+
+        setState(() {
+          _isDataInitialized = false;
+
+          _nameController.text = data?['name'] ?? '';
+          _usernameController.text = data?['username'] ?? '';
+          _emailController.text = data?['email'] ?? '';
+          _selectedDate = data?['dob'].toDate() ?? '';
+          _selectedGender = data?['gender'] ?? '';
+          _companyNameController.text = data?['companyName'] ?? '';
+          _companyContactController.text = data?['companyContact'] ?? '';
+          _companyAddressController.text = data?['companyAddress'] ?? '';
+          existingProfielURL = data?['profileImage'] ?? null;
+        });
+      } else{
+        setState(() {
+          _isDataInitialized = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Current travel agent does not exists in the system')),
+        );
+        });
+      }
+    } catch(e){
+        setState(() {
+          _isDataInitialized = false;
+        });
+        print("Error fetch travel agent details: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -80,161 +118,130 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
           },
         ),
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('travelAgent')
-            .doc(widget.userId)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(child: Text("Travel agent not found"));
-          }
-
-          var userData = snapshot.data!.data() as Map<String, dynamic>;
-
-          // Set initial data only once
-          if (_nameController.text.isEmpty &&
-              _usernameController.text.isEmpty &&
-              _emailController.text.isEmpty &&
-              _companyNameController.text.isEmpty &&
-              _companyContactController.text.isEmpty &&
-              _companyAddressController.text.isEmpty &&
-              _selectedGender == null &&
-              _selectedDate == null) {
-            _nameController.text = userData['name'] ?? '';
-            _usernameController.text = userData['username'] ?? '';
-            _emailController.text = userData['email'] ?? '';
-            _companyNameController.text = userData['companyName'] ?? '';
-            _companyContactController.text = userData['companyContact'] ?? '';
-            _companyAddressController.text = userData['companyAddress'] ?? '';
-            _selectedGender = userData['gender'];
-            _selectedDate = userData['dob']?.toDate();
-          }
-
-          return Stack(
+      body: Stack(
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("images/account_background.png"),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              Container(
-                height: double.infinity,
-                width: double.infinity,
-                color: const Color(0xFFEDF2F6).withOpacity(0.6),
-              ),
-              SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 30),
-                      child: Column(
-                        children: [
-                          Stack(
-                            children: [
-                              _image != null
-                                  ? CircleAvatar(
-                                      radius: 64,
-                                      backgroundImage: MemoryImage(_image!),
-                                    )
-                                  : userData['profileImage'] != null
-                                      ? CircleAvatar(
-                                          radius: 64,
-                                          backgroundImage: NetworkImage(userData['profileImage']),
-                                        )
-                                      : const CircleAvatar(
-                                          radius: 64,
-                                          backgroundImage: AssetImage("images/profile.png"),
-                                          backgroundColor: Colors.white,
-                                        ),
-                              Positioned(
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.add_a_photo,
-                                    color: Colors.black,
-                                  ),
-                                  onPressed: selectImage,
-                                ),
-                                bottom: -13,
-                                left: 80,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 40),
-                          username(),
-                          const SizedBox(height: 20),
-                          name(),
-                          const SizedBox(height: 20),
-                          email(),
-                          const SizedBox(height: 20),
-                          dob(),
-                          const SizedBox(height: 20),
-                          gender(),
-                          const SizedBox(height: 20),
-                          companyName(),
-                          const SizedBox(height: 20),
-                          companyContact(),
-                          const SizedBox(height: 20),
-                          companyAddress(),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: isUpdating ? null : _updateProfile,
-                            child: const Text(
-                              'Update',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF467BA1),
-                              padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 15),
-                              textStyle: const TextStyle(
-                                fontSize: 22,
-                                fontFamily: 'Inika',
-                                fontWeight: FontWeight.bold,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+              if (!_isDataInitialized)
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage("images/account_background.png"),
+                      fit: BoxFit.cover,
                     ),
-                  ],
-                ),
-              ),
-              if (isUpdating) // Display the loading indicator if isUpdating is true
-                Center(
-                  child: Container(
-                    // color: Colors.black.withOpacity(0.5), // Optional: semi-transparent background
-                    child: const CircularProgressIndicator(),
                   ),
+                ),
+                Container(
+                  height: double.infinity,
+                  width: double.infinity,
+                  color: const Color(0xFFEDF2F6).withOpacity(0.6),
+                ),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 30),
+                        child: Column(
+                          children: [
+                            Stack(
+                              children: [
+                                _image != null
+                                    ? CircleAvatar(
+                                        radius: 64,
+                                        backgroundImage: MemoryImage(_image!),
+                                      )
+                                    : existingProfielURL != null
+                                        ? CircleAvatar(
+                                            radius: 64,
+                                            backgroundImage: NetworkImage(existingProfielURL!),
+                                          )
+                                        : const CircleAvatar(
+                                            radius: 64,
+                                            backgroundImage: AssetImage("images/profile.png"),
+                                            backgroundColor: Colors.white,
+                                          ),
+                                Positioned(
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.add_a_photo,
+                                      color: Colors.black,
+                                    ),
+                                    onPressed: selectImage,
+                                  ),
+                                  bottom: -13,
+                                  left: 80,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 40),
+                            username(),
+                            const SizedBox(height: 20),
+                            name(),
+                            const SizedBox(height: 20),
+                            email(),
+                            const SizedBox(height: 20),
+                            dob(),
+                            const SizedBox(height: 20),
+                            gender(),
+                            const SizedBox(height: 20),
+                            companyName(),
+                            const SizedBox(height: 20),
+                            companyContact(),
+                            const SizedBox(height: 20),
+                            companyAddress(),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity, // This makes the button take up the full width
+                              child: ElevatedButton(
+                                onPressed: isUpdating ? null : _updateProfile,
+                                child: const Text(
+                                  'Update',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF467BA1),
+                                  padding: const EdgeInsets.symmetric(vertical: 15), // You can remove horizontal padding to avoid shrinking
+                                  textStyle: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isUpdating) // Display the loading indicator if isUpdating is true
+                  Center(
+                    child: Container(
+                      // color: Colors.black.withOpacity(0.5), // Optional: semi-transparent background
+                      child: const CircularProgressIndicator(),
+                    ),
+                  ),
+              if(_isDataInitialized)
+                Center(
+                  child: CircularProgressIndicator(),
                 ),
             ],
-          );
-        }
-      )
-    );
-  }
+          )
+      );
+    }
 
   Widget name() {
     return TextField(
       controller: _nameController,
-      readOnly: true,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
-        color: Colors.black54
+        fontSize: 14,
+        color: Colors.black
       ),
       decoration: InputDecoration(
         hintText: 'Please update your name...',
@@ -264,7 +271,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -283,7 +290,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       controller: _usernameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       maxLength: 12,
       decoration: InputDecoration(
@@ -314,7 +321,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -333,7 +340,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       controller: _emailController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Please update your email...',
@@ -363,7 +370,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -382,7 +389,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       controller: _companyNameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Please update company name...',
@@ -412,7 +419,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -431,8 +438,9 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       controller: _companyContactController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
+      keyboardType: TextInputType.number,
       decoration: InputDecoration(
         hintText: 'Please update company contact...',
         labelText: 'Company Contact',
@@ -461,7 +469,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -480,7 +488,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       controller: _companyAddressController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Please update company address...',
@@ -510,7 +518,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -531,7 +539,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       readOnly: true,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
         color: Colors.black54
       ),
       decoration: InputDecoration(
@@ -561,7 +569,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -586,7 +594,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         readOnly: true,
         style: const TextStyle(
           fontWeight: FontWeight.w800,
-          fontSize: 17,
+          fontSize: 14,
           color: Colors.black54
         ),
         decoration: InputDecoration(
@@ -617,7 +625,7 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
           ),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           labelStyle: const TextStyle(
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
             shadows: [

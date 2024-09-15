@@ -208,6 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     _buildInfoRow("Name :", userData['name']),
                                     _buildInfoRow("DOB :", dob != null ? formatDate(dob) : 'Not specified'),
+                                    _buildInfoRow("Contact :", userData['contact']),
                                     _buildInfoRow("Address :", userData['address']),
                                   ],
                                 ),
@@ -264,8 +265,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF467BA1),
                           borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
                           ),
                         ),
                       ),
@@ -274,7 +275,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Positioned(
-                bottom: screenHeight * 0.2,
+                bottom: screenHeight * 0.15,
                 left: 0, // Remove left positioning
                 right: 0, // Remove right positioning
                 child: Center(

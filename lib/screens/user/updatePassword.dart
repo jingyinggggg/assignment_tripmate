@@ -222,97 +222,109 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        title: const Text("Update Password"),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF749CB9),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontFamily: 'Inika',
-          fontWeight: FontWeight.bold,
-          fontSize: 24,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    resizeToAvoidBottomInset: true,
+    appBar: AppBar(
+      title: const Text("Update Password"),
+      centerTitle: true,
+      backgroundColor: const Color(0xFF749CB9),
+      titleTextStyle: const TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inika',
+        fontWeight: FontWeight.bold,
+        fontSize: 24,
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _passwordTextField(
-              controller: currentPasswordController,
-              hintText: "Enter your current password",
-              labelText: "Current Password",
-              obscureText: currentPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  currentPasswordVisible = !currentPasswordVisible;
-                });
-              },
-              isVisible: currentPasswordVisible,
-            ),
-            const SizedBox(height: 20),
-            _passwordTextField(
-              controller: newPasswordController,
-              hintText: "Enter your new password",
-              labelText: "New Password",
-              obscureText: newPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  newPasswordVisible = !newPasswordVisible;
-                });
-              },
-              isVisible: newPasswordVisible,
-            ),
-            const SizedBox(height: 20),
-            _passwordTextField(
-              controller: confirmNewPasswordController,
-              hintText: "Enter your new password again",
-              labelText: "Confirm New Password",
-              obscureText: confirmNewPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  confirmNewPasswordVisible = !confirmNewPasswordVisible;
-                });
-              },
-              isVisible: confirmNewPasswordVisible,
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: isLoading ? null : _updatePassword,
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text(
-                      'Update Password',
-                      style: TextStyle(
-                        color: Colors.white,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    ),
+    body: LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 10, right: 10, top: 20),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _passwordTextField(
+                      controller: currentPasswordController,
+                      hintText: "Enter your current password",
+                      labelText: "Current Password",
+                      obscureText: currentPasswordVisible,
+                      onVisibilityToggle: () {
+                        setState(() {
+                          currentPasswordVisible = !currentPasswordVisible;
+                        });
+                      },
+                      isVisible: currentPasswordVisible,
+                    ),
+                    const SizedBox(height: 20),
+                    _passwordTextField(
+                      controller: newPasswordController,
+                      hintText: "Enter your new password",
+                      labelText: "New Password",
+                      obscureText: newPasswordVisible,
+                      onVisibilityToggle: () {
+                        setState(() {
+                          newPasswordVisible = !newPasswordVisible;
+                        });
+                      },
+                      isVisible: newPasswordVisible,
+                    ),
+                    const SizedBox(height: 20),
+                    _passwordTextField(
+                      controller: confirmNewPasswordController,
+                      hintText: "Enter your new password again",
+                      labelText: "Confirm New Password",
+                      obscureText: confirmNewPasswordVisible,
+                      onVisibilityToggle: () {
+                        setState(() {
+                          confirmNewPasswordVisible = !confirmNewPasswordVisible;
+                        });
+                      },
+                      isVisible: confirmNewPasswordVisible,
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : _updatePassword,
+                      child: isLoading
+                          ? const CircularProgressIndicator()
+                          : const Text(
+                              'Update Password',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF467BA1),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        textStyle: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF467BA1),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                textStyle: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+        );
+      },
+    ),
+  );
+}
+
 }
