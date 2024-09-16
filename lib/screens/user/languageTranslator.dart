@@ -1,6 +1,7 @@
-import 'package:assignment_tripmate/language_service.dart';
 import 'package:flutter/material.dart';
-import 'package:translator/translator.dart';
+import 'package:assignment_tripmate/GoogleAPI.dart'; // Import the GoogleTranslateApi
+import 'package:assignment_tripmate/language_service.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 
 class LanguageTranslatorScreen extends StatefulWidget {
@@ -13,19 +14,62 @@ class LanguageTranslatorScreen extends StatefulWidget {
 }
 
 class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
+  final inputController = TextEditingController(); // Controller for input TextField
   final outputController = TextEditingController(text: "Result here...");
-  final translator = GoogleTranslator();
-  final languageService = LanguageService();  // Create an instance of LanguageService
+  final googleTranslateApi = GoogleTranslateApi(); // Create an instance of GoogleTranslateApi
+  final languageService = LanguageService(); // Create an instance of LanguageService
+  final SpeechToText _speechToText = SpeechToText();
+  String wordSpoken = '';
 
-  String inputText = '';
   String? inputLanguage;
   String? outputLanguage;
   List<Map<String, String>> languages = []; // Store the fetched languages
+  bool isTranslating = false; // To manage translating state
+  bool speechEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    fetchLanguages();  // Fetch available languages when the screen loads
+    fetchLanguages(); // Fetch available languages when the screen loads
+    inputController.addListener(translateText); // Add listener for input changes
+    initSpeech();
+  }
+
+  void initSpeech() async {
+    speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    if (speechEnabled) {
+      await _speechToText.listen(onResult: _onSpeechResult);
+      setState(() {});
+    }
+  }
+
+  void _stopListening() async {
+    if (speechEnabled) {
+      await _speechToText.stop();
+      setState(() {});
+    }
+  }
+
+  void _onSpeechResult(result) {
+    setState(() {
+      wordSpoken = '${result.recognizedWords}';
+      // Update the inputController's text with the recognized words
+      inputController.text = wordSpoken;
+      // Move the cursor to the end of the text field
+      inputController.selection = TextSelection.fromPosition(
+        TextPosition(offset: inputController.text.length),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    inputController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchLanguages() async {
@@ -38,16 +82,40 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
   }
 
   Future<void> translateText() async {
-    if (inputLanguage != null && outputLanguage != null) {
-      final translated = await translator.translate(
-        inputText,
-        from: inputLanguage!,
-        to: outputLanguage!,
-      );
+    if (inputLanguage != null && outputLanguage != null && inputController.text.isNotEmpty) {
       setState(() {
-        outputController.text = translated.text;
+        isTranslating = true; // Start translating
+        outputController.text = ""; // Clear the previous result
       });
+
+      try {
+        // Use the googleTranslateApi instance to get the translated text
+        final translatedText = await googleTranslateApi.translateText(
+          inputController.text,
+          outputLanguage!,
+        );
+
+        setState(() {
+          outputController.text = translatedText;
+          isTranslating = false; // Translation complete
+        });
+      } catch (e) {
+        // Handle any errors
+        setState(() {
+          outputController.text = "Error: ${e.toString()}";
+          isTranslating = false;
+        });
+      }
     }
+  }
+
+  void _swapLanguages() {
+    setState(() {
+      final tempLanguage = inputLanguage;
+      inputLanguage = outputLanguage;
+      outputLanguage = tempLanguage;
+    });
+    translateText(); // Update translation after swapping languages
   }
 
   @override
@@ -88,7 +156,6 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Wrap the first DropdownButton in a SizedBox with a specific width
                       SizedBox(
                         width: 120,  // Adjust the width as needed
                         child: DropdownButton<String>(
@@ -102,8 +169,8 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                             setState(() {
                               inputLanguage = newValue!;
                             });
+                            translateText(); // Update translation when language changes
                           },
-                          // Dropdown items with background color
                           items: languages.map<DropdownMenuItem<String>>((lang) {
                             return DropdownMenuItem<String>(
                               value: lang['code'],
@@ -113,15 +180,15 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                           dropdownColor: Colors.blue.shade100, // Sets dropdown background color
                         ),
                       ),
-                      SizedBox(width: 10),
-                      const Icon(Icons.arrow_forward_rounded),
-                      SizedBox(width: 10),
-                      // Wrap the second DropdownButton in a SizedBox with a specific width
+                      IconButton(
+                        icon: const Icon(Icons.swap_horiz_rounded),
+                        onPressed: _swapLanguages, // Swap languages on button press
+                      ),
                       SizedBox(
                         width: 120,  // Adjust the width as needed
                         child: DropdownButton<String>(
                           value: outputLanguage,
-                          isExpanded: true,  // Allows the text to wrap inside the dropdown
+                          isExpanded: true,
                           underline: Container(
                             height: 2,  // Height of the underline
                             color: Color(0xFF467BA1),  // Color of the underline
@@ -130,6 +197,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                             setState(() {
                               outputLanguage = newValue!;
                             });
+                            translateText(); // Update translation when language changes
                           },
                           items: languages.map<DropdownMenuItem<String>>((lang) {
                             return DropdownMenuItem<String>(
@@ -141,37 +209,37 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                       ),
                     ],
                   )
-
                 else
                   const Center(child: CircularProgressIndicator()),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 TextField(
+                  controller: inputController,
                   maxLines: 5,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF467BA1), width: 1.5),
                     ),
-                    hintText: "Enter text to translate...",
+                    hintText: _speechToText.isListening
+                              ? "Listening ..."
+                              : speechEnabled
+                                ? "Enter text to translate or use the microphone for voice input..."
+                                : "Text or speech not available"
                   ),
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      inputText = value;
-                    });
-                  },
                 ),
 
                 const SizedBox(height: 20),
 
                 Container(
                   child: Icon(
-                    Icons.arrow_downward_rounded
+                    Icons.arrow_downward_rounded,
+                    color: Color(0xFF467BA1),
                   ),
                 ),
 
@@ -185,6 +253,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                     border: OutlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF467BA1), width: 1.5),
                     ),
+                    hintText: isTranslating ? "Translating..." : "Result here...", // Show translating hint
                   ),
                   style: TextStyle(
                     color: Colors.black,
@@ -192,32 +261,18 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
-                ElevatedButton(
-                  onPressed: translateText,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF467BA1),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                  ),
-                  child: const Text(
-                    "Translate",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF467BA1),
+        onPressed: _speechToText.isListening ? _stopListening : _startListening,
+        tooltip: 'Listen',
+        child: Icon(
+          _speechToText.isListening ? Icons.stop : Icons.mic,
+          color: Colors.white,
         ),
       ),
     );
