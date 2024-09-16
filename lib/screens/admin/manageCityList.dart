@@ -77,7 +77,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -122,7 +122,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                       ),
                       hintText: "Search city...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -152,7 +152,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                       child: Text(
                         "Add City",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -181,7 +181,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                 child: Text(
                   "No cities available for the selected country.",
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 14,
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                   ),
@@ -195,6 +195,9 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
   }
 
   Widget cityComponent({required City city}) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
       padding: EdgeInsets.only(bottom: 15, top: 10),
       child: Row(
@@ -203,8 +206,8 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
           Row(
             children: [
               Container(
-                width: 90,
-                height: 70,
+                width: screenWidth * 0.25,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(0),
                   image: DecorationImage(
@@ -217,13 +220,16 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
               Text(
                 city.cityName,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
+                maxLines: null,
+                overflow: TextOverflow.visible,
               ),
             ],
           ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 onPressed: (){
@@ -233,13 +239,13 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                   );
                 }, 
                 icon: Icon(Icons.remove_red_eye),
-                iconSize: 25,
+                iconSize: 20,
                 color: Colors.grey.shade600,
               ),
               IconButton(
                 onPressed: (){},
                 icon: Icon(Icons.edit_document),
-                iconSize: 25,
+                iconSize: 20,
                 color: Colors.grey.shade600,
               ),
             ],

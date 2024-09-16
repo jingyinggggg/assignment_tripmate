@@ -79,7 +79,7 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -170,18 +170,18 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Container(
-                          alignment: Alignment.center,
-                          child: Text(
-                            "*** You are viewing from user perspective currently. ***",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
+                        // Container(
+                        //   alignment: Alignment.center,
+                        //   child: Text(
+                        //     "*** You are viewing from user perspective currently. ***",
+                        //     style: TextStyle(
+                        //       fontSize: 14,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: Colors.red
+                        //     ),
+                        //     textAlign: TextAlign.center,
+                        //   ),
+                        // ),
 
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

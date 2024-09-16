@@ -27,7 +27,7 @@ class _TravelAgentViewPDFScreenState extends State<TravelAgentViewPDFScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         automaticallyImplyLeading: false,
         actions: [

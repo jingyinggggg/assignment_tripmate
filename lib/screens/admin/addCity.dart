@@ -52,7 +52,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -94,11 +94,10 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF467BA1),
                       textStyle: const TextStyle(
-                        fontSize: 22,
-                        fontFamily: 'Inika',
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                      minimumSize: const Size(380, 60),
+                      minimumSize: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.08),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -123,7 +122,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
       controller: _cityNameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       onChanged: (value) {
         setState(() {
@@ -158,7 +157,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -178,7 +177,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
       readOnly: true,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
         color: Colors.black54
       ),
       decoration: InputDecoration(
@@ -209,7 +208,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -223,7 +222,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
           icon: const Icon(
             Icons.image,
             color: Color(0xFF467BA1),
-            size: 30,
+            size: 25,
           ),
           onPressed: () {
             selectImage();
@@ -237,7 +236,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
     if (_image == null || _cityNameController.text.isEmpty) {
       return Container(
         width: double.infinity,
-        height: 200,
+        height: MediaQuery.of(context).size.height * 0.3,
         decoration: BoxDecoration(
           color: Colors.grey[300],
           borderRadius: BorderRadius.circular(10),
@@ -252,7 +251,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
                 'Insert name and image to preview',
                 style: TextStyle(
                   color: Colors.black87,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -262,7 +261,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
     } else {
       return Container(
         width: double.infinity,
-        height: 200,
+        height: MediaQuery.of(context).size.height * 0.3,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           image: DecorationImage(
@@ -286,7 +285,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
                     _cityNameController.text, 
                     style: const TextStyle(
                       color: Colors.black,
-                      fontSize: 22,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(

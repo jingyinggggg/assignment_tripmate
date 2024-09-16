@@ -237,7 +237,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20
         ),
         automaticallyImplyLeading: false, // This removes the default leading widget
       ),

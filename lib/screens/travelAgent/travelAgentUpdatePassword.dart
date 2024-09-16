@@ -235,7 +235,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),

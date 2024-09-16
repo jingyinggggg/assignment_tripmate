@@ -78,7 +78,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -123,7 +123,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
                       ),
                       hintText: "Search tour list...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -164,84 +164,90 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
     );
   }
 
-  Widget tourComponent({required TourPackage tourPackage}) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 15, top: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 70,
-                height: 90,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(0),
-                  image: DecorationImage(
-                    image: NetworkImage(tourPackage.image),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
+Widget tourComponent({required TourPackage tourPackage}) {
+  final double screenWidth = MediaQuery.of(context).size.width;
+  final double screenHeight = MediaQuery.of(context).size.height;
 
-              Column(
-                children: [
-                  Container(
-                    width: 200,  // Set a fixed width for the tour name
-                    child: Text(
-                      tourPackage.tourName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: null,
-                      overflow: TextOverflow.visible, // Ensure long text doesn't overflow
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    width: 200,  // Set a fixed width for the agency
-                    child: Text(
-                      tourPackage.agency,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: null,
-                      overflow: TextOverflow.visible, // Ensure long text doesn't overflow
-                    ),
-                  ),
-                ],
-              )
-            ],
+  return Container(
+    width: screenWidth,
+    padding: const EdgeInsets.only(bottom: 15, top: 10),
+    child: Row(
+      children: [
+        Container(
+          width: screenWidth * 0.15,
+          height: screenHeight * 0.1,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(0),
+            image: DecorationImage(
+              image: NetworkImage(tourPackage.image),
+              fit: BoxFit.cover,
+            ),
           ),
-          Row(
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminTourPackageDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourPackage.tourID))
-                  );
-                },
-                icon: const Icon(Icons.remove_red_eye),
-                iconSize: 25,
-                color: Colors.grey.shade600,
+              Text(
+                tourPackage.tourName,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              IconButton(
-                onPressed: () {
-                  // Handle edit button action
-                },
-                icon: const Icon(Icons.edit_document),
-                iconSize: 25,
-                color: Colors.grey.shade600,
+              const SizedBox(height: 5),
+              Text(
+                tourPackage.agency,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        // Buttons row
+        Row(
+          mainAxisSize: MainAxisSize.min, // Makes the row take up the minimum amount of space
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdminTourPackageDetailsScreen(
+                      userId: widget.userId,
+                      countryName: widget.countryName,
+                      cityName: widget.cityName,
+                      tourID: tourPackage.tourID,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.remove_red_eye),
+              iconSize: 20,
+              color: Colors.grey.shade600,
+            ),
+            IconButton(
+              onPressed: () {
+                // Handle edit button action
+              },
+              icon: const Icon(Icons.edit),
+              iconSize: 20,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+
 
 }

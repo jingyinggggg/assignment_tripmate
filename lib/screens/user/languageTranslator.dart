@@ -63,7 +63,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -157,7 +157,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   ),
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                   onChanged: (value) {
@@ -188,7 +188,7 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   ),
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -200,16 +200,16 @@ class _LanguageTranslatorScreenState extends State<LanguageTranslatorScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF467BA1),
                     foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(60),
+                    minimumSize: const Size.fromHeight(50),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(10),
                       side: BorderSide(color: Color(0xFF467BA1), width: 2),
                     ),
                   ),
                   child: const Text(
                     "Translate",
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),

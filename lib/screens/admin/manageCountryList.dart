@@ -76,7 +76,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -122,7 +122,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                       ),
                       hintText: "Search country...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -152,7 +152,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                       child: Text(
                         "Add Country",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -178,6 +178,9 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
   }
 
   Widget countryComponent({required Country country}) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
       // color: Colors.white,
       padding: EdgeInsets.only(bottom: 15, top: 10),
@@ -187,8 +190,8 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           Row(
             children: [
               Container(
-                width: 90,
-                height: 70,
+                width: screenWidth * 0.25,
+                height: screenHeight * 0.1,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(0),
                   image: DecorationImage(
@@ -201,13 +204,16 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
               Text(
                 country.countryName,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
+                maxLines: null,
+                overflow: TextOverflow.visible,
               ),
             ],
           ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 onPressed: (){
@@ -217,13 +223,13 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                   );
                 }, 
                 icon: Icon(Icons.remove_red_eye),
-                iconSize: 25,
+                iconSize: 20,
                 color: Colors.grey.shade600,
               ),
               IconButton(
                 onPressed: (){}, 
                 icon: Icon(Icons.edit_document),
-                iconSize: 25,
+                iconSize: 20,
                 color: Colors.grey.shade600,
               ),
             ],

@@ -76,7 +76,7 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -121,7 +121,7 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                       ),
                       hintText: "Search car brand...",
                       hintStyle: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         color: Colors.grey.shade500,
                         fontWeight: FontWeight.bold,
                       ),
@@ -152,7 +152,7 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                       child: Text(
                         "Add Brand",
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -172,7 +172,7 @@ class _AdminManageCarBrandScreenState extends State<AdminManageCarBrandScreen> {
                         child: Text(
                           "No car brand available in the system.",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 14,
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                           ),
@@ -202,8 +202,8 @@ Widget carBrandComponent({required CarBrand carBrand}) {
         Row(
           children: [
             Container(
-              width: 60, 
-              height: 60,
+              width: MediaQuery.of(context).size.width * 0.15, 
+              height: MediaQuery.of(context).size.width * 0.15,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white, // Set background color to white
@@ -220,7 +220,7 @@ Widget carBrandComponent({required CarBrand carBrand}) {
             Text(
               carBrand.carName,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -237,7 +237,7 @@ Widget carBrandComponent({required CarBrand carBrand}) {
                 // );
               },
               icon: Icon(Icons.remove_red_eye),
-              iconSize: 25,
+              iconSize: 20,
               color: Colors.grey.shade600,
             ),
             IconButton(
@@ -249,7 +249,7 @@ Widget carBrandComponent({required CarBrand carBrand}) {
                 // );
               },
               icon: Icon(Icons.edit),
-              iconSize: 25,
+              iconSize: 20,
               color: Colors.grey.shade600,
             ),
           ],

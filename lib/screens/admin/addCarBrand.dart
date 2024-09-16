@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/admin/manageCarBrandList.dart';
-import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -53,7 +52,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 24,
+          fontSize: 20,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -95,11 +94,10 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF467BA1),
                       textStyle: const TextStyle(
-                        fontSize: 22,
-                        fontFamily: 'Inika',
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                      minimumSize: const Size(380, 60),
+                      minimumSize: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height * 0.08),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -124,7 +122,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
       controller: _carBrandNameController,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: 'Enter Car Brand',
@@ -154,7 +152,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -174,7 +172,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
       readOnly: true,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: 14,
         color: Colors.black54
       ),
       decoration: InputDecoration(
@@ -205,7 +203,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -219,7 +217,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
           icon: const Icon(
             Icons.image,
             color: Color(0xFF467BA1),
-            size: 30,
+            size: 25,
           ),
           onPressed: () {
             selectImage();
@@ -233,7 +231,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
     if (_image == null || _carBrandNameController.text.isEmpty) {
       return Container(
         width: double.infinity,
-        height: 300,
+        height: MediaQuery.of(context).size.height * 0.4,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -243,13 +241,13 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.image, size: 100, color: Colors.grey),
+              Icon(Icons.image, size: 80, color: Colors.grey),
               SizedBox(height: 10),
               Text(
                 'Insert name and image to preview',
                 style: TextStyle(
                   color: Colors.black87,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -259,7 +257,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
     } else {
       return Container(
         width: double.infinity,
-        height: 250,
+        height: MediaQuery.of(context).size.height * 0.4,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -278,7 +276,7 @@ class _AdminAddCarBrandScreenState extends State<AdminAddCarBrandScreen> {
             Text(
               _carBrandNameController.text,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.black,
                 fontWeight: FontWeight.bold
               ),
