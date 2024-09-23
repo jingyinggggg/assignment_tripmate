@@ -268,3 +268,17 @@ class CarBrand{
 
   CarBrand(this.carId, this.carImage, this.carName);
 }
+
+class CarList{
+  final String carID;
+  final String carModel;
+  final String? carImage;
+  final String? carType;
+  final String? transmission;
+  final int? seat;
+  final double? price;
+  final String? agentID;
+  final String? agencyName;
+
+  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.transmission, this.seat, this.price, this.agentID, this.agencyName});
+}

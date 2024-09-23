@@ -23,7 +23,7 @@ class TravelAgentAddCarInfoScreen extends StatefulWidget {
 }
 
 class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScreen>{
-  List<String> _carType = ['SUV', 'Sedan', 'MPV'];
+  List<String> _carType = ['SUV', 'Sedan', 'MPV', 'Hatchback'];
   List<String> _transmissionType = ['Auto', 'Manual'];
   List<String> _fuelType = ['Petrol', 'Electricity', 'Hybrid'];
 

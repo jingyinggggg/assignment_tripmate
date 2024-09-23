@@ -6,6 +6,7 @@ const Color primaryColor = Color(0xFF467BA1);
 const Color secondaryColor = Colors.black54;
 const defaultFontSize = 14.0;
 const defaultLabelFontSize = 16.0;
+const defaultAppBarTitleFontSize = 20.0;
 
 double getScreenWidth(BuildContext context) {
   return MediaQuery.of(context).size.width;

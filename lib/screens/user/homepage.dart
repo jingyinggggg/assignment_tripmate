@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
+import 'package:assignment_tripmate/screens/user/carRentalHomepage.dart';
 import 'package:assignment_tripmate/screens/user/currencyConverter.dart';
 import 'package:assignment_tripmate/screens/user/custom_animation.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
@@ -61,7 +62,10 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Handle navigation or other actions here.
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (context) => CarRentalHomepageScreen(userId: widget.userId))
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white, // Button background color

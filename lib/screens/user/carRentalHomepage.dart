@@ -1,23 +1,22 @@
 import 'package:assignment_tripmate/constants.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentAddCarInfo.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
+import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class TravelAgentViewCarListingScreen extends StatefulWidget {
+class CarRentalHomepageScreen extends StatefulWidget {
   final String userId;
 
-  const TravelAgentViewCarListingScreen({
+  const CarRentalHomepageScreen({
     super.key,
     required this.userId,
   });
 
   @override
-  State<StatefulWidget> createState() => _TravelAgentViewCarListingScreenState();
+  State<StatefulWidget> createState() => _CarRentalHomepageScreenState();
 }
 
-class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarListingScreen>{
+class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
   List<CarList> _carList = [];
   List<CarList> _foundedCar = [];
 
@@ -29,21 +28,64 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
       _foundedCar = _carList;
     });
   }
+
   Future<void> fetchCarList() async {
     try {
-      // Reference to the car_rental collection in Firestore
+      // Reference to the car_rental and travelAgent collections
       CollectionReference carRef = FirebaseFirestore.instance.collection('car_rental');
+      CollectionReference agentRef = FirebaseFirestore.instance.collection('travelAgent');
 
       // Fetch the documents from the car_rental collection
-      QuerySnapshot querySnapshot = await carRef.where('agencyID', isEqualTo: widget.userId).get();
+      QuerySnapshot querySnapshot = await carRef.get();
 
-      // Convert each document into a Car List object and add to _carList
-      _carList = querySnapshot.docs.map((doc) {
+      // Create a list of car rentals
+      List<CarList> cars = querySnapshot.docs.map((doc) {
         return CarList(
-          doc['carID'],
-          doc['carModel']
+          doc['carID'] ?? '',
+          doc['carModel'] ?? 'Unknown Model',
+          carImage: doc['carImage'],
+          carType: doc['carType'],
+          transmission: doc['transmission'],
+          seat: doc['seat'],
+          price: doc['pricePerDay'],
+          agentID: doc['agencyID'],
         );
       }).toList();
+
+      // Create a map to hold agency names by agentID
+      Map<String, String> agentNames = {};
+
+      // Fetch agency names for the corresponding agentIDs
+      for (var car in cars) {
+        String agencyID = car.agentID ?? ''; // Ensure agencyID is not null
+        if (agencyID.isNotEmpty && !agentNames.containsKey(agencyID)) {
+          try {
+            DocumentSnapshot agentDoc = await agentRef.doc(agencyID).get();
+            if (agentDoc.exists) {
+              agentNames[agencyID] = agentDoc['agencyName'] ?? 'Unknown Agency'; // Handle potential null value
+            }
+          } catch (e) {
+            print('Error fetching agency: $e'); // Handle error appropriately
+          }
+        }
+      }
+
+      // Now update the car list with agency names
+      _carList = cars.map((car) {
+        String agencyName = agentNames[car.agentID] ?? 'Unknown Agency';
+        return CarList(
+          car.carID,
+          car.carModel,
+          carImage: car.carImage,
+          carType: car.carType,
+          transmission: car.transmission,
+          seat: car.seat,
+          price: car.price,
+          agentID: car.agentID,
+          agencyName: agencyName, // Pass the agency name here
+        );
+      }).toList();
+
 
       // Update _foundedCar
       setState(() {
@@ -54,6 +96,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
       print('Error fetching car list: $e');
     }
   }
+
 
   void onSearch(String search) {
     setState(() {
@@ -70,7 +113,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
             appBar: AppBar(
-        title: const Text("Car Listing"),
+        title: const Text("Car Rental"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),
         titleTextStyle: const TextStyle(
@@ -84,21 +127,10 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+              MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId))
             );
           },
         ),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.add, color: Colors.white, size: 30,),
-            onPressed: () {
-              Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (context) => TravelAgentAddCarInfoScreen(userId: widget.userId))
-              );
-            },
-          ),
-        ]
       ),
 
       body: Column(
@@ -130,7 +162,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Colors.red, width: 2),
                   ),
-                  hintText: "Search car listing...",
+                  hintText: "Search car...",
                   hintStyle: TextStyle(
                     fontSize: defaultFontSize,
                     color: Colors.grey.shade500,
@@ -154,7 +186,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
                   )
                 : Center(
                     child: Text(
-                      "No car listings added in the system yet.",
+                      "No car exist in the system yet.",
                       style: TextStyle(
                         fontSize: defaultFontSize,
                         fontWeight: FontWeight.bold,
@@ -175,40 +207,57 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
     return Container(
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20), // Padding around the row
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 193, 223, 238).withOpacity(0.3), // Background color
-        border: Border(
-          top: BorderSide(color: primaryColor, width: 1.5), // Always show top border
-          bottom: isLast
-              ? BorderSide(color: primaryColor, width: 1.5) // Show bottom border only if it's the last row
-              : BorderSide.none,
-        ),
+        color: Colors.white, // Background color
+        border: Border.all(color: Colors.grey.shade500, width: 1.5),
+        borderRadius: BorderRadius.circular(10)
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Row(
-            children: [
-              // Display the row number
-              Text(
-                '$rowNumber. ', // Adding the row number
-                style: TextStyle(
-                  fontSize: defaultLabelFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black, // You can customize the color if needed
-                ),
+
+          Container(
+            width: screenWidth * 0.7,
+            height: screenHeight * 0.2,
+            // color: Colors.grey.shade300,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: NetworkImage(carList.carImage!),
+                fit: BoxFit.cover,
               ),
-              SizedBox(width: 10),
-              Text(
-                carList.carModel,
-                style: TextStyle(
-                  fontSize: defaultLabelFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: null,
-                overflow: TextOverflow.visible,
-              ),
-            ],
+            ),
           ),
+
+          Text(
+            '${carList.carModel} - ${carList.carType}' ,
+            style: TextStyle(
+              fontSize: defaultFontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.black, // You can customize the color if needed
+            ),
+          ),
+
+          // Row(
+          //   children: [
+          //     // Display the row number
+          //     Text(
+          //       '$rowNumber. ', // Adding the row number
+          //       style: TextStyle(
+          //         fontSize: defaultLabelFontSize,
+          //         fontWeight: FontWeight.bold,
+          //         color: Colors.black, // You can customize the color if needed
+          //       ),
+          //     ),
+          //     SizedBox(width: 10),
+          //     Text(
+          //       carList.carModel,
+          //       style: TextStyle(
+          //         fontSize: defaultLabelFontSize,
+          //         fontWeight: FontWeight.bold,
+          //       ),
+          //       maxLines: null,
+          //       overflow: TextOverflow.visible,
+          //     ),
+          //   ],
+          // ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
