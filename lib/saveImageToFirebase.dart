@@ -338,5 +338,48 @@ class StoreData {
     return resp;
   }
 
+  Future<String> saveCarRentalData({
+    required String carID, 
+    required String carModel, 
+    required String carType, 
+    required String transmission, 
+    required int seat, 
+    required String fuel, 
+    required Uint8List carImage,
+    required String pickUpLocation, 
+    required String dropOffLocation, 
+    required double price, 
+    required String insurance, 
+    required String carCondition, 
+    required String rentalPolicy, 
+    required String agencyID
+  }) async{
+    String resp = "Some Error Occurred";
+    try{
+      String fileName = "$carModel.jpg"; 
+      String imageURL = await uploadImageToStorage("car/$agencyID/$fileName", carImage);
+      await _firestore.collection("car_rental").doc(carID).set({
+        'carID': carID,
+        'carModel': carModel,
+        'carType': carType,
+        'transmission': transmission,
+        'seat': seat,
+        'fuel': fuel,
+        'carImage': imageURL,
+        'pickUpLocation': pickUpLocation,
+        'dropOffLocation': dropOffLocation,
+        'pricePerDay': price,
+        'insurance': insurance,
+        'carCondition': carCondition,
+        'rentalPolicy': rentalPolicy,
+        'agencyID': agencyID
+      });
+      resp = "Success";
+    } catch(err){
+      resp = err.toString();
+    }
+    return resp;
+  }
+
 
 }

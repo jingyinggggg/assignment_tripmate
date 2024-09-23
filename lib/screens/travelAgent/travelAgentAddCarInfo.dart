@@ -4,6 +4,7 @@ import 'package:assignment_tripmate/autocomplete_predictions.dart';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/network_utility.dart';
 import 'package:assignment_tripmate/place_auto_complete_response.dart';
+import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCarInfo.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -37,7 +38,6 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
   TextEditingController _pickUpLocationController = TextEditingController();
   TextEditingController _dropOffLocationController = TextEditingController();
   TextEditingController _pricingController = TextEditingController();
-  TextEditingController _discountController = TextEditingController();
   TextEditingController _rentalPolicyController = TextEditingController();
   TextEditingController _insuransCoverageController = TextEditingController();
   TextEditingController _carConditionController = TextEditingController();
@@ -45,6 +45,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
   Uint8List? _carImage;
 
   List<AutoCompletePredictions> placedPredictions = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -85,6 +86,113 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
       }
     } 
   }
+
+  // Add car details to database
+  Future<void> _addCar() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      // Check for empty fields and provide feedback
+      if (_carNameController.text.isEmpty || selectedCarType == null || selectedTransmission == null || 
+          _seatController.text.isEmpty || selectedFuel == null || _carImage == null || 
+          _pickUpLocationController.text.isEmpty || _dropOffLocationController.text.isEmpty || 
+          _pricingController.text.isEmpty || _insuransCoverageController.text.isEmpty || 
+          _carConditionController.text.isEmpty || _rentalPolicyController.text.isEmpty) {
+        
+        setState(() {
+          isLoading = false;
+        });
+
+        print("Car Name: ${_carNameController.text}");
+        print("Car Type: $selectedCarType");
+        print("Transmission: $selectedTransmission");
+        print("Seats: ${_seatController.text}");
+        print("Fuel: $selectedFuel");
+        print("Car Image: $_carImage");
+        print("Pick Up Location: ${_pickUpLocationController.text}");
+        print("Drop Off Location: ${_dropOffLocationController.text}");
+        print("Pricing: ${_pricingController.text}");
+        print("Insurance: ${_insuransCoverageController.text}");
+        print("Car Condition: ${_carConditionController.text}");
+        print("Rental Policy: ${_rentalPolicyController.text}");
+
+        showCustomDialog(
+          context: context, 
+          title: 'Incomplete Information', 
+          content: 'Please fill in all the fields before submitting.',
+          onPressed: () {
+            Navigator.of(context).pop();
+          }
+        );
+
+        return; // Exit early
+      }
+
+      // Generate car ID and save data
+      final snapshot = await firestore.collection('car_rental').get();
+      final carID = 'CAR${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      String resp = await StoreData().saveCarRentalData(
+        carID: carID, 
+        carModel: _carNameController.text, 
+        carType: selectedCarType!, 
+        transmission: selectedTransmission!, 
+        seat: int.tryParse(_seatController.text) ?? 0, 
+        fuel: selectedFuel!, 
+        carImage: _carImage!, 
+        pickUpLocation: _pickUpLocationController.text, 
+        dropOffLocation: _dropOffLocationController.text, 
+        price: double.tryParse(_pricingController.text) ?? 0.0, 
+        insurance: _insuransCoverageController.text, 
+        carCondition: _carConditionController.text, 
+        rentalPolicy: _rentalPolicyController.text, 
+        agencyID: widget.userId
+      );
+
+      // After successfully saving
+      setState(() {
+        isLoading = false;
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: 'Successful', 
+        content: 'You have added the car details successfully.', 
+        onPressed: () {
+          Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => TravelAgentViewCarListingScreen(userId: widget.userId)
+            )
+          );
+        }
+      );
+
+    } catch (e) {
+      print('Error: $e'); // For debugging
+      setState(() {
+        isLoading = false;
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: 'Failed', 
+        content: 'Something went wrong: $e.', 
+        onPressed: () {
+          Navigator.of(context).pop();
+        }
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,15 +241,45 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                   SizedBox(height: 20,),
                   buildTextField(_carNameController, 'Enter car model', 'Car Model'),
                   SizedBox(height: 20,),
-                  buildDropDownList(_carType, 'Select category of car', 'Car Type', selectedCarType),
+                  buildDropDownList(
+                    _carType, 
+                    'Select category of car', 
+                    'Car Type', 
+                    selectedCarType, 
+                    (newValue){
+                      setState(() {
+                        selectedCarType = newValue;
+                      });
+                    }
+                  ),
                   // SizedBox(height: 20,),
                   // buildDropDownList(_carBrand, 'Select brand of car', 'Car Brand', selectedBrand),
                   SizedBox(height: 20,),
-                  buildDropDownList(_transmissionType, 'Select type of transmission', 'Transmission', selectedTransmission),
+                  buildDropDownList(
+                    _transmissionType, 
+                    'Select type of transmission', 
+                    'Transmission', 
+                    selectedTransmission,
+                    (newValue){
+                      setState(() {
+                        selectedTransmission = newValue;
+                      });
+                    }
+                  ),
                   SizedBox(height: 20,),
                   buildTextField(_seatController, 'Enter number of seats', 'Number of Seats', isIntField: true),
                   SizedBox(height: 20,),
-                  buildDropDownList(_fuelType, 'Select type of fuel', 'Fuel Type', selectedFuel),
+                  buildDropDownList(
+                    _fuelType, 
+                    'Select type of fuel', 
+                    'Fuel Type', 
+                    selectedFuel,
+                    (newValue){
+                      setState(() {
+                        selectedFuel = newValue;
+                      });
+                    }
+                  ),
                   SizedBox(height: 20,),
                   carImage(),
                   SizedBox(height: 30,), 
@@ -338,8 +476,8 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                   ),
                   SizedBox(height: 20,),
                   buildTextField(_pricingController, 'Enter price', 'Price (RM/per day)', isIntField: true),
-                  SizedBox(height: 20,),
-                  buildTextField(_discountController, 'Enter discount price', 'Discount Price (RM/per day)', isIntField: true),
+                  // SizedBox(height: 20,),
+                  // buildTextField(_discountController, 'Enter discount price', 'Discount Price (RM/per day)', isIntField: true),
                   SizedBox(height: 30,), 
 
                   const Text(
@@ -380,19 +518,21 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
 
                   Container(
                     width: double.infinity,
-                    height: 60,
+                    height: getScreenHeight(context) * 0.08,
                     child: ElevatedButton(
-                      onPressed: (){},
-                      child: Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                      onPressed: (){_addCar();},
+                      child: isLoading
+                        ? CircularProgressIndicator()
+                        : Text(
+                            'Add',
+                            style: TextStyle(
+                              color: Colors.white,
                             ),
+                          ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF467BA1),
                         textStyle: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                         shape: RoundedRectangleBorder(
@@ -463,7 +603,8 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     );
   }
 
-  Widget buildDropDownList(List<String> listname, String hintText, String label, String? selectedValue){
+  Widget buildDropDownList(
+      List<String> listname, String hintText, String label, String? selectedValue, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
       value: selectedValue,
       hint: Text(hintText),
@@ -511,11 +652,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
           child: Text(type),
         );
       }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          selectedValue = newValue!;
-        });
-      },
+      onChanged: onChanged, // Use the passed in function
       style: const TextStyle(
         fontWeight: FontWeight.bold,
         fontSize: defaultFontSize,
@@ -523,6 +660,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
       ),
     );
   }
+
 
 
   Widget carImage() {
