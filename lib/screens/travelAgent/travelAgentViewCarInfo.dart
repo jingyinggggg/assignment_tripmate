@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAddCarInfo.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentCarMaintenance.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentEditCarInfo.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -233,7 +234,12 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
               Container(
                 width: 35, // Set a specific width to reduce space
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => TravelAgentCarMaintenanceScreen(userId: widget.userId, carId: carList.carID))
+                    );
+                  },
                   icon: Icon(Icons.build),
                   iconSize: 20,
                   color: Colors.grey.shade600,
