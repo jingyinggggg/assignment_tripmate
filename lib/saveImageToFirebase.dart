@@ -352,7 +352,9 @@ class StoreData {
     required String insurance, 
     required String carCondition, 
     required String rentalPolicy, 
-    required String agencyID
+    required String agencyID,
+    required String agencyName,
+    required String agencyContact
   }) async{
     String resp = "Some Error Occurred";
     try{
@@ -372,7 +374,9 @@ class StoreData {
         'insurance': insurance,
         'carCondition': carCondition,
         'rentalPolicy': rentalPolicy,
-        'agencyID': agencyID
+        'agencyID': agencyID,
+        'agencyName': agencyName,
+        'agencyContact': agencyContact
       });
       resp = "Success";
     } catch(err){

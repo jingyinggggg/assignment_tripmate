@@ -46,6 +46,8 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
 
   List<AutoCompletePredictions> placedPredictions = [];
   bool isLoading = false;
+  String? agencyName;
+  String? agencyContact;
 
   @override
   void initState() {
@@ -87,6 +89,26 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     } 
   }
 
+  Future<void> fetchTravelAgencyNameAndContact() async {
+    try {
+      QuerySnapshot userQuery = await FirebaseFirestore.instance
+        .collection('travelAgent')
+        .where('id', isEqualTo: widget.userId)
+        .limit(1)
+        .get();
+      
+      DocumentSnapshot userDoc = userQuery.docs.first;
+      var agencyData = userDoc.data() as Map<String, dynamic>;
+
+      setState(() {
+        agencyName = agencyData['companyName'];
+        agencyContact = agencyData['companyContact'];
+      });
+    } catch (e) {
+      print("Error fetching agency details: $e");
+    }
+  }
+
   // Add car details to database
   Future<void> _addCar() async {
     setState(() {
@@ -106,19 +128,6 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
         setState(() {
           isLoading = false;
         });
-
-        print("Car Name: ${_carNameController.text}");
-        print("Car Type: $selectedCarType");
-        print("Transmission: $selectedTransmission");
-        print("Seats: ${_seatController.text}");
-        print("Fuel: $selectedFuel");
-        print("Car Image: $_carImage");
-        print("Pick Up Location: ${_pickUpLocationController.text}");
-        print("Drop Off Location: ${_dropOffLocationController.text}");
-        print("Pricing: ${_pricingController.text}");
-        print("Insurance: ${_insuransCoverageController.text}");
-        print("Car Condition: ${_carConditionController.text}");
-        print("Rental Policy: ${_rentalPolicyController.text}");
 
         showCustomDialog(
           context: context, 
@@ -150,7 +159,9 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
         insurance: _insuransCoverageController.text, 
         carCondition: _carConditionController.text, 
         rentalPolicy: _rentalPolicyController.text, 
-        agencyID: widget.userId
+        agencyID: widget.userId,
+        agencyName: agencyName ?? '',
+        agencyContact: agencyContact ?? ''
       );
 
       // After successfully saving

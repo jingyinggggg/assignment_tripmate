@@ -274,11 +274,14 @@ class CarList{
   final String carModel;
   final String? carImage;
   final String? carType;
+  final String? fuel;
   final String? transmission;
   final int? seat;
   final double? price;
   final String? agentID;
   final String? agencyName;
+  final String? agencyContact;
+  final String? pickUpLocation;
 
-  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.transmission, this.seat, this.price, this.agentID, this.agencyName});
+  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation});
 }
