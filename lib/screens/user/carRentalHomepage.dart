@@ -81,7 +81,7 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-            appBar: AppBar(
+      appBar: AppBar(
         title: const Text("Car Rental"),
         centerTitle: true,
         backgroundColor: const Color(0xFF749CB9),

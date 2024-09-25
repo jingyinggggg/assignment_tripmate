@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 
 import 'package:assignment_tripmate/chat_bubble.dart';
 import 'package:assignment_tripmate/chat_service.dart';

@@ -1,6 +1,3 @@
-import 'package:assignment_tripmate/screens/user/converterPage.dart';
-import 'package:assignment_tripmate/screens/user/infoPage.dart';
-import 'package:assignment_tripmate/screens/user/ratesPage.dart';
 import 'package:assignment_tripmate/screens/user/row_button.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';

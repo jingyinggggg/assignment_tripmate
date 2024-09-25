@@ -62,6 +62,8 @@ dependencies:
   flutter_svg: ^1.1.5
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  google_maps_flutter: 2.9.0
+  geocoding: ^3.0.0
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20
   # google_ml_vision: ^0.0.7

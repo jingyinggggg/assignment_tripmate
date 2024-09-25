@@ -1,4 +1,3 @@
-import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

@@ -1,5 +1,4 @@
 import 'package:assignment_tripmate/screens/admin/adminViewTourList.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
