@@ -83,8 +83,8 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
         setState(() {
           _isDataInitialized = false;
           ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Current travel agent does not exists in the system')),
-        );
+            SnackBar(content: Text('Current travel agent does not exists in the system')),
+          );
         });
       }
     } catch(e){

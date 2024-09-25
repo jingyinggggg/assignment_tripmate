@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/autocomplete_predictions.dart';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/network_utility.dart';
@@ -10,19 +10,21 @@ import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class TravelAgentAddCarInfoScreen extends StatefulWidget {
+class TravelAgentEditCarInfoScreen extends StatefulWidget {
   final String userId;
+  final String carId;
 
-  const TravelAgentAddCarInfoScreen({
+  const TravelAgentEditCarInfoScreen({
     super.key,
     required this.userId,
+    required this.carId,
   });
 
   @override
-  State<StatefulWidget> createState() => _TravelAgentAddCarInfoScreenState();
+  State<StatefulWidget> createState() => _TravelAgentEditCarInfoScreenState();
 }
 
-class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScreen>{
+class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScreen>{
   List<String> _carType = ['SUV', 'Sedan', 'MPV', 'Hatchback'];
   List<String> _transmissionType = ['Auto', 'Manual'];
   List<String> _fuelType = ['Petrol', 'Electricity', 'Hybrid'];
@@ -46,12 +48,58 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
 
   List<AutoCompletePredictions> placedPredictions = [];
   bool isLoading = false;
+  bool isFetching = false;
   String? agencyName;
   String? agencyContact;
+  String? existingImagePath;
 
   @override
   void initState() {
     super.initState();
+    _fetchCarData();
+  }
+
+  Future<void> _fetchCarData() async {
+    setState(() {
+      isFetching = true;
+    });
+    try{
+      DocumentReference CarRef = FirebaseFirestore.instance.collection('car_rental').doc(widget.carId);
+      DocumentSnapshot carSnapshot = await CarRef.get();
+
+      if(carSnapshot.exists){
+        Map<String, dynamic>? data = carSnapshot.data() as Map<String, dynamic>?;
+
+        setState(() {
+          isFetching = false;
+
+          _carNameController.text = data?['carModel'] ?? '';
+          selectedCarType = data?['carType'] ?? '';
+          selectedTransmission = data?['transmission'] ?? '';
+          _seatController.text = data?['seat'].toString() ?? '';
+          selectedFuel = data?['fuel'] ?? '';
+          _pickUpLocationController.text = data?['pickUpLocation'] ?? '';
+          _dropOffLocationController.text = data?['dropOffLocation'] ?? '';
+          _pricingController.text = data?['pricePerDay'].toStringAsFixed(0) ?? '';
+          _insuransCoverageController.text = data?['insurance'] ?? '';
+          _carConditionController.text = data?['carCondition'] ?? '';
+          _rentalPolicyController.text = data?['rentalPolicy'] ?? '';
+          existingImagePath = data?['carImage'] ?? '';
+        });
+      } else{
+        setState(() {
+          isFetching = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Current car model does not exists in the system')),
+          );
+        });
+      }
+    }catch(e){
+      setState(() {
+        isFetching = false;
+      });
+      print("Error fetch car details: $e");
+    }
   }
 
   Future<void> selectImage() async {
@@ -109,8 +157,13 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     }
   }
 
+  Future<Uint8List> _getImageFromURL(String imageUrl) async {
+    final response = await http.get(Uri.parse(imageUrl));
+    return response.bodyBytes;
+  }
+
   // Add car details to database
-  Future<void> _addCar() async {
+  Future<void> _updateCar() async {
     setState(() {
       isLoading = true;
     });
@@ -120,7 +173,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     try {
       // Check for empty fields and provide feedback
       if (_carNameController.text.isEmpty || selectedCarType == null || selectedTransmission == null || 
-          _seatController.text.isEmpty || selectedFuel == null || _carImage == null || 
+          _seatController.text.isEmpty || selectedFuel == null || 
           _pickUpLocationController.text.isEmpty || _dropOffLocationController.text.isEmpty || 
           _pricingController.text.isEmpty || _insuransCoverageController.text.isEmpty || 
           _carConditionController.text.isEmpty || _rentalPolicyController.text.isEmpty) {
@@ -141,18 +194,26 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
         return; // Exit early
       }
 
-      // Generate car ID and save data
-      final snapshot = await firestore.collection('car_rental').get();
-      final carID = 'CAR${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+      Uint8List? carImageToUpload;
+
+      if (_carImage != null) {
+          carImageToUpload = _carImage!;
+        } else if (existingImagePath != null && existingImagePath!.isNotEmpty) {
+          // Fetch the existing image from URL
+          carImageToUpload = await _getImageFromURL(existingImagePath!);
+        } else {
+          // Handle case where no image is provided
+          throw Exception("Tour cover image is required.");
+        }
 
       String resp = await StoreData().saveCarRentalData(
-        carID: carID, 
+        carID: widget.carId, 
         carModel: _carNameController.text, 
         carType: selectedCarType!, 
         transmission: selectedTransmission!, 
         seat: int.tryParse(_seatController.text) ?? 0, 
         fuel: selectedFuel!, 
-        carImage: _carImage!, 
+        carImage: carImageToUpload, 
         pickUpLocation: _pickUpLocationController.text, 
         dropOffLocation: _dropOffLocationController.text, 
         price: double.tryParse(_pricingController.text) ?? 0.0, 
@@ -162,7 +223,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
         agencyID: widget.userId,
         agencyName: agencyName ?? '',
         agencyContact: agencyContact ?? '',
-        action: 1
+        action: 2
       );
 
       // After successfully saving
@@ -173,7 +234,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
       showCustomDialog(
         context: context, 
         title: 'Successful', 
-        content: 'You have added the car details successfully.', 
+        content: 'You have updated the car details successfully.', 
         onPressed: () {
           Navigator.push(
             context, 
@@ -364,6 +425,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                           ),
                         ),
                         maxLines: null,
+                        textAlign: TextAlign.justify,
                       ),
                       SizedBox(height: 10,),
                       if (placedPredictions.isNotEmpty) 
@@ -450,6 +512,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                           ),
                         ),
                         maxLines: null,
+                        textAlign: TextAlign.justify,
                       ),
                       SizedBox(height: 10,),
                       if (placedPredictions.isNotEmpty) 
@@ -532,11 +595,11 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                     width: double.infinity,
                     height: getScreenHeight(context) * 0.08,
                     child: ElevatedButton(
-                      onPressed: (){_addCar();},
+                      onPressed: (){_updateCar();},
                       child: isLoading
                         ? CircularProgressIndicator()
                         : Text(
-                            'Add',
+                            'Update',
                             style: TextStyle(
                               color: Colors.white,
                             ),
@@ -673,66 +736,87 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     );
   }
 
-
-
   Widget carImage() {
-    return TextField(
-      controller: _carImageController,
-      readOnly: true,
-      style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 15,
-        color: Colors.black54
-      ),
-      decoration: InputDecoration(
-        hintText: 'Please upload the image of car...',
-        labelText: 'Car Image',
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(
-            color: Color(0xFF467BA1),
-            width: 2.5,
-          ),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.black87,
-          shadows: [
-            Shadow(
-              offset: Offset(0.5, 0.5),
-              color: Colors.black87,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Car Image",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              onPressed: () async {
+                // Select a new image
+                await selectImage();
+              },
+              icon: const Icon(
+                Icons.edit,
+                size: 25,
+                color: Color(0xFF467BA1),
+              ),
             ),
           ],
         ),
-        suffixIcon: IconButton(
-          icon: const Icon(
-            Icons.image,
-            color: Color(0xFF467BA1),
-            size: 25,
-          ),
-          onPressed: () {
-            selectImage();
-          }
-        ),
-      ),
+        _carImage != null // If a new image is selected from memory
+          ? Container(
+              width: double.infinity,
+              height: 150,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: const Color(0xFF467BA1), width: 3),
+              ),
+              child: Image.memory(
+                _carImage!,
+                fit: BoxFit.contain,
+              ),
+            )
+          : (existingImagePath != null && existingImagePath!.isNotEmpty)
+            ? Container( // If there's a network image to display
+                width: double.infinity,
+                height: 200,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: const Color(0xFF467BA1), width: 3),
+                ),
+                child: Image.network(
+                  existingImagePath!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Container( // Placeholder if no image is available
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.image, size: 50, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text(
+                        'Insert image to preview',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ],
     );
   }
 

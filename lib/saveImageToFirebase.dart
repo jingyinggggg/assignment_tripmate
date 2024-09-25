@@ -354,30 +354,53 @@ class StoreData {
     required String rentalPolicy, 
     required String agencyID,
     required String agencyName,
-    required String agencyContact
+    required String agencyContact,
+    required int action
   }) async{
     String resp = "Some Error Occurred";
     try{
       String fileName = "$carModel.jpg"; 
       String imageURL = await uploadImageToStorage("car/$agencyID/$fileName", carImage);
-      await _firestore.collection("car_rental").doc(carID).set({
-        'carID': carID,
-        'carModel': carModel,
-        'carType': carType,
-        'transmission': transmission,
-        'seat': seat,
-        'fuel': fuel,
-        'carImage': imageURL,
-        'pickUpLocation': pickUpLocation,
-        'dropOffLocation': dropOffLocation,
-        'pricePerDay': price,
-        'insurance': insurance,
-        'carCondition': carCondition,
-        'rentalPolicy': rentalPolicy,
-        'agencyID': agencyID,
-        'agencyName': agencyName,
-        'agencyContact': agencyContact
-      });
+
+      if(action == 1){
+        await _firestore.collection("car_rental").doc(carID).set({
+          'carID': carID,
+          'carModel': carModel,
+          'carType': carType,
+          'transmission': transmission,
+          'seat': seat,
+          'fuel': fuel,
+          'carImage': imageURL,
+          'pickUpLocation': pickUpLocation,
+          'dropOffLocation': dropOffLocation,
+          'pricePerDay': price,
+          'insurance': insurance,
+          'carCondition': carCondition,
+          'rentalPolicy': rentalPolicy,
+          'agencyID': agencyID,
+          'agencyName': agencyName,
+          'agencyContact': agencyContact
+        });
+      } else{
+        await _firestore.collection("car_rental").doc(carID).update({
+          'carID': carID,
+          'carModel': carModel,
+          'carType': carType,
+          'transmission': transmission,
+          'seat': seat,
+          'fuel': fuel,
+          'carImage': imageURL,
+          'pickUpLocation': pickUpLocation,
+          'dropOffLocation': dropOffLocation,
+          'pricePerDay': price,
+          'insurance': insurance,
+          'carCondition': carCondition,
+          'rentalPolicy': rentalPolicy,
+          'agencyID': agencyID,
+          'agencyName': agencyName,
+          'agencyContact': agencyContact
+        });
+      }
       resp = "Success";
     } catch(err){
       resp = err.toString();

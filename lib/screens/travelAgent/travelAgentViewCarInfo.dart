@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAddCarInfo.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentEditCarInfo.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -175,13 +176,14 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
     return Container(
       padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20), // Padding around the row
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 193, 223, 238).withOpacity(0.3), // Background color
-        border: Border(
-          top: BorderSide(color: primaryColor, width: 1.5), // Always show top border
-          bottom: isLast
-              ? BorderSide(color: primaryColor, width: 1.5) // Show bottom border only if it's the last row
-              : BorderSide.none,
-        ),
+        color: Colors.grey.shade100, // Background color
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2), // Adjust shadow color and opacity as needed
+            blurRadius: 4.0,
+            offset: Offset(0, -2), // Shadow above the container
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -212,20 +214,47 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: (){}, 
-                icon: Icon(Icons.edit_document),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 35, // Set a specific width to reduce space
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => TravelAgentEditCarInfoScreen(userId: widget.userId, carId: carList.carID))
+                    );
+                  },
+                  icon: Icon(Icons.edit_document),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                  tooltip: "Edit",
+                  padding: EdgeInsets.zero,
+                ),
               ),
-              IconButton(
-                onPressed: (){}, 
-                icon: Icon(Icons.delete),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 35, // Set a specific width to reduce space
+                child: IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.build),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                  tooltip: "Maintenance",
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+              Container(
+                width: 35, // Set a specific width to reduce space
+                child: IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.delete),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                  tooltip: "Delete",
+                  padding: EdgeInsets.zero,
+                ),
               ),
             ],
-          ),
+          )
+
         ],
       ),
     );
