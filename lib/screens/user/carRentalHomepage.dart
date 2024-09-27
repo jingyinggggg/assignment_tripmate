@@ -112,49 +112,95 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
 
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10, top: 20, right: 10, bottom: 20),
-            child: Container(
-              height: 60,
-              child: TextField(
-                onChanged: (value) => onSearch(value),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.red, width: 2),
-                  ),
-                  hintText: "Search car...",
-                  hintStyle: TextStyle(
-                    fontSize: defaultFontSize,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
+          Container(
+            padding: EdgeInsets.all(10.0),
+            alignment: Alignment.center,
+            // color: primaryColor,
+            height: 100,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20))
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                TextField(
+                  onChanged: (value) => onSearch(value),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: Colors.red, width: 2),
+                    ),
+                    hintText: "Search car...",
+                    hintStyle: TextStyle(
+                      fontSize: defaultFontSize,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-            ),
+              ],
+            )
           ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 10, top: 20, right: 10, bottom: 20),
+          //   child: Container(
+          //     height: 60,
+          //     child: TextField(
+          //       onChanged: (value) => onSearch(value),
+          //       decoration: InputDecoration(
+          //         filled: true,
+          //         fillColor: Colors.white,
+          //         contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+          //         prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+          //         border: OutlineInputBorder(
+          //           borderRadius: BorderRadius.circular(10),
+          //           borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+          //         ),
+          //         enabledBorder: OutlineInputBorder(
+          //           borderRadius: BorderRadius.circular(10),
+          //           borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+          //         ),
+          //         focusedBorder: OutlineInputBorder(
+          //           borderRadius: BorderRadius.circular(10),
+          //           borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+          //         ),
+          //         errorBorder: OutlineInputBorder(
+          //           borderRadius: BorderRadius.circular(10),
+          //           borderSide: BorderSide(color: Colors.red, width: 2),
+          //         ),
+          //         hintText: "Search car...",
+          //         hintStyle: TextStyle(
+          //           fontSize: defaultFontSize,
+          //           color: Colors.grey.shade500,
+          //           fontWeight: FontWeight.bold,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
           Expanded(
             child: isLoading
               ? Center(child: CircularProgressIndicator())
               : _foundedCar.isNotEmpty
                 ? Padding(
-                  padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
+                  padding: EdgeInsets.only(left: 10, right: 10, bottom: 10, top: 15),
                   child: ListView.builder(
                     itemCount: _foundedCar.length,
                     itemBuilder: (context, index) {
