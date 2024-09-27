@@ -1,9 +1,11 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/carRentalHomepage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:latlong2/latlong.dart';
 
 class CarRentalDetailsScreen extends StatefulWidget {
   final String userId;
@@ -18,6 +20,8 @@ class CarRentalDetailsScreen extends StatefulWidget {
 class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   Map<String, dynamic>? carData;
   bool isLoading = true;
+  LatLng targetCarLocation = LatLng(0, 0);
+  Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -38,6 +42,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
         setState(() {
           carData = carSnapshot.data() as Map<String, dynamic>?;
         });
+              
+        // Convert the pickup location to LatLng
+        await _fetchCoordinates(carSnapshot['pickUpLocation']);
+
       } else {
         _showSnackBar('Car not found');
       }
@@ -47,6 +55,42 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchCoordinates(String address) async {
+    final url =
+        'https://maps.googleapis.com/maps/api/geocode/json?address=${Uri.encodeComponent(address)}&key=$apiKey';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['results'].isNotEmpty) {
+          double lat = data['results'][0]['geometry']['location']['lat'];
+          double lng = data['results'][0]['geometry']['location']['lng'];
+          setState(() {
+            targetCarLocation = LatLng(lat, lng);
+
+            // Add marker at the target location
+            _markers.add(
+              Marker(
+                markerId: MarkerId('targetLocation'),
+                position: targetCarLocation,
+                infoWindow: InfoWindow(
+                  title: 'Car Location',
+                ),
+              ),
+            );
+          });
+        } else {
+          _showSnackBar('No locations found for the provided address.');
+        }
+      } else {
+        _showSnackBar('Error fetching location data.');
+      }
+    } catch (e) {
+      _showSnackBar('Error fetching location data: $e');
     }
   }
 
@@ -78,22 +122,32 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
             );
           },
         ),
+        actions: [
+          IconButton(
+            onPressed: (){}, 
+            icon: ImageIcon(AssetImage('images/chat.png'), color: Colors.white, size: 20,),
+            tooltip: "Chat",
+
+          )
+        ],
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
-                FlutterMap(
-                  options: MapOptions(
-                    initialCenter: LatLng(51, -0.09), // Use actual car location if available
-                    initialZoom: 13,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                Container(
+                  height: getScreenHeight(context) * 0.3,
+                  child: GoogleMap(
+
+                    markers: _markers,
+                    initialCameraPosition: CameraPosition(
+                      target: targetCarLocation,
+                      zoom: 13
                     ),
-                  ],
+                    mapType: MapType.normal,
+                  ),
                 ),
+                SizedBox(height: getScreenHeight(context) * 0.9,),
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -105,13 +159,17 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.black45,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30),
-                            topRight: Radius.circular(30),
-                          ),
+                          color: Color(0xFF749CB9),
+                          // borderRadius: BorderRadius.only(
+                          //   topLeft: Radius.circular(30),
+                          //   topRight: Radius.circular(30),
+                          // ),
                           boxShadow: [
-                            BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.4), // Adjust shadow color and opacity as needed
+                              blurRadius: 10.0,
+                              offset: Offset(0, -4), // Shadow above the container
+                            ),
                           ],
                         ),
                         child: Column(
@@ -120,7 +178,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             Text(
                               carData?['carModel'] ?? 'Car Model not available',
                               style: const TextStyle(
-                                fontSize: 20,
+                                fontSize: 18,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -184,7 +242,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                     ],
                   ),
                 ),
-                _buildCarImage(),
+                // _buildCarImage(),
               ],
             ),
     );
@@ -218,7 +276,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   Widget _buildScrollView() {
     return Container(
-      height: getScreenHeight(context) * 0.48, // Fixed height for the scrollable container
+      height: getScreenHeight(context) * 0.40, // Fixed height for the scrollable container
       decoration: const BoxDecoration(color: Colors.white),
       child: SingleChildScrollView(
         child: Padding(
@@ -462,13 +520,13 @@ Widget _buildConditionSection() {
 
   Widget _buildCarImage() {
     return Positioned(
-      top: 70,
+      top: getScreenHeight(context) * 0.2,
       right: 10,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: SizedBox(
-          width: getScreenWidth(context) * 0.4,
-          height: getScreenHeight(context) * 0.2,
+          width: getScreenWidth(context) * 0.37,
+          height: getScreenHeight(context) * 0.18,
           child: carData?['carImage'] != null
               ? Image.network(
                   carData!['carImage'],
