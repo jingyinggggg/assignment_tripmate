@@ -6,6 +6,7 @@ import 'package:assignment_tripmate/screens/user/custom_animation.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:assignment_tripmate/screens/user/languageTranslator.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyHomepage.dart';
 import 'package:assignment_tripmate/screens/user/viewCountry.dart';
 import 'package:flutter/material.dart';
 import 'package:assignment_tripmate/screens/user/bottom_nav_bar.dart';
@@ -99,7 +100,10 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                   SizedBox(width: 10), // Add spacing between buttons if necessary
                   ElevatedButton(
                     onPressed: () {
-                      // Handle navigation or other actions here.
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (context) => LocalBuddyHomepageScreen(userId: widget.userId))
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
