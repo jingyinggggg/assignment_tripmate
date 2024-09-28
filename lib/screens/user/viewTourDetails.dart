@@ -30,11 +30,29 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
   bool isLoading = false;
   bool isButtonLoading = false;
   bool isOpenFile = false;
+  bool isFavorited = false;
 
   @override
   void initState() {
     super.initState();
     _fetchTourData();
+    _checkIfFavorited();
+  }
+
+  Future<void> _checkIfFavorited() async {
+    // Check if this tour package is already in the user's wishlist
+    final wishlistQuery = await FirebaseFirestore.instance
+        .collection('wishlist')
+        .where('userID', isEqualTo: widget.userId)
+        .get();
+
+    if (wishlistQuery.docs.isNotEmpty) {
+      final wishlistDocRef = wishlistQuery.docs.first.reference;
+      final tourPackages = await wishlistDocRef.collection('tourPackage').where('tourPackageId', isEqualTo: widget.tourID).get();
+      setState(() {
+        isFavorited = tourPackages.docs.isNotEmpty; // Set the favorite status based on the query
+      });
+    }
   }
 
   Future<void> _fetchTourData() async {
@@ -69,28 +87,6 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
         SnackBar(content: Text('Error fetching tour data: $e')),
       );
     }
-  }
-
-  void _showDialog({
-    required String title,
-    required String content,
-    required VoidCallback onPressed,
-  }) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: [
-            TextButton(
-              onPressed: onPressed,
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Future openFile({required String url, String? fileName}) async {
@@ -132,6 +128,97 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
       return null;
     }
   }
+
+  Future<void> _addToWishlist(String tourPackageId) async {
+    try {
+      // Reference to the Firestore collection
+      final wishlistRef = FirebaseFirestore.instance.collection('wishlist');
+
+      // Check if the wishlist document for the user exists
+      final wishlistQuery = await wishlistRef.where('userID', isEqualTo: widget.userId).get();
+
+      DocumentReference wishlistDocRef;
+
+      if (wishlistQuery.docs.isEmpty) {
+        // If no wishlist exists, create a new one with a custom ID format
+        final snapshot = await wishlistRef.get();
+        final wishlistID = 'WL${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+        wishlistDocRef = await wishlistRef.doc(wishlistID).set({
+          'userID': widget.userId,
+        }).then((_) => wishlistRef.doc(wishlistID)); // Get the reference of the new document
+      } else {
+        // Use the existing wishlist document
+        wishlistDocRef = wishlistQuery.docs.first.reference;
+      }
+
+      // Now add the tour package ID to the 'tourPackage' subcollection
+      await wishlistDocRef.collection('tourPackage').add({
+        'tourPackageId': tourPackageId,
+        // Add any other fields related to the tour package here
+      });
+
+      // Show SnackBar to inform the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Current tour package is added to your wishlist!'),
+          duration: Duration(seconds: 2), // Duration for which the SnackBar will be displayed
+        ),
+      );
+
+      setState(() {
+        isFavorited = true;
+      });
+
+      print('Current tour package is added to your wishlist.');
+    } catch (e) {
+      print('Error adding to wishlist: $e');
+    }
+  }
+
+  Future<void> _removeFromWishlist(String tourPackageId) async {
+    try {
+      final wishlistQuery = await FirebaseFirestore.instance
+          .collection('wishlist')
+          .where('userID', isEqualTo: widget.userId)
+          .get();
+
+      if (wishlistQuery.docs.isNotEmpty) {
+        final wishlistDocRef = wishlistQuery.docs.first.reference;
+        final tourPackages = await wishlistDocRef.collection('tourPackage').where('tourPackageId', isEqualTo: tourPackageId).get();
+
+        if (tourPackages.docs.isNotEmpty) {
+          // Delete the tour package document
+          await tourPackages.docs.first.reference.delete();
+
+          // Show SnackBar to inform the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Current tour package is removed from your wishlist!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          setState(() {
+            isFavorited = false; // Update favorite status
+          });
+
+          print('Current tour package is removed from your wishlist.');
+        }
+      }
+    } catch (e) {
+      print('Error removing from wishlist: $e');
+    }
+  }
+
+  void _toggleWishlist() {
+    if (isFavorited) {
+      _removeFromWishlist(widget.tourID);
+    } else {
+      _addToWishlist(widget.tourID);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +263,6 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                           width: double.infinity,
                           height: 200,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
                             image: DecorationImage(
                               image: NetworkImage(tourData!['tourCover']),
                               fit: BoxFit.cover,
@@ -248,32 +334,52 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                               ),
                             ),
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  icon: isOpenFile
-                                      ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
-                                      : const ImageIcon(
-                                          AssetImage("images/download-pdf.png"),
-                                          size: 23,
-                                          color: Colors.black,
-                                        ),
-                                  onPressed: isOpenFile
-                                      ? null // Disable button when loading
-                                      : () {
-                                          openFile(
-                                            url: tourData?['brochure'],
-                                            fileName: '${tourData?['tourName']}.pdf',
-                                          );
-                                        },
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.favorite_border,
-                                    size: 23,
-                                    color: Colors.black,
+                                Container(
+                                  width: 35,
+                                  child: IconButton(
+                                    icon: isOpenFile
+                                        ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
+                                        : const ImageIcon(
+                                            AssetImage("images/download-pdf.png"),
+                                            size: 23,
+                                            color: Colors.black,
+                                          ),
+                                    onPressed: isOpenFile
+                                        ? null // Disable button when loading
+                                        : () {
+                                            openFile(
+                                              url: tourData?['brochure'],
+                                              fileName: '${tourData?['tourName']}.pdf',
+                                            );
+                                          },
                                   ),
-                                  onPressed: (){},
                                 ),
+                                Container(
+                                  width: 35,
+                                  child: IconButton(
+                                    icon: Icon(
+                                      isFavorited ? Icons.favorite : Icons.favorite_border,
+                                      size: 23,
+                                      color: isFavorited ? Colors.red : Colors.black,
+                                    ),
+                                    onPressed: (){
+                                      _toggleWishlist();
+                                    },
+                                  ),
+                                ),
+                                Container(
+                                  width: 35,
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.share,
+                                      size: 23,
+                                      color: Colors.black,
+                                    ),
+                                    onPressed: (){},
+                                  ),
+                                )
                               ],
                             ),
                           ],
