@@ -22,6 +22,7 @@ class TravelAgentViewCarListingScreen extends StatefulWidget {
 class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarListingScreen>{
   List<CarList> _carList = [];
   List<CarList> _foundedCar = [];
+  bool isLoading = false;
 
   @override
   void initState(){
@@ -32,6 +33,9 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
     });
   }
   Future<void> fetchCarList() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       // Reference to the car_rental collection in Firestore
       CollectionReference carRef = FirebaseFirestore.instance.collection('car_rental');
@@ -50,8 +54,12 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
       // Update _foundedCar
       setState(() {
         _foundedCar = _carList;
+        isLoading = false;
       });
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
       // Handle any errors
       print('Error fetching car list: $e');
     }
@@ -143,7 +151,9 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
             ),
           ),
           Expanded(
-            child: _foundedCar.isNotEmpty
+            child: isLoading
+              ? Center(child: CircularProgressIndicator())
+              : _foundedCar.isNotEmpty
                 ? ListView.builder(
                     itemCount: _foundedCar.length,
                     itemBuilder: (context, index) {
