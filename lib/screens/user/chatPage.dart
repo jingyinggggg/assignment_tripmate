@@ -1,6 +1,8 @@
+import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -22,7 +24,10 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
   @override
   void initState(){
     super.initState();
-    // fetchMessageList();
+    fetchMessageList();
+    setState(() {
+      _foundedMessageList = _MessageList;
+    });
   }
 
   Future<void> fetchMessageList() async {
@@ -34,78 +39,78 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
       // Fetch all chat_rooms where the document ID contains widget.userId
       CollectionReference chatRef = FirebaseFirestore.instance.collection('chat_rooms');
       QuerySnapshot chatRoomsSnapshot = await chatRef.get();
-      
-      // Print the document IDs to verify they are being fetched
-      for (var doc in chatRoomsSnapshot.docs) {
-        print('Document ID: ${doc.id}');
+
+      // Clear the previous message list
+      _MessageList.clear();
+
+      // Iterate over all chat rooms
+      for (var chatRoom in chatRoomsSnapshot.docs) {
+        String docId = chatRoom.id.trim();
+        List<String> ids = docId.split('_').map((id) => id.trim()).toList();
+
+        // Ensure the current user ID is in the list of IDs
+        if (ids.contains(widget.userId.trim())) {
+          // Determine the other participant's ID
+          String otherUserId = ids.firstWhere((id) => id != widget.userId.trim());
+
+          // Fetch the latest message from the chat room
+          CollectionReference messagesRef = chatRoom.reference.collection('messages');
+          QuerySnapshot latestMessageSnapshot = await messagesRef
+              .orderBy('timestamp', descending: true)
+              .limit(1)
+              .get();
+
+          if (latestMessageSnapshot.docs.isNotEmpty) {
+            var messageDoc = latestMessageSnapshot.docs.first; // Get the first (latest) message
+            String senderId = messageDoc['senderId']; 
+
+            // Fetch user profile based on the otherUserId type (User, Travel Agent, Admin)
+            DocumentSnapshot userSnapshot;
+            if (otherUserId.startsWith('U')) {
+              userSnapshot = await FirebaseFirestore.instance.collection('users').doc(otherUserId).get();
+            } else if (otherUserId.startsWith('TA')) {
+              userSnapshot = await FirebaseFirestore.instance.collection('travelAgent').doc(otherUserId).get();
+            } else if (otherUserId.startsWith('A')) {
+              userSnapshot = await FirebaseFirestore.instance.collection('admin').doc(otherUserId).get();
+            } else {
+              continue; // Skip if no valid collection is found
+            }
+
+            // If the user profile exists, extract profile image and message details
+            if (userSnapshot.exists) {
+              var userData = userSnapshot.data() as Map<String, dynamic>;
+              String receiverProfile = userData['profileImage'] ?? ''; // Use a default or fallback image if null
+              String receiverName = userData['name'] ?? 'Unknown'; // Use a default name if null
+
+              // Determine if the sender is the current user
+              bool isSenderCurrentUser = senderId == widget.userId;
+
+              // Add the latest message along with the receiver's profile to the list
+              _MessageList.add(
+                MessageList(
+                  receiverName,
+                  receiverProfile,
+                  otherUserId,
+                  messageDoc['message'] ?? '', // Retrieve the message content, use empty string if null
+                  messageDoc['timestamp'] as Timestamp? ?? Timestamp.now(),
+                  isSenderCurrentUser
+                ),
+              );
+            }
+          }
+        }
       }
-      
-      // // Filter chat rooms where the document ID contains the current user ID as sender or receiver
-      // List<DocumentSnapshot> filteredChatRooms = chatRoomsSnapshot.docs.where((doc) {
-      //   String docId = doc.id.trim(); // Ensure no leading/trailing spaces
-      //   List<String> ids = docId.split('_').map((id) => id.trim()).toList(); // Split by '_' and trim any spaces
-      //   return ids.contains(widget.userId.trim()); // Check if one of the IDs matches the user ID
-      // }).toList();
-
-      // print(filteredChatRooms);
-
-      // // Iterate over filtered chat rooms and fetch messages
-      // for (var chatRoom in filteredChatRooms) {
-      //   CollectionReference messagesRef = chatRoom.reference.collection('messages');
-      //   QuerySnapshot messagesSnapshot = await messagesRef.orderBy('timestamp').get();
-
-      //   for (var messageDoc in messagesSnapshot.docs) {
-      //     String receiverId = messageDoc['receiverId'];
-
-      //     DocumentSnapshot userSnapshot;
-
-      //     // Fetch user profile based on the receiverId type (User, Travel Agent, Admin)
-      //     if (receiverId.startsWith('U')) {
-      //       userSnapshot = await FirebaseFirestore.instance
-      //           .collection('users')
-      //           .doc(receiverId)
-      //           .get();
-      //     } else if (receiverId.startsWith('TA')) {
-      //       userSnapshot = await FirebaseFirestore.instance
-      //           .collection('travelAgent')
-      //           .doc(receiverId)
-      //           .get();
-      //     } else if (receiverId.startsWith('A')) {
-      //       userSnapshot = await FirebaseFirestore.instance
-      //           .collection('admin')
-      //           .doc(receiverId)
-      //           .get();
-      //     } else {
-      //       continue; // Skip if no valid collection is found
-      //     }
-
-      //     // If the user profile exists, extract profile image and message details
-      //     if (userSnapshot.exists) {
-      //       var userData = userSnapshot.data() as Map<String, dynamic>;
-      //       String receiverProfile = userData['profileImage'];
-      //       String receiverName = userData['name']; // Assuming the user's name field exists
-
-      //       // Add the message along with the receiver's profile to the list
-      //       _MessageList.add(
-      //         MessageList(
-      //           receiverName,
-      //           receiverProfile,
-      //           receiverId,
-      //           messageDoc['message']
-      //         ),
-      //       );
-      //     }
-      //   }
-      // }
 
       // Update UI after fetching the data
       setState(() {
         _foundedMessageList = _MessageList;
         isLoading = false;
       });
-
     } catch (e) {
       print("Error fetching messages: $e");
+      setState(() {
+        isLoading = false;  // Stop loading in case of an error
+      });
     }
   }
 
@@ -114,6 +119,31 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
       _foundedMessageList = _MessageList.where((MessageList) => MessageList.receiverName.toUpperCase().contains(search.toUpperCase())).toList();
     });
   }
+
+  String formatTimestamp(Timestamp timestamp) {
+    DateTime messageDateTime = timestamp.toDate();
+    DateTime now = DateTime.now();
+    
+    // Check if the message is from today
+    if (messageDateTime.year == now.year && messageDateTime.month == now.month && messageDateTime.day == now.day) {
+      return DateFormat.jm().format(messageDateTime); // Display time (without seconds)
+    }
+    
+    // Check if the message is from yesterday
+    if (messageDateTime.year == now.year && messageDateTime.month == now.month && 
+        messageDateTime.day == now.day - 1) {
+      return "Yesterday";
+    }
+    
+    // Check if the message is from this week
+    if (messageDateTime.isAfter(now.subtract(Duration(days: 7)))) {
+      return DateFormat.EEEE().format(messageDateTime); // Display the day of the week
+    }
+
+    // If older than a week, display the date
+    return DateFormat('MM/dd/yyyy').format(messageDateTime);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -162,13 +192,13 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
                 ),
               ),
 
-              ElevatedButton(onPressed: fetchMessageList, child: Text("Fetch")),
+              // ElevatedButton(onPressed: fetchMessageList, child: Text("Fetch")),
 
               isLoading
                 ? Expanded(child: Center(child: CircularProgressIndicator()))
                 : Expanded( // Ensures the ListView takes up the available space
                   child: Padding(
-                    padding: EdgeInsets.only(right: 10, left: 15), // Adjust padding
+                    padding: EdgeInsets.only(right: 15, left: 15, top: 10), // Adjust padding
                     child: ListView.builder(
                       itemCount: _foundedMessageList.length,
                       itemBuilder: (context, index) {
@@ -184,44 +214,86 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     );
   }
 
-  Widget messageListComponent({required MessageList messageList}){
-    return Container(
-      padding: EdgeInsets.only(top:10, bottom:10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Color(0xFF467BA1), 
-                    width: 2.0, 
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(messageList.receiverProfile),
+  Widget messageListComponent({required MessageList messageList}) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: messageList.receiverID))
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.only(top: 10, bottom: 10),
+        child: Row(
+          children: [
+            // Profile Image
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Color(0xFF467BA1),
+                  width: 2.0,
                 ),
               ),
-              SizedBox(width: 15),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(messageList.receiverName, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14)),
-                  SizedBox(height: 5,),
-                  Text(messageList.latestMessage, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12))
-                ],
-              )
-            ],
-          )
-        ],
+              child: CircleAvatar(
+                radius: 25,
+                backgroundImage: messageList.receiverProfile.isNotEmpty
+                    ? NetworkImage(messageList.receiverProfile)
+                    : AssetImage('images/profile.png'),
+                backgroundColor: Colors.white,
+              ),
+            ),
+            SizedBox(width: 15),
+
+            // Expanded container to take available width
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          messageList.receiverName,
+                          style: TextStyle(
+                              color: Colors.black, 
+                              fontWeight: FontWeight.w700, 
+                              fontSize: 14),
+                        ),
+                        Text(
+                          formatTimestamp(messageList.latestReceiveTime),
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      messageList.isCurrentUser ? 'You: ${messageList.latestMessage}' : messageList.latestMessage,
+                      style: TextStyle(
+                        color: Colors.black, 
+                        fontWeight: FontWeight.w500, 
+                        fontSize: 12,
+                        overflow: TextOverflow.ellipsis
+                      ),
+                    ),
+                    SizedBox(height: 10)
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+
 
 
 

@@ -1,6 +1,7 @@
 
 import 'package:assignment_tripmate/chat_bubble.dart';
 import 'package:assignment_tripmate/chat_service.dart';
+import 'package:assignment_tripmate/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -160,10 +161,12 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
           ),
         ),
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, 
           children: [
             Container(
-              width: 45, 
-              height: 45,
+              width: 35, 
+              height: 35,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -173,23 +176,23 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
               ),
               child: receiverProfileImage != null
               ? CircleAvatar(
-                radius: 30,
+                radius: 20,
                 backgroundImage: NetworkImage(receiverProfileImage ?? ''),
               )
               : CircleAvatar(
-                  radius: 30,
+                  radius: 20,
                   backgroundImage: AssetImage("images/profile.png"),
                   backgroundColor: Colors.white,
                 ),
             ),
-            const SizedBox(width: 20), // Space between image and name
+            const SizedBox(width: 10), // Space between image and name
             // Name text
             Text(
               receiverName ?? '', // Use empty string as fallback if receiverName is null
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontSize: defaultLabelFontSize,
               ),
             ),
           ],

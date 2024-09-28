@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -257,8 +258,10 @@ class MessageList{
   final String receiverProfile;
   final String receiverID;
   final String latestMessage;
+  final Timestamp latestReceiveTime;
+  final bool isCurrentUser;
 
-  MessageList(this.receiverName, this.receiverProfile, this.receiverID, this.latestMessage);
+  MessageList(this.receiverName, this.receiverProfile, this.receiverID, this.latestMessage, this.latestReceiveTime, this.isCurrentUser);
 }
 
 class CarBrand{

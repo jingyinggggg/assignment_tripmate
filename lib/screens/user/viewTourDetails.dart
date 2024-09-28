@@ -332,7 +332,8 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
+                                      // builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
+                                      builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0002'),
                                     ),
                                   );
                                 } else {
