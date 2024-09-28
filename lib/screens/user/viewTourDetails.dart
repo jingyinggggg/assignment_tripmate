@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
-import 'package:assignment_tripmate/screens/user/viewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -219,7 +219,6 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -238,287 +237,357 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ViewTourListScreen(
-                  userId: widget.userId,
-                  countryName: widget.countryName,
-                  cityName: widget.cityName,
-                ),
-              ),
-            );
+            Navigator.pop(context);
           },
         )
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator()) // Show a loading indicator while data is being fetched
           : SingleChildScrollView(
-              child: Column(
-                children: [
-                  if (tourData?['tourCover'] != null) ...[
-                    Stack(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage(tourData!['tourCover']),
-                              fit: BoxFit.cover,
-                            ),
+            child: Column(
+              children: [
+                if (tourData?['tourCover'] != null) ...[
+                  Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(tourData!['tourCover']),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        Positioned.fill(
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: Container(
-                              width: double.infinity,
-                              height: 50,
-                              color: Colors.white.withOpacity(0.7),
-                              child: Center(
-                                child: Text(
-                                  tourData!['tourName'] ?? 'No Name',
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        offset: Offset(0.5, 0.5),
-                                        color: Colors.black87,
-                                      ),
-                                    ],
-                                  ),
-                                  textAlign: TextAlign.center,
+                      ),
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: double.infinity,
+                            height: 50,
+                            color: Colors.white.withOpacity(0.7),
+                            child: Center(
+                              child: Text(
+                                tourData!['tourName'] ?? 'No Name',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(0.5, 0.5),
+                                      color: Colors.black87,
+                                    ),
+                                  ],
                                 ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    )
-                  ] else ...[
-                    Container(
-                      width: double.infinity,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
                       ),
-                      child: const Center(
-                        child: Text(
-                          'No Image Available',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                    ],
+                  )
+                ] else ...[
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
                     ),
-                  ],
-
-                  Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Agency Info",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 35,
-                                  child: IconButton(
-                                    icon: isOpenFile
-                                        ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
-                                        : const ImageIcon(
-                                            AssetImage("images/download-pdf.png"),
-                                            size: 23,
-                                            color: Colors.black,
-                                          ),
-                                    onPressed: isOpenFile
-                                        ? null // Disable button when loading
-                                        : () {
-                                            openFile(
-                                              url: tourData?['brochure'],
-                                              fileName: '${tourData?['tourName']}.pdf',
-                                            );
-                                          },
-                                  ),
-                                ),
-                                Container(
-                                  width: 35,
-                                  child: IconButton(
-                                    icon: Icon(
-                                      isFavorited ? Icons.favorite : Icons.favorite_border,
-                                      size: 23,
-                                      color: isFavorited ? Colors.red : Colors.black,
-                                    ),
-                                    onPressed: (){
-                                      _toggleWishlist();
-                                    },
-                                  ),
-                                ),
-                                Container(
-                                  width: 35,
-                                  child: IconButton(
-                                    icon: Icon(
-                                      Icons.share,
-                                      size: 23,
-                                      color: Colors.black,
-                                    ),
-                                    onPressed: (){},
-                                  ),
-                                )
-                              ],
-                            ),
-                          ],
+                    child: const Center(
+                      child: Text(
+                        'No Image Available',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-
-                        Text(
-                          "Agency: ${tourData?['agency'] ?? 'No Agency Info'}",
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.black
-                          ),
-                        ),
-
-                        SizedBox(height: 20),
-
-                        Text(
-                          "Tour Highlights",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        SizedBox(height: 10),
-
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: tourData?['tourHighlight']?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            var tourHighlight = tourData!['tourHighlight'][index];
-                            return tourHighlightComponent(
-                              tourHighlight['no'] ?? 'No Numbering',
-                              tourHighlight['description'] ?? 'No Description',
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 20),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Itinerary",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                final receiverUserId = tourData?['agentID']; // Safely get the value
-
-                                if (receiverUserId != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      // builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
-                                      builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0002'),
-                                    ),
-                                  );
-                                } else {
-                                  // Handle the case where receiverUserId is null
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Agent is not available')),
-                                  );
-                                }
-                              },
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    "Enquiry",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  const ImageIcon(
-                                    AssetImage("images/communication.png"),
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF467BA1),
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(0),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-
-                        SizedBox(height: 10),
-
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: tourData?['itinerary']?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            var itinerary = tourData!['itinerary'][index];
-                            return itineraryComponent(
-                              itinerary['day'] ?? 'No Day',
-                              itinerary['title'] ?? 'No Title',
-                              itinerary['description'] ?? 'No Description',
-                              itinerary['overnight'] ?? 'No Remarks',
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 20),
-
-                        Text(
-                          "Availability",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        SizedBox(height: 10),
-
-                        availabilityComponent(tourData!),
-
-                        SizedBox(height:30),
-                      ],
+                      ),
                     ),
                   ),
                 ],
-              ),
+
+                Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Agency Info",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 35,
+                                child: IconButton(
+                                  icon: isOpenFile
+                                      ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
+                                      : const ImageIcon(
+                                          AssetImage("images/download-pdf.png"),
+                                          size: 23,
+                                          color: Colors.black,
+                                        ),
+                                  onPressed: isOpenFile
+                                      ? null // Disable button when loading
+                                      : () {
+                                          openFile(
+                                            url: tourData?['brochure'],
+                                            fileName: '${tourData?['tourName']}.pdf',
+                                          );
+                                        },
+                                ),
+                              ),
+                              Container(
+                                width: 35,
+                                child: IconButton(
+                                  icon: Icon(
+                                    isFavorited ? Icons.favorite : Icons.favorite_border,
+                                    size: 23,
+                                    color: isFavorited ? Colors.red : Colors.black,
+                                  ),
+                                  onPressed: (){
+                                    _toggleWishlist();
+                                  },
+                                ),
+                              ),
+                              Container(
+                                width: 35,
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.share,
+                                    size: 23,
+                                    color: Colors.black,
+                                  ),
+                                  onPressed: (){},
+                                ),
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      Text(
+                        "Agency: ${tourData?['agency'] ?? 'No Agency Info'}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black
+                        ),
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Text(
+                        "Tour Highlights",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: tourData?['tourHighlight']?.length ?? 0,
+                        itemBuilder: (context, index) {
+                          var tourHighlight = tourData!['tourHighlight'][index];
+                          return tourHighlightComponent(
+                            tourHighlight['no'] ?? 'No Numbering',
+                            tourHighlight['description'] ?? 'No Description',
+                          );
+                        },
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Itinerary",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              final receiverUserId = tourData?['agentID']; // Safely get the value
+
+                              if (receiverUserId != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    // builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
+                                    builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0002'),
+                                  ),
+                                );
+                              } else {
+                                // Handle the case where receiverUserId is null
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Agent is not available')),
+                                );
+                              }
+                            },
+                            child: Row(
+                              children: [
+                                const Text(
+                                  "Enquiry",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                const ImageIcon(
+                                  AssetImage("images/communication.png"),
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF467BA1),
+                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(0),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+
+                      SizedBox(height: 10),
+
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: tourData?['itinerary']?.length ?? 0,
+                        itemBuilder: (context, index) {
+                          var itinerary = tourData!['itinerary'][index];
+                          return itineraryComponent(
+                            itinerary['day'] ?? 'No Day',
+                            itinerary['title'] ?? 'No Title',
+                            itinerary['description'] ?? 'No Description',
+                            itinerary['overnight'] ?? 'No Remarks',
+                          );
+                        },
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Text(
+                        "Availability",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      availabilityComponent(tourData!),
+
+                      SizedBox(height:30),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          ),
+      bottomNavigationBar: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 7.0,
+            offset: Offset(0, -2),
+          ),
+        ],
+        ),
+        child: BottomAppBar(
+          color: Colors.white,
+          child: tourData != null ? bookNowComponent(tourData!) : SizedBox(), // Render empty widget if null
+        ),
+      ),
+
     );
   }
 
+  Widget bookNowComponent(Map<String, dynamic> tourData) {
+    double cheapestPrice = double.infinity; // Start with a high value
+
+    // Check if availability is not empty
+    if (tourData['availability'] != null && tourData['availability'].isNotEmpty) {
+      // Extract prices safely and handle their types
+      List<double> prices = [];
+      for (var item in tourData['availability']) {
+        // Safely access price and convert it to double
+        final priceNum = item['price'] as num?;
+        if (priceNum != null) {
+          prices.add(priceNum.toDouble());
+        }
+      }
+      
+      // Find the cheapest price using fold
+      if (prices.isNotEmpty) {
+        cheapestPrice = prices.reduce((currentMin, price) => price < currentMin ? price : currentMin);
+      } else {
+        // Set default value if no prices are found
+        cheapestPrice = 0.0; // or any default value you prefer
+      }
+    } else {
+      // Handle case where availability is null or empty
+      cheapestPrice = 0.0; // or any default value you prefer
+    }
+
+    return Container(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'From RM${cheapestPrice.toStringAsFixed(0)}/pax',
+            style: TextStyle(
+              fontSize: defaultLabelFontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0),
+              ),
+            ),
+            child: Text(
+              'Book Now',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: defaultFontSize,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget tourHighlightComponent(String numbering, String description) {
     return Container(
@@ -658,61 +727,59 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
     );
   }
 
-Widget availabilityComponent(Map<String, dynamic> data) {
-  if (data.isEmpty || data['availability'] == null || data['availability'].isEmpty || data['flight_info'] == null || data['flight_info'].isEmpty) {
-    return Center(
-      child: Text('No availability data found'),
-    );
-  } else {
-    List<dynamic> availabilityList = data['availability'];
-    List<dynamic> flightInfoList = data['flight_info'];
+  Widget availabilityComponent(Map<String, dynamic> data) {
+    if (data.isEmpty || data['availability'] == null || data['availability'].isEmpty || data['flight_info'] == null || data['flight_info'].isEmpty) {
+      return Center(
+        child: Text('No availability data found'),
+      );
+    } else {
+      List<dynamic> availabilityList = data['availability'];
+      List<dynamic> flightInfoList = data['flight_info'];
 
-    // Ensure both lists are of equal length
-    int length = availabilityList.length < flightInfoList.length ? availabilityList.length : flightInfoList.length;
+      // Ensure both lists are of equal length
+      int length = availabilityList.length < flightInfoList.length ? availabilityList.length : flightInfoList.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFF467BA1), width: 1.0),
-          ),
-          child: Table(
-            columnWidths: const {
-              0: FlexColumnWidth(1.2),
-              1: FlexColumnWidth(1.1),
-              2: FlexColumnWidth(1.2),
-            },
-            border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
-            children: [
-              // Header row
-              TableRow(
-                children: [
-                  _buildTableHeaderCell("Date"),
-                  _buildTableHeaderCell("Flight"),
-                  _buildTableHeaderCell("Price"),
-                ],
-              ),
-              // Data rows
-              for (int i = 0; i < length; i++)
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFF467BA1), width: 1.0),
+            ),
+            child: Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1.2),
+                1: FlexColumnWidth(1.1),
+                2: FlexColumnWidth(1.2),
+              },
+              border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
+              children: [
+                // Header row
                 TableRow(
                   children: [
-                    _buildTextFieldCell(availabilityList[i]['dateRange'] ?? 'No Date'),
-                    _buildTextFieldCell(flightInfoList[i]['flightName'] ?? 'No Flight'),
-                    _buildTextFieldCell('RM ' + (availabilityList[i]['price']?.toString() ?? '0') + '.00'),
+                    _buildTableHeaderCell("Date"),
+                    _buildTableHeaderCell("Flight"),
+                    _buildTableHeaderCell("Price"),
                   ],
                 ),
-            ],
+                // Data rows
+                for (int i = 0; i < length; i++)
+                  TableRow(
+                    children: [
+                      _buildTextFieldCell(availabilityList[i]['dateRange'] ?? 'No Date'),
+                      _buildTextFieldCell(flightInfoList[i]['flightName'] ?? 'No Flight'),
+                      _buildTextFieldCell('RM ' + (availabilityList[i]['price']?.toString() ?? '0') + '.00'),
+                    ],
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    }
   }
-}
-
-
 
   Widget _buildTextFieldCell(String text) {
     return Container(

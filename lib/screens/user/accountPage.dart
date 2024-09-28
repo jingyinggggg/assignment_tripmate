@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/profile.dart';
 import 'package:assignment_tripmate/screens/user/setting.dart';
+import 'package:assignment_tripmate/screens/user/wishlist.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -180,12 +181,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      WishlistScreen(userID: widget.userId)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
