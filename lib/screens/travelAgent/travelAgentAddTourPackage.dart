@@ -31,7 +31,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
   final List<TextEditingController> _tourHighlightControllers = [];
   final List<TextEditingController> _itineraryTitleControllers = [];
   final List<TextEditingController> _itineraryDescriptionControllers = [];
-  final List<TextEditingController> _itineraryOvernightControllers = [];
+  // final List<TextEditingController> _itineraryOvernightControllers = [];
   final List<TextEditingController> _flightDepartDateControllers = [];
   final List<TextEditingController> _flightReturnDateControllers = [];
   final List<TextEditingController> _flightNameControllers = [];
@@ -51,7 +51,7 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     for (var i = 0; i < _itinerary.length; i++) {
       _itineraryTitleControllers.add(TextEditingController(text: _itinerary[i]['title']));
       _itineraryDescriptionControllers.add(TextEditingController(text: _itinerary[i]['description']));
-      _itineraryOvernightControllers.add(TextEditingController(text: _itinerary[i]['overnight']));
+      // _itineraryOvernightControllers.add(TextEditingController(text: _itinerary[i]['overnight']));
     }
 
     for (var i = 0; i < _flight.length; i++) {
@@ -71,9 +71,14 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     {'no': '', 'description': ''},
   ];
 
+  // final List<Map<String, String>> _itinerary = [
+  //   {'day': '', 'title': '', 'description': '', 'overnight': ''},
+  // ];
+
   final List<Map<String, String>> _itinerary = [
-    {'day': '', 'title': '', 'description': '', 'overnight': ''},
+    {'day': '', 'title': '', 'description': ''},
   ];
+
 
   final List<Map<String, String>> _flight = [
     {'no': '', 'depart': '', 'return': '', 'flight': ''},
@@ -109,9 +114,9 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     for (var controller in _itineraryDescriptionControllers) {
       controller.dispose();
     }
-    for (var controller in _itineraryOvernightControllers) {
-      controller.dispose();
-    }
+    // for (var controller in _itineraryOvernightControllers) {
+    //   controller.dispose();
+    // }
 
     // Dispose flight controllers
     for (var controller in _flightDepartDateControllers) {
@@ -181,10 +186,10 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
       showSnackBar("Please ensure you have filled in the previous row before adding a new one.", context);
     } else {
       setState(() {
-        _itinerary.add({'day': '', 'title': '', 'description': '', 'overnight': ''});
+        _itinerary.add({'day': '', 'title': '', 'description': ''});
         _itineraryTitleControllers.add(TextEditingController());
         _itineraryDescriptionControllers.add(TextEditingController());
-        _itineraryOvernightControllers.add(TextEditingController());
+        // _itineraryOvernightControllers.add(TextEditingController());
       });
     }
   }
@@ -238,11 +243,11 @@ void _removeItineraryRow(int index) {
       // Dispose of the text controllers and remove them from the list
       _itineraryTitleControllers[index].dispose();
       _itineraryDescriptionControllers[index].dispose();
-      _itineraryOvernightControllers[index].dispose();
+      // _itineraryOvernightControllers[index].dispose();
 
       _itineraryTitleControllers.removeAt(index);
       _itineraryDescriptionControllers.removeAt(index);
-      _itineraryOvernightControllers.removeAt(index);
+      // _itineraryOvernightControllers.removeAt(index);
     }
   });
 }
@@ -294,7 +299,7 @@ void _removeItineraryRow(int index) {
           _itinerary[i]['day'] = (i + 1).toString();
           _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
           _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
-          _itinerary[i]['overnight'] = _itineraryOvernightControllers[i].text.trim();
+          // _itinerary[i]['overnight'] = _itineraryOvernightControllers[i].text.trim();
         }
 
       case "flight":
@@ -413,7 +418,7 @@ void _removeItineraryRow(int index) {
               'day': entry['day'],
               'title': entry['title'],
               'description': entry['description'],
-              'overnight': entry['overnight'],
+              // 'overnight': entry['overnight'],
             };
           }).toList(),
         };
@@ -710,7 +715,7 @@ void _removeItineraryRow(int index) {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF467BA1),
                         textStyle: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                         shape: RoundedRectangleBorder(
@@ -905,10 +910,9 @@ void _removeItineraryRow(int index) {
           child: Table(
             columnWidths: const {
               0: FlexColumnWidth(0.5),
-              1: FlexColumnWidth(0.85),
-              2: FlexColumnWidth(1.2),
-              3: FlexColumnWidth(0.95),
-              4: FlexColumnWidth(0.4),
+              1: FlexColumnWidth(1.1),
+              2: FlexColumnWidth(1.7),
+              3: FlexColumnWidth(0.4),
             },
             border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
             children: [
@@ -917,7 +921,7 @@ void _removeItineraryRow(int index) {
                   _buildTableHeaderCell('Day'),
                   _buildTableHeaderCell('Title'),
                   _buildTableHeaderCell('Description'),
-                  _buildTableHeaderCell('Overnight'),
+                  // _buildTableHeaderCell('Overnight'),
                   _buildTableHeaderCell(''),
                 ],
               ),
@@ -938,7 +942,7 @@ void _removeItineraryRow(int index) {
                     ),
                     _buildTextFieldCell(_itineraryTitleControllers[i], 'Title...'),
                     _buildTextFieldCell(_itineraryDescriptionControllers[i], 'Description...'),
-                    _buildTextFieldCell(_itineraryOvernightControllers[i], 'City...'),
+                    // _buildTextFieldCell(_itineraryOvernightControllers[i], 'City...'),
                     _buildDeleteButton(i, "itinerary"),
                   ],
                 ),
@@ -1465,7 +1469,7 @@ void _removeItineraryRow(int index) {
     if (rowType == 'itinerary') {
       _itineraryTitleControllers[0].clear();
       _itineraryDescriptionControllers[0].clear();
-      _itineraryOvernightControllers[0].clear();
+      // _itineraryOvernightControllers[0].clear();
     } else if (rowType == 'tourHighlight') {
       _tourHighlightControllers[0].clear();
     } else if (rowType == 'flight') {

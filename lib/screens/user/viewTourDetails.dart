@@ -480,7 +480,6 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                             itinerary['day'] ?? 'No Day',
                             itinerary['title'] ?? 'No Title',
                             itinerary['description'] ?? 'No Description',
-                            itinerary['overnight'] ?? 'No Remarks',
                           );
                         },
                       ),
@@ -621,7 +620,7 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
     );
   }
 
-  Widget itineraryComponent(String day, String title, String description, String overnightCity) {
+  Widget itineraryComponent(String day, String title, String description) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: IntrinsicHeight( // Ensure both sides of the Row stretch to the tallest child
@@ -704,16 +703,6 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                       style: const TextStyle(
                         fontSize: 15,
                         color: Colors.black,
-                      ),
-                      textAlign: TextAlign.justify,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '*** $overnightCity',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.justify,
                     ),

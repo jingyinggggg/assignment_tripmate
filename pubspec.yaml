@@ -65,6 +65,7 @@ dependencies:
   google_maps_flutter: 2.9.0
   geocoding: ^3.0.0
   custom_info_window: ^1.0.1
+  flutter_html: ^3.0.0-beta.2
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20
   # google_ml_vision: ^0.0.7

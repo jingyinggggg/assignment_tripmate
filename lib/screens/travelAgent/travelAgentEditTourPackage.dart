@@ -35,7 +35,6 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
   List<TextEditingController> _tourHighlightControllers = [];
   List<TextEditingController> _itineraryTitleControllers = [];
   List<TextEditingController> _itineraryDescriptionControllers = [];
-  List<TextEditingController> _itineraryOvernightControllers = [];
   List<TextEditingController> _flightDepartDateControllers = [];
   List<TextEditingController> _flightReturnDateControllers = [];
   List<TextEditingController> _flightNameControllers = [];
@@ -59,7 +58,6 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
     for (var i = 0; i < _itinerary.length; i++) {
       _itineraryTitleControllers.add(TextEditingController(text: _itinerary[i]['title']));
       _itineraryDescriptionControllers.add(TextEditingController(text: _itinerary[i]['description']));
-      _itineraryOvernightControllers.add(TextEditingController(text: _itinerary[i]['overnight']));
     }
 
     for (var i = 0; i < _flight.length; i++) {
@@ -80,7 +78,7 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
   ];
 
   List<Map<String, dynamic>> _itinerary = [
-    {'day': '', 'title': '', 'description': '', 'overnight': ''},
+    {'day': '', 'title': '', 'description': ''},
   ];
 
   List<Map<String, dynamic>> _flight = [
@@ -116,9 +114,6 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
       controller.dispose();
     }
     for (var controller in _itineraryDescriptionControllers) {
-      controller.dispose();
-    }
-    for (var controller in _itineraryOvernightControllers) {
       controller.dispose();
     }
 
@@ -196,10 +191,6 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
           _itineraryDescriptionControllers = List.generate(
             _itinerary.length, 
             (index) => TextEditingController(text: _itinerary[index]['description'] ?? ''),
-          );
-          _itineraryOvernightControllers = List.generate(
-            _itinerary.length, 
-            (index) => TextEditingController(text: _itinerary[index]['overnight'] ?? ''),
           );
 
           // Populate flight info
@@ -290,10 +281,9 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
       showSnackBar("Please ensure you have filled in the previous row before adding a new one.", context);
     } else {
       setState(() {
-        _itinerary.add({'day': '', 'title': '', 'description': '', 'overnight': ''});
+        _itinerary.add({'day': '', 'title': '', 'description': ''});
         _itineraryTitleControllers.add(TextEditingController());
         _itineraryDescriptionControllers.add(TextEditingController());
-        _itineraryOvernightControllers.add(TextEditingController());
       });
     }
   }
@@ -347,11 +337,9 @@ void _removeItineraryRow(int index) {
       // Dispose of the text controllers and remove them from the list
       _itineraryTitleControllers[index].dispose();
       _itineraryDescriptionControllers[index].dispose();
-      _itineraryOvernightControllers[index].dispose();
 
       _itineraryTitleControllers.removeAt(index);
       _itineraryDescriptionControllers.removeAt(index);
-      _itineraryOvernightControllers.removeAt(index);
     }
   });
 }
@@ -403,7 +391,6 @@ void _removeItineraryRow(int index) {
           _itinerary[i]['day'] = (i + 1).toString();
           _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
           _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
-          _itinerary[i]['overnight'] = _itineraryOvernightControllers[i].text.trim();
         }
 
       case "flight":
@@ -551,7 +538,6 @@ void _removeItineraryRow(int index) {
               'day': entry['day'],
               'title': entry['title'],
               'description': entry['description'],
-              'overnight': entry['overnight'],
             };
           }).toList(),
         };
@@ -731,7 +717,7 @@ void _removeItineraryRow(int index) {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(context, MaterialPageRoute(builder: (context) => TravelAgentViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName)));
           },
         ),
       ),
@@ -863,7 +849,7 @@ void _removeItineraryRow(int index) {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF467BA1),
                           textStyle: const TextStyle(
-                            fontSize: 22,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                           shape: RoundedRectangleBorder(
@@ -1074,10 +1060,9 @@ void _removeItineraryRow(int index) {
           child: Table(
             columnWidths: const {
               0: FlexColumnWidth(0.5),
-              1: FlexColumnWidth(0.85),
-              2: FlexColumnWidth(1.2),
-              3: FlexColumnWidth(0.95),
-              4: FlexColumnWidth(0.4),
+              1: FlexColumnWidth(1.1),
+              2: FlexColumnWidth(1.7),
+              3: FlexColumnWidth(0.4),
             },
             border: TableBorder.all(color: const Color(0xFF467BA1), width: 1.5),
             children: [
@@ -1086,7 +1071,6 @@ void _removeItineraryRow(int index) {
                   _buildTableHeaderCell('Day'),
                   _buildTableHeaderCell('Title'),
                   _buildTableHeaderCell('Description'),
-                  _buildTableHeaderCell('Overnight'),
                   _buildTableHeaderCell(''),
                 ],
               ),
@@ -1131,22 +1115,6 @@ void _removeItineraryRow(int index) {
                         _itinerary, 
                         'description')
                     ),
-                    _buildTextField(
-                      controller: _itineraryOvernightControllers[i], 
-                      isPriceField: false, 
-                      isSlotField: false, 
-                      text: _itinerary[i]['overnight'] ?? '', 
-                      hintText: 'City...',
-                      onChanged: (newText) => _updateTextField(
-                        _itineraryOvernightControllers, 
-                        i, 
-                        newText, 
-                        _itinerary, 
-                        'overnight')
-                    ),
-                    // _displayDataInTextField(_itineraryTitleControllers[i], _itinerary[i]['title'] ?? '', 'Title...'),
-                    // _displayDataInTextField(_itineraryDescriptionControllers[i], _itinerary[i]['description'] ?? '', 'Description...'),
-                    // _displayDataInTextField(_itineraryOvernightControllers[i], _itinerary[i]['overnight'] ?? '', 'City...'),
                     _buildDeleteButton(i, "itinerary"),
                   ],
                 ),
@@ -1799,7 +1767,6 @@ void _removeItineraryRow(int index) {
     if (rowType == 'itinerary') {
       _itineraryTitleControllers[0].clear();
       _itineraryDescriptionControllers[0].clear();
-      _itineraryOvernightControllers[0].clear();
     } else if (rowType == 'tourHighlight') {
       _tourHighlightControllers[0].clear();
     } else if (rowType == 'flight') {
