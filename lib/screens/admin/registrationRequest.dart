@@ -1,3 +1,4 @@
+import "package:assignment_tripmate/constants.dart";
 import "package:assignment_tripmate/screens/admin/homepage.dart";
 import "package:assignment_tripmate/screens/admin/manageRegistrationRequest.dart";
 import "package:assignment_tripmate/utils.dart";
@@ -29,7 +30,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       CollectionReference taRef = FirebaseFirestore.instance.collection('travelAgent');
       
       // Query where 'accountApproved' is equal to 0
-      QuerySnapshot querySnapshot = await taRef.where('accountApproved', isEqualTo: 0).get();
+      QuerySnapshot querySnapshot = await taRef.where('accountApproved', whereIn: [0, 3]).get();
       
       _TAList = querySnapshot.docs.map((doc) {
         return TravelAgent(
@@ -94,7 +95,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                           SizedBox(width: 8),
                           Text(
                             "Travel Agent",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900), 
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), 
                           ),
                         ],
                       ),
@@ -114,7 +115,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                         SizedBox(width: 8),
                         Text(
                           "Local Buddy",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -126,6 +127,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                 unselectedLabelColor: Color(0xFFA4B4C0), // Unselected tab text color
                 indicatorPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.tab,
+                unselectedLabelStyle: TextStyle(fontSize: defaultFontSize),
               ),
             ),
           ),
@@ -134,12 +136,14 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
           children: [ 
             Container(
               padding: EdgeInsets.only(right: 10, left: 15, top: 10), // Adjust the top padding as needed
-              child: ListView.builder(
-                itemCount: _TAList.length,
-                itemBuilder: (context, index) {
-                  return TAComponent(travelAgent: _TAList[index]);
-                }
-              ),
+              child: _TAList.isEmpty
+              ? Center(child: Text('No pending review registration for travel agent.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+              : ListView.builder(
+                  itemCount: _TAList.length,
+                  itemBuilder: (context, index) {
+                    return TAComponent(travelAgent: _TAList[index]);
+                  }
+                ),
             ),
             Center( 
               child: Icon(Icons.account_circle), 
