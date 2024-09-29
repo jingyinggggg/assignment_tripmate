@@ -20,16 +20,129 @@ class LocalBuddyHomepageScreen extends StatefulWidget {
 class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen>{
   // List<CarList> _carList = [];
   // List<CarList> _foundedCar = [];
-  // bool isLoading = false;
+  bool isLoading = false;
+  int? registrationStatus;
 
-  // @override
-  // void initState(){
-  //   super.initState();
-  //   fetchCarList();
-  //   setState(() {
-  //     _foundedCar = _carList;
-  //   });
-  // }
+  @override
+  void initState(){
+    super.initState();
+    fetchLocalBuddyData();
+    // fetchCarList();
+    // setState(() {
+    //   _foundedCar = _carList;
+    // });
+  }
+
+  Future<void> fetchLocalBuddyData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      // Reference to the localBuddy collection
+      CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
+
+      // Query to find the document where userID matches the current user's ID
+      QuerySnapshot querySnapshot = await localBuddyRef.where('userID', isEqualTo: widget.userId).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // If a document is found, take the first document
+        DocumentSnapshot snapshot = querySnapshot.docs.first;
+
+        setState(() {
+          registrationStatus = snapshot['registrationStatus']; // Field from the document
+          isLoading = false;
+        });
+      } else {
+        // If no local buddy exists, keep isLoading false for rendering
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching local buddy data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Widget buildActionIcon() {
+    if (registrationStatus == null) {
+      return IconButton(
+        onPressed: () {
+          // Navigate to the registration screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    LocalBuddyRegistrationScreen(userId: widget.userId)),
+          );
+        },
+        icon: Image.asset(
+          'images/apply-icon.png',
+          width: 25,
+          height: 25,
+        ),
+        tooltip: "Apply for local buddy",
+      );
+    } else{
+      return IconButton(
+        onPressed: () {
+          // Navigate to the registration screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    LocalBuddyRegistrationScreen(userId: widget.userId)),
+          );
+        },
+        icon: Image.asset(
+          'images/request.png',
+          width: 25,
+          height: 25,
+        ),
+        tooltip: "Local Buddy Account",
+      );
+    }
+
+    // // Action based on registrationStatus
+    // switch (registrationStatus) {
+    //   case 0:
+    //   case 1:
+    //   case 4:
+    //     return IconButton(
+    //       onPressed: () {
+    //         // Handle pending review action
+    //       },
+    //       icon: Icon(Icons.pending, color: Colors.orange),
+    //       tooltip: "Pending Review",
+    //     );
+    //   case 2:
+    //     return IconButton(
+    //       onPressed: () {
+    //         // Handle edit action
+    //       },
+    //       icon: Icon(Icons.edit, color: Colors.white),
+    //       tooltip: "Edit",
+    //     );
+    //   case 3:
+    //     return IconButton(
+    //       onPressed: () {
+    //         // Handle reject action
+    //       },
+    //       icon: Icon(Icons.cancel, color: Colors.red),
+    //       tooltip: "Rejected",
+    //     );
+    //   default:
+    //     return IconButton(
+    //       onPressed: () {
+    //         // Handle unexpected status
+    //       },
+    //       icon: Icon(Icons.error, color: Colors.grey),
+    //       tooltip: "Unknown Status",
+    //     );
+    // }
+  }
 
   // Future<void> fetchCarList() async {
   //   setState(() {
@@ -109,20 +222,9 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen>{
           },
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LocalBuddyRegistrationScreen(userId: widget.userId))
-              );
-            },
-            icon: Image.asset(
-              'images/apply-icon.png',
-              width: 25, // Set the desired width
-              height: 25, // Set the desired height
-            ),
-            tooltip: "Apply",
-          )
+          isLoading
+          ? CircularProgressIndicator()
+          : buildActionIcon()
         ],
       ),
 
