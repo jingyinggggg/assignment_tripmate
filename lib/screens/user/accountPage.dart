@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/login.dart';
+import 'package:assignment_tripmate/screens/user/blog.dart';
 import 'package:assignment_tripmate/screens/user/profile.dart';
 import 'package:assignment_tripmate/screens/user/setting.dart';
 import 'package:assignment_tripmate/screens/user/wishlist.dart';
@@ -241,12 +242,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      BlogMainScreen(userId: widget.userId)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
