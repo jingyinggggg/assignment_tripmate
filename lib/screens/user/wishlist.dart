@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/carRentalDetails.dart';
 import 'package:assignment_tripmate/screens/user/viewTourDetails.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -16,12 +17,13 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
 
   int currentPageIndex = 0;
   List<TourPackage> _tourPackage = [];
+  List<CarRental> _carRental = [];
   bool isLoading = false;
 
   @override
   void initState(){
     super.initState();
-    fetchTPList();
+    fetchWishlist();
   }
 
   @override
@@ -29,7 +31,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
     super.dispose();
   }
 
-  Future<void> fetchTPList() async {
+  Future<void> fetchWishlist() async {
     setState(() {
       isLoading = true;
     });
@@ -39,16 +41,26 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
       QuerySnapshot wishlistSnapshot = await wishlistRef.where('userID', isEqualTo: widget.userID).get();
 
       List<String> tourPackageIDs = [];
+      List<String> carRentalIDs = [];
 
-      // Step 2: Loop through each wishlist document and fetch tourPackageId from the subcollection
+      // Step 2: Loop through each wishlist document and fetch tourPackageId and carRentalId from subcollections
       for (var wishlistDoc in wishlistSnapshot.docs) {
         CollectionReference tourPackageSubcollection = wishlistRef.doc(wishlistDoc.id).collection('tourPackage');
         QuerySnapshot tourPackageSnapshot = await tourPackageSubcollection.get();
+
+        CollectionReference carRentalSubcollection = wishlistRef.doc(wishlistDoc.id).collection('carRental');
+        QuerySnapshot carRentalSnapshot = await carRentalSubcollection.get();
         
         // Extract the tourPackageId from each document in the subcollection
         for (var tourDoc in tourPackageSnapshot.docs) {
           String tourPackageId = tourDoc['tourPackageId'] as String;
           tourPackageIDs.add(tourPackageId);
+        }
+
+        // Extract the carRentalId from each document in the subcollection
+        for (var carDoc in carRentalSnapshot.docs) {
+          String carRentalID = carDoc['carRentalId'] as String;
+          carRentalIDs.add(carRentalID);
         }
       }
 
@@ -57,18 +69,36 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
         CollectionReference tourPackagesRef = FirebaseFirestore.instance.collection('tourPackage');
         QuerySnapshot tourPackageSnapshot = await tourPackagesRef.where(FieldPath.documentId, whereIn: tourPackageIDs).get();
 
-        // Step 4: Map the fetched documents to TourPackage objects and update the state
+        // Map the fetched documents to TourPackage objects and update the state
         setState(() {
           _tourPackage = tourPackageSnapshot.docs.map((doc) => TourPackage.fromFirestore(doc)).toList();
-          isLoading = false;
         });
       } else {
-        // Handle case where no tour packages are found in wishlist
         setState(() {
           _tourPackage = [];
-          isLoading = false;
         });
       }
+
+      // Step 4: Fetch car rentals from 'carRental' collection using the retrieved IDs
+      if (carRentalIDs.isNotEmpty) {
+        CollectionReference carRentalsRef = FirebaseFirestore.instance.collection('car_rental');
+        QuerySnapshot carRentalSnapshot = await carRentalsRef.where(FieldPath.documentId, whereIn: carRentalIDs).get();
+
+        // Map the fetched documents to CarRental objects and update the state
+        setState(() {
+          _carRental = carRentalSnapshot.docs.map((doc) => CarRental.fromFirestore(doc)).toList();
+        });
+      } else {
+        setState(() {
+          _carRental = [];
+        });
+      }
+
+      // End loading state
+      setState(() {
+        isLoading = false;
+      });
+      
     } catch (e) {
       print('Error fetching wishlist: $e');
       setState(() {
@@ -140,7 +170,20 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
                               ),
                             )
                           : Center(child: Text('No tour packages found in your wishlist')),
-                  Center(child: Icon(Icons.car_rental)),
+                  isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : _carRental.isNotEmpty
+                      ? Container(
+                        padding: EdgeInsets.only(right: 10, left: 10),
+                        child: ListView.builder(
+                          itemCount: _carRental.length,
+                          itemBuilder: (context, index) {
+                            return CarComponent(carRental: _carRental[index]);
+                          }
+                        ),
+                      )
+                    : Center(child: Text('No car rental details found in your wishlist')),
+                  // Center(child: Icon(Icons.car_rental)),
                   Center(child: Icon(Icons.person)),
                 ],
               ),
@@ -204,6 +247,77 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
     );
   }
 
+  Widget CarComponent({required CarRental carRental}) {
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => CarRentalDetailsScreen(userId: widget.userID, carId: carRental.carID))
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.only(top: 10, bottom: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1.5))
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Wrap this inner Row with Expanded to make sure it takes the available space
+            Expanded(
+              child: Row(
+                children: [
+                  // Image container with fixed width and height
+                  Container(
+                    width: getScreenWidth(context) * 0.25,
+                    height: getScreenHeight(context) * 0.11,
+                    margin: EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      // border: Border.all(color: primaryColor, width: 1.5),
+                      image: DecorationImage(
+                        image: NetworkImage(carRental.image),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  // Text widget wrapped in Expanded to take remaining space
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          carRental.carName, 
+                          style: TextStyle(
+                            color: Colors.black, 
+                            fontWeight: FontWeight.bold, 
+                            fontSize: defaultLabelFontSize,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Provider: ${carRental.provider}',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: defaultFontSize
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      ],
+                    )
+                    
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      )
+    );
+  }
+
 }
 
 class TourPackage {
@@ -232,6 +346,33 @@ class TourPackage {
       image: data['tourCover'] ?? '',
       countryName: data['countryName'] ?? '',
       cityName: data['cityName'] ?? ''
+    );
+  }
+}
+
+class CarRental {
+  final String carName;
+  final String carID;
+  final String image;
+  final String provider;
+
+  // Named parameters constructor
+  CarRental({
+    required this.carName,
+    required this.carID,
+    required this.image,
+    required this.provider,
+  });
+
+  // Add a factory constructor to convert Firestore document to TourPackage object
+  factory CarRental.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    return CarRental(
+      carID: doc.id, // Firestore document ID
+      carName: data['carModel'] ?? '',
+      image: data['carImage'] ?? '',
+      provider: data['agencyName'] ?? '',
     );
   }
 }

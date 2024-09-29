@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/carRentalHomepage.dart';
@@ -22,12 +23,30 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   bool isLoading = true;
   LatLng targetCarLocation = LatLng(0, 0);
   Set<Marker> _markers = {};
+  bool isFavorited = false;
 
   @override
   void initState() {
     super.initState();
     _fetchCarDetails();
+    _checkIfFavorited();
   }
+
+  Future<void> _checkIfFavorited() async {
+    // Check if this tour package is already in the user's wishlist
+    final wishlistQuery = await FirebaseFirestore.instance
+        .collection('wishlist')
+        .where('userID', isEqualTo: widget.userId)
+        .get();
+
+    if (wishlistQuery.docs.isNotEmpty) {
+      final wishlistDocRef = wishlistQuery.docs.first.reference;
+      final carRental = await wishlistDocRef.collection('carRental').where('carRentalId', isEqualTo: widget.carId).get();
+      setState(() {
+        isFavorited = carRental.docs.isNotEmpty; // Set the favorite status based on the query
+      });
+    }
+  }  
 
   Future<void> _fetchCarDetails() async {
     setState(() {
@@ -98,6 +117,92 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _addToWishlist(String carRentalId) async {
+    try {
+      // Reference to the Firestore collection
+      final wishlistRef = FirebaseFirestore.instance.collection('wishlist');
+
+      // Check if the wishlist document for the user exists
+      final wishlistQuery = await wishlistRef.where('userID', isEqualTo: widget.userId).get();
+
+      DocumentReference wishlistDocRef;
+
+      if (wishlistQuery.docs.isEmpty) {
+        // If no wishlist exists, create a new one with a custom ID format
+        final snapshot = await wishlistRef.get();
+        final wishlistID = 'WL${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+        wishlistDocRef = await wishlistRef.doc(wishlistID).set({
+          'userID': widget.userId,
+        }).then((_) => wishlistRef.doc(wishlistID)); // Get the reference of the new document
+      } else {
+        // Use the existing wishlist document
+        wishlistDocRef = wishlistQuery.docs.first.reference;
+      }
+
+      // Now add the tour package ID to the 'tourPackage' subcollection
+      await wishlistDocRef.collection('carRental').add({
+        'carRentalId': carRentalId,
+        // Add any other fields related to the tour package here
+      });
+
+      // Show SnackBar to inform the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Current car rental details is added to your wishlist!'),
+          duration: Duration(seconds: 2), // Duration for which the SnackBar will be displayed
+        ),
+      );
+
+      setState(() {
+        isFavorited = true;
+      });
+    } catch (e) {
+      print('Error adding to wishlist: $e');
+    }
+  }
+
+  Future<void> _removeFromWishlist(String carRentalId) async {
+    try {
+      final wishlistQuery = await FirebaseFirestore.instance
+          .collection('wishlist')
+          .where('userID', isEqualTo: widget.userId)
+          .get();
+
+      if (wishlistQuery.docs.isNotEmpty) {
+        final wishlistDocRef = wishlistQuery.docs.first.reference;
+        final carRental = await wishlistDocRef.collection('carRental').where('carRentalId', isEqualTo: carRentalId).get();
+
+        if (carRental.docs.isNotEmpty) {
+          // Delete the tour package document
+          await carRental.docs.first.reference.delete();
+
+          // Show SnackBar to inform the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Current car rental details is removed from your wishlist!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          setState(() {
+            isFavorited = false; // Update favorite status
+          });
+        }
+      }
+    } catch (e) {
+      print('Error removing from wishlist: $e');
+    }
+  }  
+
+  void _toggleWishlist() {
+    if (isFavorited) {
+      _removeFromWishlist(widget.carId);
+    } else {
+      _addToWishlist(widget.carId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,20 +221,49 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CarRentalHomepageScreen(userId: widget.userId)),
-            );
+            Navigator.pop(context);
           },
         ),
         actions: [
-          IconButton(
-            onPressed: (){}, 
-            icon: ImageIcon(AssetImage('images/chat.png'), color: Colors.white, size: 20,),
-            tooltip: "Chat",
-
-          )
+          Row(
+            mainAxisSize: MainAxisSize.min, // To keep the Row tight and avoid expanding
+            children: [
+              Container(
+                width: 35,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: carData?['agencyID'] ?? ''))
+                    );
+                  },
+                  icon: ImageIcon(
+                    AssetImage('images/chat.png'),
+                    color: Colors.white,
+                    size: 21,
+                  ),
+                  tooltip: "Chat",
+                )
+              ),
+              Container(
+                width: 30,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.favorite,
+                    size: 23,
+                    color: isFavorited ? Colors.red : Colors.white,
+                  ),
+                  tooltip: 'Wishlist',
+                  onPressed: () {
+                    _toggleWishlist();
+                  },
+                ),
+              ),
+              SizedBox(width: 10,)
+            ],
+          ),
         ],
+
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -160,10 +294,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
                           color: Color(0xFF749CB9),
-                          // borderRadius: BorderRadius.only(
-                          //   topLeft: Radius.circular(30),
-                          //   topRight: Radius.circular(30),
-                          // ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.4), // Adjust shadow color and opacity as needed
