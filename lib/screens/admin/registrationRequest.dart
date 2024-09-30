@@ -58,7 +58,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       CollectionReference userRef = FirebaseFirestore.instance.collection('users');
       
       // Fetch localBuddy where registrationStatus is 0 or 4
-      QuerySnapshot querySnapshot = await localBuddyRef.where('registrationStatus', whereIn: [0, 4]).get();
+      QuerySnapshot querySnapshot = await localBuddyRef.where('registrationStatus', whereIn: [0, 1, 5]).get();
 
       // Clear the current list
       _LocalBuddyList = [];
@@ -72,10 +72,11 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
         if (userSnapshot.exists) {
           // Create a LocalBuddy object and save both localBuddy and user details
           _LocalBuddyList.add(LocalBuddy(
-            doc['localBuddyID'], 
-            userSnapshot['name'], 
-            userSnapshot['profileImage'], 
-            doc['occupation']
+            localBuddyID:  doc['localBuddyID'], 
+            localBuddyName:  userSnapshot['name'], 
+            localBuddyImage: userSnapshot['profileImage'], 
+            occupation: doc['occupation'],
+            status: doc['registrationStatus'] ?? null
           ));
         }
       }
@@ -84,8 +85,6 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       setState(() {
         _LocalBuddyList;
       });
-
-      print(_LocalBuddyList);
 
     } catch (e) {
       print("Error fetching local buddies and user info: $e");
@@ -255,7 +254,10 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
     );
   }
 
-  Widget LocalBuddyComponent({required LocalBuddy localBuddy}){
+  Widget LocalBuddyComponent({required LocalBuddy localBuddy}) {
+    // Default to -1 if status is null
+    int status = localBuddy.status ?? -1;
+
     return Container(
       padding: EdgeInsets.only(top: 10, bottom: 10),
       child: Row(
@@ -270,7 +272,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Color(0xFF467BA1), 
-                    width: 2.0, 
+                    width: 2.0,
                   ),
                 ),
                 child: CircleAvatar(
@@ -282,18 +284,52 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(localBuddy.localBuddyName, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
-                  SizedBox(height: 5,),
-                  Text("Occupation: " + localBuddy.occupation, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12))
+                  Text(
+                    localBuddy.localBuddyName, 
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "Occupation: ${localBuddy.occupation}", 
+                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12),
+                  ),
+                  SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Text(
+                        "Status: ${status == 0 || status == 4 ? 'Pending Review' : status == 1 ? 'Pending Interview' : 'Unknown Status'} ",
+                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12),
+                      ),
+                      SizedBox(width: 5),
+                      Icon(
+                        status == 0 || status == 4 
+                            ? Icons.hourglass_empty 
+                            : status == 1 
+                                ? Icons.schedule 
+                                : Icons.help_outline,
+                        color: status == 0 || status == 4 
+                            ? Colors.orange 
+                            : status == 1 
+                                ? Colors.blue 
+                                : Colors.grey,
+                        size: defaultFontSize,
+                      ),
+                    ],
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           IconButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.push(
                 context, 
-                MaterialPageRoute(builder: (context) => AdminManageLocalBuddyRegistrationRequestScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID))
+                MaterialPageRoute(
+                  builder: (context) => AdminManageLocalBuddyRegistrationRequestScreen(
+                    userId: widget.userId, 
+                    localBuddyId: localBuddy.localBuddyID,
+                  ),
+                ),
               );
             }, 
             icon: Icon(Icons.edit_document),
@@ -304,5 +340,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
         ],
       ),
     );
-  }  
+  }
+
+ 
 }

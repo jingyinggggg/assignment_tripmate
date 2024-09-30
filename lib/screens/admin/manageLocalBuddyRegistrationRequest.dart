@@ -23,7 +23,10 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
   bool isLoading = false;
   bool isScheduledInterview = false;
   bool isRejectLoading = false;
+  bool isDeclineLoading = false;
+  bool isShortlistedLoading = false;
   TextEditingController _rejectReasonController = TextEditingController();
+  TextEditingController _declineInterviewReasonController = TextEditingController();
   DateTime? interviewDateTime;
 
   @override
@@ -86,7 +89,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
       });
 
       await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyId).update({
-        'accountApproved': 3,
+        'registrationStatus': 3,
         'rejectReason': reason,
       });
 
@@ -156,6 +159,123 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
     );
   }
 
+  Future<void> _shorlistedRequest() async {
+    try {
+      setState(() {
+        isShortlistedLoading = true;
+      });
+
+      await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyId).update({
+        'registrationStatus': 2,
+      });
+
+      _showDialog(
+        title: 'Success',
+        content: 'You have approved the registration request successfully.',
+        onPressed: () {
+          Navigator.of(context).pop();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RegistrationRequestScreen(userId: widget.userId)),
+          );
+        },
+      );
+
+      setState(() {
+        isShortlistedLoading = false; // Stop loading
+      });
+    } catch (e) {
+      _showDialog(
+        title: 'Error',
+        content: 'An error occurred: $e',
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+    } finally {
+      setState(() {
+        isShortlistedLoading = false; // Stop loading
+      });
+    }
+  }
+
+  Future<void> _declineInterview(String reason) async {
+    try {
+      setState(() {
+        isDeclineLoading = true;
+      });
+
+      await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyId).update({
+        'registrationStatus': 4,
+        'declineInterviewReason': reason,
+      });
+
+      _showDialog(
+        title: 'Rejected',
+        content: 'You have reject the registration request after interview session.',
+        onPressed: () {
+          Navigator.of(context).pop();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RegistrationRequestScreen(userId: widget.userId)),
+          );
+        },
+      );
+    } catch (e) {
+      _showDialog(
+        title: 'Error',
+        content: 'An error occurred: $e',
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      );
+    } finally {
+      setState(() {
+        isDeclineLoading = false; // Stop loading
+      });
+    }
+  }
+
+  void _showDeclineDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reject Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Please provide a reason for rejection:'),
+              TextField(
+                controller: _rejectReasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter rejection reason...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _declineInterview(_declineInterviewReasonController.text); // Perform reject request
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _createGoogleCalendarEvent(String email) async {
     // Constructing the calendar URL
     final String calendarUrl =
@@ -175,7 +295,10 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // User has returned to the app
-      _updateRegistrationStatus(2); // Update registration status
+      _updateRegistrationStatus(1); // Update registration status
+      setState(() {
+        
+      });
     }
   }
 
@@ -547,48 +670,46 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                               minimumSize: Size(100, 40),
                             ),
                           ),
-                            SizedBox(width: 20),
-                            ElevatedButton(
-                              onPressed: isRejectLoading
-                                  ? null
-                                  : () {
-                                      _showRejectDialog();
-                                    },
-                              child: isRejectLoading
-                                  ? SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.red,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      'Reject',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 16,
-                                      ),
+                          SizedBox(width: 20),
+                          ElevatedButton(
+                            onPressed: isRejectLoading
+                                ? null
+                                : () {
+                                    _showRejectDialog();
+                                  },
+                            child: isRejectLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.red,
+                                      strokeWidth: 2,
                                     ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  side: BorderSide(color: Colors.red, width: 2),
-                                ),
-                                minimumSize: Size(100, 40),
+                                  )
+                                : Text(
+                                    'Reject',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                side: BorderSide(color: Colors.red, width: 2),
                               ),
-                            )
-                          ]
-                        )
+                              minimumSize: Size(100, 40),
+                            ),
+                          )
+                        ]
+                      )
                       
-                      else if(localBuddyData?['registrationStatus'] == 2)
+                      else if(localBuddyData?['registrationStatus'] == 1)
                         Container(
                           child: Column(
                             children: [
-                              SizedBox(height: 20),
-
                               Container(
                                 alignment: Alignment.topCenter,
                                 decoration: BoxDecoration(
@@ -598,7 +719,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                                   ),
                                 ),
                                 child: Text(
-                                  'Interview Section',
+                                  'Interview Session',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 16,
@@ -607,16 +728,18 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-
                               SizedBox(height:20),
-
-                              _buildDetailRow('Interview Meeting', localBuddyData?['registrationStatus'] == 2 ? 'Scheduled' : 'N/A', 130),
-
+                              _buildDetailRow('Interview Meeting', localBuddyData?['registrationStatus'] == 1 ? 'Scheduled' : 'N/A', 130),
+                              localBuddyData?['declineInterviewReason'] != null
+                              ? _buildDetailRow('Reject Reason: ', localBuddyData?['declineInterviewReason'], 130)
+                              : Container(),
+                              SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                 ElevatedButton(
                                   onPressed: isScheduledInterview ? null : () {
+                                    _shorlistedRequest();
                                   },
                                   child: isScheduledInterview
                                       ? SizedBox(
@@ -632,7 +755,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                                           style: TextStyle(
                                             color: Colors.green,
                                             fontWeight: FontWeight.w900,
-                                            fontSize: 16,
+                                            fontSize: defaultLabelFontSize,
                                           ),
                                         ),
                                   style: ElevatedButton.styleFrom(
@@ -649,7 +772,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                                     onPressed: isRejectLoading
                                         ? null
                                         : () {
-                                            _showRejectDialog();
+                                            _showDeclineDialog();
                                           },
                                     child: isRejectLoading
                                         ? SizedBox(
@@ -661,11 +784,11 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                                             ),
                                           )
                                         : Text(
-                                            'Decline',
+                                            'Reject',
                                             style: TextStyle(
                                               color: Colors.red,
                                               fontWeight: FontWeight.w900,
-                                              fontSize: 16,
+                                              fontSize: defaultLabelFontSize,
                                             ),
                                           ),
                                     style: ElevatedButton.styleFrom(
