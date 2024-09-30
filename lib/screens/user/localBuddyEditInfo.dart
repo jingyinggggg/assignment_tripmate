@@ -6,19 +6,19 @@ import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class LocalBuddyRegistrationScreen extends StatefulWidget {
+class LocalBuddyEditInfoScreen extends StatefulWidget {
   final String userId;
 
-  const LocalBuddyRegistrationScreen({
+  const LocalBuddyEditInfoScreen({
     super.key,
     required this.userId,
   });
 
   @override
-  State<StatefulWidget> createState() => _LocalBuddyHomepageScreenState();
+  State<StatefulWidget> createState() => _LocalBuddyEditInfoScreenState();
 }
 
-class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen> {
+class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   TextEditingController _occupationController = TextEditingController();
   TextEditingController _languageSpokenController = TextEditingController();
   TextEditingController _locationController = TextEditingController();
@@ -56,14 +56,14 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
   @override
   void initState() {
     super.initState();
-    fetchUserLocation();
+    fetchLocalBuddy();
   }
 
-  Future<void> fetchUserLocation() async {
+  Future<void> fetchLocalBuddy() async {
     try {
       QuerySnapshot userQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('id', isEqualTo: widget.userId)
+          .collection('localBuddy')
+          .where('userID', isEqualTo: widget.userId)
           .limit(1)
           .get();
 
@@ -71,7 +71,12 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
       var userData = userDoc.data() as Map<String, dynamic>;
 
       setState(() {
-        _locationController.text = userData['address'];
+        _occupationController.text = userData['occupation'];
+        _locationController.text = userData['location'];
+        _languageSpokenController.text = userData['languageSpoken'];
+        _pricingController.text = userData['pricePerHour'].toString();
+        _bioController.text = userData['bio'];
+        _previousExperienceController.text = userData['previousExperience'];
       });
     } catch (e) {
       print("Error fetching user details: $e");
@@ -235,35 +240,10 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Local Buddy Registration"),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF749CB9),
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontFamily: 'Inika',
-          fontWeight: FontWeight.bold,
-          fontSize: defaultAppBarTitleFontSize,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      LocalBuddyHomepageScreen(userId: widget.userId)),
-            );
-          },
-        ),
-      ),
       body: ListView(
         padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         children: [
@@ -548,7 +528,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
               child: isLoading
                   ? CircularProgressIndicator()
                   : Text(
-                      'Submit',
+                      'Update',
                       style: TextStyle(
                         color: Colors.white,
                       ),

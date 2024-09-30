@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class LocalBuddyCustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  const CustomBottomNavBar({
+  const LocalBuddyCustomBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -39,24 +39,12 @@ class CustomBottomNavBar extends StatelessWidget {
         backgroundColor: const Color(0xFF749CB9),
         destinations: const [
           NavigationDestination(
-            icon: ImageIcon(AssetImage("images/home.png"), size: 20),
-            label: "Home",
+            icon: Icon(Icons.explore, size: 20),
+            label: "Explore",
           ),
           NavigationDestination(
-            icon: ImageIcon(AssetImage("images/map.png"), size: 20),
-            label: 'Itinerary',
-          ),
-          NavigationDestination(
-            icon: ImageIcon(AssetImage("images/chat.png"), size: 20),
-            label: 'Messages',
-          ),
-          NavigationDestination(
-            icon: ImageIcon(AssetImage("images/booking.png"), size: 20),
-            label: 'Bookings',
-          ),
-          NavigationDestination(
-            icon: ImageIcon(AssetImage("images/account.png"), size: 20),
-            label: 'Account',
+            icon: Icon(Icons.person, size: 20),
+            label: 'Me',
           ),
         ],
       ),

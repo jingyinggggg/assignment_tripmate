@@ -57,7 +57,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
       CollectionReference userRef = FirebaseFirestore.instance.collection('users');
       
-      // Fetch localBuddy where registrationStatus is 0 or 4
+      // Fetch localBuddy where registrationStatus is 0 or 1 or 5
       QuerySnapshot querySnapshot = await localBuddyRef.where('registrationStatus', whereIn: [0, 1, 5]).get();
 
       // Clear the current list
@@ -76,7 +76,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
             localBuddyName:  userSnapshot['name'], 
             localBuddyImage: userSnapshot['profileImage'], 
             occupation: doc['occupation'],
-            status: doc['registrationStatus'] ?? null
+            status: doc['registrationStatus'] ?? -1
           ));
         }
       }
@@ -256,7 +256,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
 
   Widget LocalBuddyComponent({required LocalBuddy localBuddy}) {
     // Default to -1 if status is null
-    int status = localBuddy.status ?? -1;
+    int status = localBuddy.status;
 
     return Container(
       padding: EdgeInsets.only(top: 10, bottom: 10),
@@ -297,17 +297,17 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                   Row(
                     children: [
                       Text(
-                        "Status: ${status == 0 || status == 4 ? 'Pending Review' : status == 1 ? 'Pending Interview' : 'Unknown Status'} ",
+                        "Status: ${status == 0 || status == 5 ? 'Pending Review' : status == 1 ? 'Pending Interview' : 'Unknown Status'} ",
                         style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12),
                       ),
                       SizedBox(width: 5),
                       Icon(
-                        status == 0 || status == 4 
-                            ? Icons.hourglass_empty 
+                        status == 0 || status == 5 
+                            ? Icons.hourglass_bottom 
                             : status == 1 
                                 ? Icons.schedule 
                                 : Icons.help_outline,
-                        color: status == 0 || status == 4 
+                        color: status == 0 || status == 5 
                             ? Colors.orange 
                             : status == 1 
                                 ? Colors.blue 

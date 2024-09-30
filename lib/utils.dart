@@ -287,7 +287,8 @@ class LocalBuddy{
   final String localBuddyImage;
   final String occupation;
   final int status;
+  final int? ranking;
 
-  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, required this.occupation, required this.status});
+  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, required this.occupation, required this.status, this.ranking});
 
 }
