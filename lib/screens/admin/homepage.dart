@@ -1,6 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
-import 'package:assignment_tripmate/screens/admin/manageCarBrandList.dart';
+import 'package:assignment_tripmate/screens/admin/manageCarList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
@@ -65,7 +65,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AdminManageCarBrandScreen(userId: widget.userId),
+                      builder: (context) => AdminManageCarListScreen(userId: widget.userId),
                     ),
                   );
                 },

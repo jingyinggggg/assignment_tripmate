@@ -313,7 +313,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
 
                             _buildDetailRow('Company Name', travelAgentData?['companyName'], 125),
                             SizedBox(height: 10),
-                            _buildDetailRow('Company Contact', _formatDate(travelAgentData?['companyContact']), 125),
+                            _buildDetailRow('Company Contact', travelAgentData?['companyContact'], 125),
                             SizedBox(height: 10),
                             _buildDetailRow('Company Address', travelAgentData?['companyAddress'], 125),
                             SizedBox(height: 10),

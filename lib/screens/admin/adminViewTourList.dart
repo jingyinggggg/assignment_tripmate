@@ -1,4 +1,4 @@
-import 'package:assignment_tripmate/screens/admin/adminViewTourDetails.dart';
+import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -164,90 +164,59 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
     );
   }
 
-Widget tourComponent({required TourPackage tourPackage}) {
-  final double screenWidth = MediaQuery.of(context).size.width;
-  final double screenHeight = MediaQuery.of(context).size.height;
-
-  return Container(
-    width: screenWidth,
-    padding: const EdgeInsets.only(bottom: 15, top: 10),
-    child: Row(
-      children: [
-        Container(
-          width: screenWidth * 0.15,
-          height: screenHeight * 0.1,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(0),
-            image: DecorationImage(
-              image: NetworkImage(tourPackage.image),
-              fit: BoxFit.cover,
+  Widget tourComponent({required TourPackage tourPackage}) {
+    return Container(
+      width: getScreenWidth(context),
+      child: Row(
+        children: [
+          Container(
+            width: getScreenWidth(context) * 0.15,
+            height: getScreenHeight(context) * 0.1,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(0),
+              image: DecorationImage(
+                image: NetworkImage(tourPackage.image),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tourPackage.tourName,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 5),
-              Text(
-                tourPackage.agency,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        // Buttons row
-        Row(
-          mainAxisSize: MainAxisSize.min, // Makes the row take up the minimum amount of space
-          children: [
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminTourPackageDetailsScreen(
-                      userId: widget.userId,
-                      countryName: widget.countryName,
-                      cityName: widget.cityName,
-                      tourID: tourPackage.tourID,
-                    ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tourPackage.tourName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
-              icon: const Icon(Icons.remove_red_eye),
-              iconSize: 20,
-              color: Colors.grey.shade600,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Agency: ${tourPackage.agency}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: () {
-                // Handle edit button action
-              },
-              icon: const Icon(Icons.edit),
-              iconSize: 20,
-              color: Colors.grey.shade600,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-
-
+          ),
+          IconButton(
+            onPressed: () {
+              // Handle edit button action
+            },
+            icon: const Icon(Icons.edit),
+            iconSize: 20,
+            color: Colors.grey.shade600,
+          ),
+        ],
+      ),
+    );
+  }
 }

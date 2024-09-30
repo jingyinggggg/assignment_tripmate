@@ -1,5 +1,6 @@
 import "package:assignment_tripmate/constants.dart";
 import "package:assignment_tripmate/screens/admin/homepage.dart";
+import "package:assignment_tripmate/screens/admin/manageLocalBuddyRegistrationRequest.dart";
 import "package:assignment_tripmate/screens/admin/manageRegistrationRequest.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
@@ -16,12 +17,13 @@ class RegistrationRequestScreen extends StatefulWidget {
 
 class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
   List<TravelAgent> _TAList = [];
-  // List<TravelAgent> _foundedTAList = [];
+  List<LocalBuddy> _LocalBuddyList = [];
 
   @override
   void initState() {
     super.initState();
     fetchTAList();
+    fetchLocalBuddyList();
   }
 
   Future<void> fetchTAList() async {
@@ -49,7 +51,47 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       print("Error fetching travel agents list: $e");
     }
   }
-  
+
+  Future<void> fetchLocalBuddyList() async {
+    try {
+      CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
+      CollectionReference userRef = FirebaseFirestore.instance.collection('users');
+      
+      // Fetch localBuddy where registrationStatus is 0 or 4
+      QuerySnapshot querySnapshot = await localBuddyRef.where('registrationStatus', whereIn: [0, 4]).get();
+
+      // Clear the current list
+      _LocalBuddyList = [];
+
+      // Loop through each localBuddy document
+      for (var doc in querySnapshot.docs) {
+        // Fetch corresponding user details using the userID
+        DocumentSnapshot userSnapshot = await userRef.doc(doc['userID']).get();
+
+        // Check if the user document exists
+        if (userSnapshot.exists) {
+          // Create a LocalBuddy object and save both localBuddy and user details
+          _LocalBuddyList.add(LocalBuddy(
+            doc['localBuddyID'], 
+            userSnapshot['name'], 
+            userSnapshot['profileImage'], 
+            doc['occupation']
+          ));
+        }
+      }
+
+      // Update state to reflect the new list
+      setState(() {
+        _LocalBuddyList;
+      });
+
+      print(_LocalBuddyList);
+
+    } catch (e) {
+      print("Error fetching local buddies and user info: $e");
+    }
+  }
+
   @override 
   Widget build(BuildContext context) { 
     return DefaultTabController( 
@@ -135,7 +177,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
         body: TabBarView( 
           children: [ 
             Container(
-              padding: EdgeInsets.only(right: 10, left: 15, top: 10), // Adjust the top padding as needed
+              padding: EdgeInsets.only(right: 10, left: 10, top: 10), // Adjust the top padding as needed
               child: _TAList.isEmpty
               ? Center(child: Text('No pending review registration for travel agent.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
               : ListView.builder(
@@ -145,9 +187,17 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                   }
                 ),
             ),
-            Center( 
-              child: Icon(Icons.account_circle), 
-            ), 
+            Container(
+              padding: EdgeInsets.only(right: 10, left: 10, top: 10),
+              child: _LocalBuddyList.isEmpty
+              ? Center(child: Text('No pending review registration for local buddy.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+              : ListView.builder(
+                  itemCount: _LocalBuddyList.length,
+                  itemBuilder: (context, index) {
+                    return LocalBuddyComponent(localBuddy: _LocalBuddyList[index]);
+                  }
+                ),
+            )
           ], 
         ),
       ), 
@@ -190,7 +240,6 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
           ),
           IconButton(
             onPressed: (){
-              print("UserId: ${widget.userId}, TAId: ${travelAgent.id}");
               Navigator.push(
                 context, 
                 MaterialPageRoute(builder: (context) => AdminManageRegistrationRequestScreen(userId: widget.userId, TAId: travelAgent.id))
@@ -199,9 +248,61 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
             icon: Icon(Icons.edit_document),
             iconSize: 25,
             color: Color(0xFF467BA1),
+            tooltip: 'Review Request',
           ),
         ],
       ),
     );
   }
+
+  Widget LocalBuddyComponent({required LocalBuddy localBuddy}){
+    return Container(
+      padding: EdgeInsets.only(top: 10, bottom: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60, 
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Color(0xFF467BA1), 
+                    width: 2.0, 
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: NetworkImage(localBuddy.localBuddyImage),
+                ),
+              ),
+              SizedBox(width: 15),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(localBuddy.localBuddyName, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+                  SizedBox(height: 5,),
+                  Text("Occupation: " + localBuddy.occupation, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12))
+                ],
+              )
+            ],
+          ),
+          IconButton(
+            onPressed: (){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => AdminManageLocalBuddyRegistrationRequestScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID))
+              );
+            }, 
+            icon: Icon(Icons.edit_document),
+            iconSize: 25,
+            color: Color(0xFF467BA1),
+            tooltip: 'Review Request',
+          ),
+        ],
+      ),
+    );
+  }  
 }

@@ -435,6 +435,7 @@ class StoreData {
         'occupation': occupation,
         'location': location,
         'userID': userID,
+        'languageSpoken': languageSpoken,
         'availability': availability,
         'pricePerHour': pricePerHour,
         'idCardImage': imageURL,

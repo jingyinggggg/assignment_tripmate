@@ -264,14 +264,6 @@ class MessageList{
   MessageList(this.receiverName, this.receiverProfile, this.receiverID, this.latestMessage, this.latestReceiveTime, this.isCurrentUser);
 }
 
-class CarBrand{
-  final String carId;
-  final String carImage;
-  final String carName;
-
-  CarBrand(this.carId, this.carImage, this.carName);
-}
-
 class CarList{
   final String carID;
   final String carModel;
@@ -287,4 +279,13 @@ class CarList{
   final String? pickUpLocation;
 
   CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation});
+}
+
+class LocalBuddy{
+  final String localBuddyID;
+  final String localBuddyName;
+  final String localBuddyImage;
+  final String occupation;
+
+  LocalBuddy(this.localBuddyID, this.localBuddyName, this.localBuddyImage, this.occupation);
 }
