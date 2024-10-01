@@ -409,38 +409,33 @@ class StoreData {
   }
 
   Future<String> saveLocalBuddyData({
-    required String localBuddyID, 
-    required String occupation, 
+    String? localBuddyID,
+    required String occupation,
     required String location,
-    required String userID, 
-    required String languageSpoken, 
-    required List<Map<String, dynamic>> availability, 
-    required int pricePerHour, 
-    required Uint8List idCard,
+    String? userID,
+    required String languageSpoken,
+    required List<Map<String, dynamic>> availability,
+    required int pricePerHour,
+    Uint8List? idCard,
     Uint8List? referenceImage,
-    required String bio, 
-    String? previousExperience, 
+    required String bio,
+    String? previousExperience,
     required int action,
-    required int registrationStatus
+    int? registrationStatus,
   }) async {
     String resp = "Some Error Occurred";
     try {
-      // Upload the ID card image
-      String idCardFileName = "identificationCard.jpg"; 
-      String imageURL = await uploadImageToStorage("localBuddy/$localBuddyID/$idCardFileName", idCard);
 
-      // Prepare the data to store in Firestore
+      
+      // Prepare the base data to store in Firestore
       Map<String, dynamic> buddyData = {
-        'localBuddyID': localBuddyID,
         'occupation': occupation,
         'location': location,
-        'userID': userID,
         'languageSpoken': languageSpoken,
         'availability': availability,
         'pricePerHour': pricePerHour,
-        'idCardImage': imageURL,
         'bio': bio,
-        'registrationStatus': registrationStatus
+        'registrationStatus': registrationStatus,
       };
 
       // Conditionally add referenceImage if provided
@@ -455,12 +450,25 @@ class StoreData {
         buddyData['previousExperience'] = previousExperience;
       }
 
+      if(idCard != null){
+        // Upload the ID card image
+        String idCardFileName = "identificationCard.jpg"; 
+        String imageURL = await uploadImageToStorage("localBuddy/$localBuddyID/$idCardFileName", idCard);
+        buddyData['idCardImage'] = imageURL;
+      }
+
       // Firestore operations: set or update based on action
       if (action == 1) {
         // Create a new document
+        buddyData['localBuddyID'] = localBuddyID; // Add only when creating
+        buddyData['userID'] = userID; // Add only when creating
+        buddyData['registrationStatus'] = registrationStatus;
         await _firestore.collection("localBuddy").doc(localBuddyID).set(buddyData);
       } else {
         // Update the existing document
+        // Remove localBuddyID and userID from the data before updating
+        buddyData.remove('localBuddyID');
+        buddyData.remove('userID');
         await _firestore.collection("localBuddy").doc(localBuddyID).update(buddyData);
       }
 
@@ -470,5 +478,4 @@ class StoreData {
     }
     return resp;
   }
-
 }

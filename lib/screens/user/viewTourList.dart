@@ -3,6 +3,7 @@ import 'package:assignment_tripmate/screens/user/viewTourDetails.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ViewTourListScreen extends StatefulWidget {
   final String userId;
@@ -255,8 +256,9 @@ Widget tourListComponent({
     onTap: (){
       Navigator.push(
         context, 
-        MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour.tourID))
+        MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour.tourID, fromAppLink: 'false',))
       );
+      // context.go('/viewTourDetails/${widget.userId}/${widget.countryName}/${widget.cityName}/${tour.tourID}');
     },
     child: Container(
       decoration: BoxDecoration(

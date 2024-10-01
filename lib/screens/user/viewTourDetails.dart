@@ -4,14 +4,17 @@ import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ViewTourDetailsScreen extends StatefulWidget {
   final String userId;
   final String countryName;
   final String cityName;
   final String tourID;
+  final String fromAppLink;
 
   const ViewTourDetailsScreen({
     super.key,
@@ -19,13 +22,14 @@ class ViewTourDetailsScreen extends StatefulWidget {
     required this.countryName,
     required this.cityName,
     required this.tourID,
+    required this.fromAppLink
   });
 
   @override
   State<StatefulWidget> createState() => _ViewTourDetailsScreenState();
 }
 
-class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
+class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? tourData;
   bool isLoading = false;
   bool isButtonLoading = false;
@@ -37,6 +41,13 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
     super.initState();
     _fetchTourData();
     _checkIfFavorited();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove observer
+    super.dispose();
   }
 
   Future<void> _checkIfFavorited() async {
@@ -220,7 +231,22 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User has returned to the app
+      setState(() {
+        
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    
+    final String shareLink = 'https://tripmate.com/viewTourDetails/${widget.userId}/${widget.countryName}/${widget.cityName}/${widget.tourID}/true';
+    // final String shareLink = 'https://tripmate.com/login';
+
+    print(widget.fromAppLink);
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -237,9 +263,23 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            if (widget.fromAppLink == 'true') {
+              // Show a message (SnackBar, Dialog, etc.)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please log into your account or register an account to explore more.'),
+                ),
+              );
+
+              // Delay the navigation to the login page
+              Future.delayed(const Duration(milliseconds: 500), () {
+                context.go('/login'); // Ensure you have a route defined for '/login'
+              });
+            } else {
+              Navigator.pop(context);
+            }
           },
-        )
+        ),
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator()) // Show a loading indicator while data is being fetched
@@ -367,7 +407,9 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                                     size: 23,
                                     color: Colors.black,
                                   ),
-                                  onPressed: (){},
+                                  onPressed: (){
+                                    Share.share(shareLink, subject: 'Check out this tour!');
+                                  },
                                 ),
                               )
                             ],
@@ -428,8 +470,7 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    // builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
-                                    builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'U0002'),
+                                    builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: receiverUserId),
                                   ),
                                 );
                               } else {

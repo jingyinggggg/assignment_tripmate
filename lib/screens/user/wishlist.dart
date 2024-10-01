@@ -199,7 +199,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
       onTap: (){
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID))
+          MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID, fromAppLink: 'false',))
         );
       },
       child: Container(

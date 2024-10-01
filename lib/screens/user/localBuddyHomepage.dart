@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +45,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     try {
       CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
       CollectionReference userRef = FirebaseFirestore.instance.collection('users');
-      QuerySnapshot querySnapshot = await localBuddyRef.where('userID', isEqualTo: widget.userId).where('registrationStatus', isEqualTo: 2).get();
+      QuerySnapshot querySnapshot = await localBuddyRef.where('registrationStatus', isEqualTo: 2).get();
 
       _localBuddyList = [];
 
@@ -149,6 +148,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
         var userSnapshot = userQuerySnapshot.docs.first; // Get the first document
         registrationStatus = userSnapshot['registrationStatus'];
 
+        print(registrationStatus);
       } else {
         registrationStatus = null;
       }

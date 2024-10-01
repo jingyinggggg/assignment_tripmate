@@ -25,10 +25,10 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   TextEditingController _pricingController = TextEditingController();
   TextEditingController _previousExperienceController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
-  TextEditingController _imageNameController = TextEditingController();
   TextEditingController _referenceController = TextEditingController();
 
   bool isLoading = false;
+  bool isFetchLoading = false;
   Uint8List? _image;
   Uint8List? _referenceImage;
 
@@ -60,6 +60,9 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   }
 
   Future<void> fetchLocalBuddy() async {
+    setState(() {
+      isFetchLoading = true;
+    });
     try {
       QuerySnapshot userQuery = await FirebaseFirestore.instance
           .collection('localBuddy')
@@ -67,19 +70,31 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
           .limit(1)
           .get();
 
-      DocumentSnapshot userDoc = userQuery.docs.first;
-      var userData = userDoc.data() as Map<String, dynamic>;
+      if (userQuery.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = userQuery.docs.first;
+        var userData = userDoc.data() as Map<String, dynamic>;
 
-      setState(() {
-        _occupationController.text = userData['occupation'];
-        _locationController.text = userData['location'];
-        _languageSpokenController.text = userData['languageSpoken'];
-        _pricingController.text = userData['pricePerHour'].toString();
-        _bioController.text = userData['bio'];
-        _previousExperienceController.text = userData['previousExperience'];
-      });
+        setState(() {
+          _occupationController.text = userData['occupation'] ?? '';
+          _locationController.text = userData['location'] ?? '';
+          _languageSpokenController.text = userData['languageSpoken'] ?? '';
+          _pricingController.text = userData['pricePerHour']?.toString() ?? '0';
+          _bioController.text = userData['bio'] ?? '';
+          _previousExperienceController.text = userData['previousExperience'] ?? '';
+
+          isFetchLoading = false;
+        });
+      } else {
+        print("No user found with userID: ${widget.userId}");
+        setState(() {
+          isFetchLoading = false;
+        });
+      }
     } catch (e) {
       print("Error fetching user details: $e");
+      setState(() {
+        isFetchLoading = false;
+      });
     }
   }
 
@@ -121,16 +136,6 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
     }
   }
 
-  Future<void> selectImage() async {
-    Uint8List? img = await ImageUtils.selectImage(context);
-    if (img != null) {
-      setState(() {
-        _image = img;
-        _imageNameController.text = 'Identification Card Uploaded'; 
-      });
-    }
-  }
-
   Future<void> selectReferenceImage() async {
     Uint8List? img = await ImageUtils.selectImage(context);
     if (img != null) {
@@ -147,14 +152,13 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         _locationController.text.isEmpty ||
         _languageSpokenController.text.isEmpty ||
         _pricingController.text.isEmpty ||
-        _image == null ||  // Assuming this is the ID card image
         _bioController.text.isEmpty || selectedDays.isEmpty) {
       
       // Show an error dialog if required fields are missing
       showCustomDialog(
         context: context,
         title: 'Error',
-        content: 'Please fill in all the required fields and upload your identification card.',
+        content: 'Please make sure you have filled in all the required fields.',
         onPressed: () {
           Navigator.pop(context);
         }
@@ -176,10 +180,6 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         };
       }).toList();
 
-      // Generate localBuddyID
-      final usersSnapshot = await FirebaseFirestore.instance.collection('localBuddy').get();
-      final localBuddyID = 'LB${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
-
       // Check if previous experience is entered (null or empty check)
       String? previousExperience;
       if (_previousExperienceController.text.isNotEmpty) {
@@ -194,26 +194,22 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
 
       // Call the saveLocalBuddyData function with the optional parameters
       String resp = await StoreData().saveLocalBuddyData(
-        localBuddyID: localBuddyID,
         occupation: _occupationController.text,
         location: _locationController.text,
-        userID: widget.userId,
         languageSpoken: _languageSpokenController.text,
         availability: availability,
         pricePerHour: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
-        idCard: _image!,  // Required field, already checked
         referenceImage: referenceImage,  // Optional field
         bio: _bioController.text,  // Required field, already checked
         previousExperience: previousExperience,  // Optional field
-        action: 1,
-        registrationStatus: 0
+        action: 0,
       );
 
       // Show success dialog
       showCustomDialog(
         context: context,
         title: 'Success',
-        content: 'Your local buddy registration has been submitted successfully. Please wait for admin review.',
+        content: 'You have update your details successfully.',
         onPressed: () {
           Navigator.push(
             context,
@@ -244,7 +240,9 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: ListView(
+      body: isFetchLoading
+      ? Center(child: CircularProgressIndicator(color: primaryColor))
+      : ListView(
         padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         children: [
           Text(
@@ -388,10 +386,10 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
           ),
           SizedBox(height: 20),
           buildTextField(_pricingController, 'Enter price', 'Price in RM (per hour)', isIntField: true),
-          SizedBox(height: 30),
 
+          SizedBox(height: 30),
           Text(
-            'Safety and Security',
+            'Additional Information',
             style: TextStyle(
               fontWeight: FontWeight.w900,
               color: Colors.black,
@@ -399,64 +397,9 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
             ),
           ),
           SizedBox(height: 20),
-          TextField(
-            controller: _imageNameController,
-            readOnly: true,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: defaultFontSize,
-              color: Colors.black54
-            ),
-            decoration: InputDecoration(
-              hintText: 'Upload your identification card...',
-              labelText: 'Identification Card',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: const TextStyle(
-                fontSize: defaultLabelFontSize,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                shadows: [
-                  Shadow(
-                    offset: Offset(0.5, 0.5),
-                    color: Colors.black87,
-                  ),
-                ],
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(
-                  Icons.image,
-                  color: Color(0xFF467BA1),
-                  size: 25,
-                ),
-                onPressed: () {
-                  selectImage();
-                }
-              ),
-            ),
-          ),
+          buildTextField(_bioController, 'Enter your personal bio', 'Personal Bio/ Introduction'),
+          SizedBox(height: 20),
+          buildTextField(_previousExperienceController, 'Enter your previous experience (if any)', 'Experience for Local Friend/Local Guide (optional)'),
           SizedBox(height: 20),
           TextField(
             controller: _referenceController,
@@ -516,21 +459,6 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
               ),
             ),
           ),
-
-
-          SizedBox(height: 30),
-          Text(
-            'Additional Information',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-              fontSize: defaultLabelFontSize,
-            ),
-          ),
-          SizedBox(height: 20),
-          buildTextField(_bioController, 'Enter your personal bio', 'Personal Bio/ Introduction'),
-          SizedBox(height: 20),
-          buildTextField(_previousExperienceController, 'Enter your previous experience (if any)', 'Experience for Local Friend/Local Guide (optional)'),
           SizedBox(height: 30),
           Container(
             width: double.infinity,
