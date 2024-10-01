@@ -25,12 +25,30 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
   Map<String, dynamic>? userData;
   String? locationArea;
   bool isLoading = false;
+  bool isFavorited = false;
 
   @override
   void initState() {
     super.initState();
     _fetchLocalBuddyData();
+    _checkIfFavorited();
   }
+
+  Future<void> _checkIfFavorited() async {
+    // Check if this tour package is already in the user's wishlist
+    final wishlistQuery = await FirebaseFirestore.instance
+        .collection('wishlist')
+        .where('userID', isEqualTo: widget.userId)
+        .get();
+
+    if (wishlistQuery.docs.isNotEmpty) {
+      final wishlistDocRef = wishlistQuery.docs.first.reference;
+      final localBuddy = await wishlistDocRef.collection('localBuddy').where('localBuddyId', isEqualTo: widget.localBuddyId).get();
+      setState(() {
+        isFavorited = localBuddy.docs.isNotEmpty; // Set the favorite status based on the query
+      });
+    }
+  }  
 
   Future<void> _fetchLocalBuddyData() async {
     setState(() {
@@ -160,6 +178,92 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
     );
   }
 
+  Future<void> _addToWishlist(String localBuddyId) async {
+    try {
+      // Reference to the Firestore collection
+      final wishlistRef = FirebaseFirestore.instance.collection('wishlist');
+
+      // Check if the wishlist document for the user exists
+      final wishlistQuery = await wishlistRef.where('userID', isEqualTo: widget.userId).get();
+
+      DocumentReference wishlistDocRef;
+
+      if (wishlistQuery.docs.isEmpty) {
+        // If no wishlist exists, create a new one with a custom ID format
+        final snapshot = await wishlistRef.get();
+        final wishlistID = 'WL${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+        wishlistDocRef = await wishlistRef.doc(wishlistID).set({
+          'userID': widget.userId,
+        }).then((_) => wishlistRef.doc(wishlistID)); // Get the reference of the new document
+      } else {
+        // Use the existing wishlist document
+        wishlistDocRef = wishlistQuery.docs.first.reference;
+      }
+
+      // Now add the tour package ID to the 'tourPackage' subcollection
+      await wishlistDocRef.collection('localBuddy').add({
+        'localBuddyId': localBuddyId,
+        // Add any other fields related to the tour package here
+      });
+
+      // Show SnackBar to inform the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Current local buddy details is added to your wishlist!'),
+          duration: Duration(seconds: 2), // Duration for which the SnackBar will be displayed
+        ),
+      );
+
+      setState(() {
+        isFavorited = true;
+      });
+    } catch (e) {
+      print('Error adding to wishlist: $e');
+    }
+  }
+
+  Future<void> _removeFromWishlist(String localBuddyId) async {
+    try {
+      final wishlistQuery = await FirebaseFirestore.instance
+          .collection('wishlist')
+          .where('userID', isEqualTo: widget.userId)
+          .get();
+
+      if (wishlistQuery.docs.isNotEmpty) {
+        final wishlistDocRef = wishlistQuery.docs.first.reference;
+        final localBuddy = await wishlistDocRef.collection('localBuddy').where('localBuddyId', isEqualTo: localBuddyId).get();
+
+        if (localBuddy.docs.isNotEmpty) {
+          // Delete the tour package document
+          await localBuddy.docs.first.reference.delete();
+
+          // Show SnackBar to inform the user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Current local buddy details is removed from your wishlist!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          setState(() {
+            isFavorited = false; // Update favorite status
+          });
+        }
+      }
+    } catch (e) {
+      print('Error removing from wishlist: $e');
+    }
+  }  
+
+  void _toggleWishlist() {
+    if (isFavorited) {
+      _removeFromWishlist(widget.localBuddyId);
+    } else {
+      _addToWishlist(widget.localBuddyId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,6 +288,45 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
             );
           },
         ),
+        actions: [
+          Row(
+            mainAxisSize: MainAxisSize.min, // To keep the Row tight and avoid expanding
+            children: [
+              Container(
+                width: 35,
+                child: IconButton(
+                  onPressed: () {
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: carData?['agencyID'] ?? ''))
+                    // );
+                  },
+                  icon: Icon(
+                    Icons.share,
+                    color: Colors.white,
+                    size: 21,
+                  ),
+                  tooltip: "Chat",
+                )
+              ),
+              Container(
+                width: 30,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.favorite,
+                    size: 23,
+                    color: isFavorited ? Colors.red : Colors.white,
+                  ),
+                  tooltip: 'Wishlist',
+                  onPressed: () {
+                    _toggleWishlist();
+                  },
+                ),
+              ),
+              SizedBox(width: 10,)
+            ],
+          ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: primaryColor))

@@ -18,6 +18,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
   int currentPageIndex = 0;
   List<TourPackage> _tourPackage = [];
   List<CarRental> _carRental = [];
+  List<LocalBuddy> _localBuddy = [];
   bool isLoading = false;
 
   @override
@@ -42,6 +43,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
 
       List<String> tourPackageIDs = [];
       List<String> carRentalIDs = [];
+      List<String> localBuddyIDs = [];
 
       // Step 2: Loop through each wishlist document and fetch tourPackageId and carRentalId from subcollections
       for (var wishlistDoc in wishlistSnapshot.docs) {
@@ -50,6 +52,9 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
 
         CollectionReference carRentalSubcollection = wishlistRef.doc(wishlistDoc.id).collection('carRental');
         QuerySnapshot carRentalSnapshot = await carRentalSubcollection.get();
+
+        CollectionReference localBuddySubcollection = wishlistRef.doc(wishlistDoc.id).collection('localBuddy');
+        QuerySnapshot localBuddySnapshot = await carRentalSubcollection.get();
         
         // Extract the tourPackageId from each document in the subcollection
         for (var tourDoc in tourPackageSnapshot.docs) {
@@ -61,6 +66,12 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
         for (var carDoc in carRentalSnapshot.docs) {
           String carRentalID = carDoc['carRentalId'] as String;
           carRentalIDs.add(carRentalID);
+        }
+
+        // Extract the localBuddyId from each document in the subcollection
+        for (var localBuddyDoc in localBuddySnapshot.docs) {
+          String localBuddyID = localBuddyDoc['localBuddyId'] as String;
+          localBuddyIDs.add(localBuddyID);
         }
       }
 
@@ -82,6 +93,21 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
       // Step 4: Fetch car rentals from 'carRental' collection using the retrieved IDs
       if (carRentalIDs.isNotEmpty) {
         CollectionReference carRentalsRef = FirebaseFirestore.instance.collection('car_rental');
+        QuerySnapshot carRentalSnapshot = await carRentalsRef.where(FieldPath.documentId, whereIn: carRentalIDs).get();
+
+        // Map the fetched documents to CarRental objects and update the state
+        setState(() {
+          _carRental = carRentalSnapshot.docs.map((doc) => CarRental.fromFirestore(doc)).toList();
+        });
+      } else {
+        setState(() {
+          _carRental = [];
+        });
+      }
+
+      // Step 5: Fetch local buddy from 'localBuddy' collection using the retrieved IDs
+      if (localBuddyIDs.isNotEmpty) {
+        CollectionReference carRentalsRef = FirebaseFirestore.instance.collection('');
         QuerySnapshot carRentalSnapshot = await carRentalsRef.where(FieldPath.documentId, whereIn: carRentalIDs).get();
 
         // Map the fetched documents to CarRental objects and update the state
@@ -373,6 +399,33 @@ class CarRental {
       carName: data['carModel'] ?? '',
       image: data['carImage'] ?? '',
       provider: data['agencyName'] ?? '',
+    );
+  }
+}
+
+class LocalBuddy {
+  final String localBuddyName;
+  final String localBuddyID;
+  final String image;
+  final String locationArea;
+
+  // Named parameters constructor
+  LocalBuddy({
+    required this.localBuddyName,
+    required this.localBuddyID,
+    required this.image,
+    required this.locationArea,
+  });
+
+  // Add a factory constructor to convert Firestore document to TourPackage object
+  factory LocalBuddy.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    return LocalBuddy(
+      localBuddyID: doc.id, // Firestore document ID
+      localBuddyName: data['localBuddyName'] ?? '',
+      image: data['profileImage'] ?? '',
+      locationArea: data['locationArea'] ?? '',
     );
   }
 }
