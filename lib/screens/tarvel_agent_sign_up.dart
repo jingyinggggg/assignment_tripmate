@@ -127,8 +127,8 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
     final specialCharRegExp = RegExp(r'[!@#%^&*(),.?":{}|<>]');
     String errorMessage = '';
 
-    if (password.length < 6) {
-      errorMessage += '• Password must be longer than 6 characters.\n';
+    if (password.length < 8) {
+      errorMessage += '• Password must be longer than 8 characters.\n';
     }
 
     if (!specialCharRegExp.hasMatch(password)) {

@@ -285,10 +285,12 @@ class LocalBuddy{
   final String localBuddyID;
   final String localBuddyName;
   final String localBuddyImage;
-  final String occupation;
-  final int status;
+  final String? occupation;
+  final int? status;
   final int? ranking;
+  final String? locationArea;
+  final String? languageSpoken;
 
-  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, required this.occupation, required this.status, this.ranking});
+  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken});
 
 }

@@ -445,7 +445,7 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
           child: CircularProgressIndicator(),
         ),
         errorWidget: (context, url, error) => Icon(Icons.error),
-        fit: BoxFit.fill,
+        fit: BoxFit.cover,
       ),
     );
   }

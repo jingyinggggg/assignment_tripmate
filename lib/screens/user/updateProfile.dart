@@ -666,6 +666,14 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
             Navigator.of(context).pop();
           },
         );
+      } else{
+        _showDialog(
+          title: 'Update Failed',
+          content: 'Please make sure your have filled in all details.',
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the success dialog
+          },
+        );
       }
     } catch (e) {
       // Handle errors

@@ -3,6 +3,7 @@ import 'package:assignment_tripmate/screens/user/localBuddyEditInfo.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyRegistration.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class LocalBuddyMeScreen extends StatefulWidget {
   final String userId;
@@ -101,7 +102,7 @@ class _LocalBuddyMeScreenState extends State<LocalBuddyMeScreen> {
                                   ? Icons.close_rounded
                                   : localBuddyData?['registrationStatus'] == 4
                                     ? Icons.no_accounts_rounded
-                                    : null,
+                                    : Icons.app_registration,
                               size: 60,
                               color: localBuddyData?['registrationStatus'] == 0 || localBuddyData?['registrationStatus'] == 5
                                 ? Colors.orange
@@ -125,8 +126,9 @@ class _LocalBuddyMeScreenState extends State<LocalBuddyMeScreen> {
                           
                           if(localBuddyData?['registrationStatus'] == null)
                             Container(
-                              width: 150,
+                              width: 200,
                               height: 50,
+                              margin: EdgeInsets.only(top: 20),
                               child: ElevatedButton(
                                 onPressed: (){
                                   Navigator.push(

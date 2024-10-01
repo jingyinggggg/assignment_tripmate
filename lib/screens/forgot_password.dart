@@ -39,7 +39,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     // Validate the password (at least 6 characters and 1 special character)
     bool isValidPassword(String password) {
-      final passwordRegex = RegExp(r'^(?=.*?[#?!@$%^&*-]).{6,}$');
+      final passwordRegex = RegExp(r'^(?=.*?[#?!@$%^&*-]).{8,}$');
       return passwordRegex.hasMatch(password);
     }
 
@@ -47,7 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!isValidPassword(newPassword)) {
         _showDialog(
           title: 'Invalid Password',
-          content: 'Password must be at least 6 characters long and contain at least one special character.',
+          content: 'Password must be at least 8 characters long and contain at least one special character.',
           onPressed: () {
             Navigator.of(context).pop();
           },

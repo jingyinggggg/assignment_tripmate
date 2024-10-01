@@ -40,7 +40,7 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
   }
 
   bool isValidPassword(String password) {
-    final passwordRegex = RegExp(r'^(?=.*?[#?!@$%^&*-]).{6,}$');
+    final passwordRegex = RegExp(r'^(?=.*?[#?!@$%^&*-]).{8,}$');
     return passwordRegex.hasMatch(password);
   }
 
@@ -73,7 +73,7 @@ class _AdminUpdatePasswordScreenState extends State<AdminUpdatePasswordScreen> {
         if (!isValidPassword(newPassword)) {
           _showDialog(
             title: 'Invalid Password',
-            content: 'Password must be at least 6 characters long and contain at least one special character.',
+            content: 'Password must be at least 8 characters long and contain at least one special character.',
             onPressed: () {
               Navigator.of(context).pop();
             },

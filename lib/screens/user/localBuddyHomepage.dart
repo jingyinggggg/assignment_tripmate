@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyBottomNavigationBar.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyEditInfo.dart';
@@ -41,35 +45,84 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     });
     try {
       CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
-      QuerySnapshot querySnapshot = await localBuddyRef.where('userID', isEqualTo: widget.userId).where('registrationStatus', isEqualTo: 3).get();
+      CollectionReference userRef = FirebaseFirestore.instance.collection('users');
+      QuerySnapshot querySnapshot = await localBuddyRef.where('userID', isEqualTo: widget.userId).where('registrationStatus', isEqualTo: 2).get();
 
-      List<LocalBuddy> _localBuddyList = querySnapshot.docs.map((doc) {
-        return LocalBuddy(
-          localBuddyID: doc['localBuddyID'], 
-          localBuddyName: doc[''], 
-          localBuddyImage: doc[''], 
-          occupation: doc['occupation'], 
-          status: doc['registrationStatus']
-        );
-      }).toList();
+      _localBuddyList = [];
 
-      if (querySnapshot.docs.isNotEmpty) {
-        DocumentSnapshot snapshot = querySnapshot.docs.first;
+      for (var doc in querySnapshot.docs){
+        DocumentSnapshot userSnapshot = await userRef.doc(doc['userID']).get();
 
-        setState(() {
-          registrationStatus = snapshot['registrationStatus'];
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
+        if(userSnapshot.exists){
+          // Get full address from the document
+          String fullAddress = doc['location'];
+
+          // Call the Geocoding API to extract country and area
+          String? country = '';
+          String? area = '';
+
+          if (fullAddress.isNotEmpty) {
+            var locationData = await _getLocationAreaAndCountry(fullAddress);
+            country = locationData['country'];
+            area = locationData['area'];
+          }
+
+          String locationArea = '$area, $country';
+
+          _localBuddyList.add(LocalBuddy(
+            localBuddyID: doc['localBuddyID'], 
+            localBuddyName: userSnapshot['name'], 
+            localBuddyImage: userSnapshot['profileImage'], 
+            languageSpoken: doc['languageSpoken'],
+            locationArea: locationArea
+          ));
+        }
       }
+
+      setState(() {
+        _localBuddyList;
+        isLoading = false;
+      });
     } catch (e) {
       print('Error fetching local buddy data: $e');
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  // Function to get area and country from the full address using the Google Geocoding API
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey; // Replace with your API key
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
     }
   }
 
@@ -108,23 +161,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     }
   }
 
-  // Widget buildActionIcon() {
-  //   return IconButton(
-  //     onPressed: () {
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => LocalBuddyRegistrationScreen(userId: widget.userId)),
-  //       );
-  //     },
-  //     icon: Image.asset(
-  //       registrationStatus == null ? 'images/apply-icon.png' : 'images/request.png',
-  //       width: 25,
-  //       height: 25,
-  //     ),
-  //     tooltip: registrationStatus == null ? "Apply for local buddy" : "Local Buddy Account",
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
       final List<Widget> _screens = [
@@ -139,24 +175,23 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  // fillColor: Color.fromARGB(255, 218, 232, 243),
                   contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                   prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Set the border color to black
+                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Black border when not focused
+                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2), // Black border when focused
+                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.red, width: 2), // Red border for error state
+                    borderSide: BorderSide(color: Colors.red, width: 2),
                   ),
                   hintText: "Search local buddy with destination...",
                   hintStyle: TextStyle(
@@ -168,8 +203,33 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
               ),
             ),
           ),
+
+          isLoading
+            ? Center(child: CircularProgressIndicator(color: primaryColor))
+            : _localBuddyList.isNotEmpty
+              ? Expanded(  // Constrain ListView to available space
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: ListView.builder(
+                      itemCount: _localBuddyList.length,
+                      itemBuilder: (context, index) {
+                        return buildLocalBuddyButton(localBuddy: _localBuddyList[index]);
+                      },
+                    ),
+                  ),
+                )
+              : Center(
+                  child: Text(
+                    'No local buddy exist in the system.',
+                    style: TextStyle(
+                      fontSize: defaultFontSize,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
         ],
       ),
+
       // Your screen 2
       registrationStatus == 2 ? LocalBuddyEditInfoScreen(userId: widget.userId) : LocalBuddyMeScreen(userId: widget.userId,),
     ];
@@ -196,45 +256,102 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
             );
           },
         ),
-        // actions: [
-        //   isLoading ? CircularProgressIndicator() : buildActionIcon(),
-        // ],
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: LocalBuddyCustomBottomNavBar(
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
-        // selectedItemColor: Colors.white,
-        // unselectedItemColor: Colors.black,
-        // backgroundColor: Color(0xFF749CB9),
       ),
     );
   }
 
-  Widget buildInfoContainer({required AssetImage image, required String text}) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: primaryColor, width: 1.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image(image: image, width: 18, height: 18),
-          SizedBox(width: 5),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: defaultCarRentalFontSize,
-              color: Colors.black,
-            ),
+  Widget buildLocalBuddyButton({required LocalBuddy localBuddy}) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => LocalBuddyDetailsScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID))
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: 180,
+        margin: EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          image: DecorationImage(
+            image: NetworkImage(localBuddy.localBuddyImage),
+            fit: BoxFit.cover,
           ),
-        ],
+        ),
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                width: double.infinity,
+                height: 70,
+                color: Colors.white.withOpacity(0.8), // Semi-transparent overlay
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        localBuddy.localBuddyName,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: defaultLabelFontSize,
+                          fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0.5, 0.5),
+                              color: Colors.black87,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                      Text(
+                        'Live in: ${localBuddy.locationArea ?? ''}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: defaultFontSize,
+                          fontWeight: FontWeight.w500,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0.5, 0.5),
+                              color: Colors.black87,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                      Text(
+                        'Language Spoken: ${localBuddy.languageSpoken ?? ''}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: defaultFontSize,
+                          fontWeight: FontWeight.w500,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(0.5, 0.5),
+                              color: Colors.black87,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
 }

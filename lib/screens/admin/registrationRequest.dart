@@ -256,7 +256,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
 
   Widget LocalBuddyComponent({required LocalBuddy localBuddy}) {
     // Default to -1 if status is null
-    int status = localBuddy.status;
+    int status = localBuddy.status ?? -1;
 
     return Container(
       padding: EdgeInsets.only(top: 10, bottom: 10),

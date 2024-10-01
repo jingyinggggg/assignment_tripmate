@@ -291,7 +291,7 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             ),
                                             Row(
                                               children: [
-                                                if (userData['accountApproved'] == 0)
+                                                if (userData['accountApproved'] == 0 || userData['accountApproved'] == 3)
                                                   Row(
                                                     children: const [
                                                       Text(
@@ -319,6 +319,21 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                                       ),
                                                       SizedBox(width: 5),
                                                       Icon(Icons.check_circle, color: Colors.green, size: 20), // Icon for approved
+                                                    ],
+                                                  )
+                                                else if (userData['accountApproved'] == 2)
+                                                  Row(
+                                                    children: const [
+                                                      Text(
+                                                        "Reject",
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.red, // You can change the color as needed
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 5),
+                                                      Icon(Icons.no_accounts, color: Colors.red, size: 20), // Icon for approved
                                                     ],
                                                   )
                                                 else
@@ -436,6 +451,7 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
 
                                   const SizedBox(height: 5),
                                   Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         "Company Address: ",
@@ -444,17 +460,19 @@ class _TravelAgentProfileScreenState extends State<TravelAgentProfileScreen> {
                                             color: Colors.black,
                                             fontWeight: FontWeight.bold),
                                       ),
-                                      Text(
-                                        userData['companyAddress'] ?? '',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500
-                                        ),
-                                        textAlign: TextAlign.justify,
-                                        maxLines: null,
-                                        overflow: TextOverflow.visible,
-                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          userData['companyAddress'] ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                          maxLines: null,
+                                          overflow: TextOverflow.visible,
+                                        ),                                      
+                                      )
                                     ],
                                   ),
                                 ],

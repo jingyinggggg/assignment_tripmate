@@ -848,7 +848,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
           child: CircularProgressIndicator(),
         ),
         errorWidget: (context, url, error) => Icon(Icons.error),
-        fit: BoxFit.fill,
+        fit: BoxFit.cover,
       ),
     );
   }

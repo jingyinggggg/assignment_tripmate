@@ -248,6 +248,18 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         children: [
           Text(
+            'Your registration for local buddy has been approved by admin. You can update your infomation at here:',
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: defaultFontSize,
+              fontWeight: FontWeight.w600
+            ),
+            maxLines: null,
+            overflow: TextOverflow.visible,
+            textAlign: TextAlign.justify,
+          ),
+          SizedBox(height: 10),
+          Text(
             'Background Information',
             style: TextStyle(
               fontWeight: FontWeight.w900,
