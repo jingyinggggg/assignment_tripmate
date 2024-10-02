@@ -290,7 +290,8 @@ class LocalBuddy{
   final int? ranking;
   final String? locationArea;
   final String? languageSpoken;
+  final String? locationAddress;
 
-  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken});
+  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken, this.locationAddress});
 
 }

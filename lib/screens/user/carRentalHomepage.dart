@@ -241,7 +241,7 @@ Widget carComponent({
       // Navigate to another page when tapped
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CarRentalDetailsScreen(userId: widget.userId, carId: carList.carID,)),
+        MaterialPageRoute(builder: (context) => CarRentalDetailsScreen(userId: widget.userId, carId: carList.carID,fromAppLink: 'false',)),
       );
     },
     child: Container(

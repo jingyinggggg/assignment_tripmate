@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/carRentalDetails.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
 import 'package:assignment_tripmate/screens/user/viewTourDetails.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class WishlistScreen extends StatefulWidget {
   final String userID;
@@ -54,7 +58,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
         QuerySnapshot carRentalSnapshot = await carRentalSubcollection.get();
 
         CollectionReference localBuddySubcollection = wishlistRef.doc(wishlistDoc.id).collection('localBuddy');
-        QuerySnapshot localBuddySnapshot = await carRentalSubcollection.get();
+        QuerySnapshot localBuddySnapshot = await localBuddySubcollection.get();
         
         // Extract the tourPackageId from each document in the subcollection
         for (var tourDoc in tourPackageSnapshot.docs) {
@@ -107,16 +111,50 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
 
       // Step 5: Fetch local buddy from 'localBuddy' collection using the retrieved IDs
       if (localBuddyIDs.isNotEmpty) {
-        CollectionReference carRentalsRef = FirebaseFirestore.instance.collection('');
-        QuerySnapshot carRentalSnapshot = await carRentalsRef.where(FieldPath.documentId, whereIn: carRentalIDs).get();
+        CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
+        QuerySnapshot localBuddySnapshot = await localBuddyRef.where(FieldPath.documentId, whereIn: localBuddyIDs).get();
 
-        // Map the fetched documents to CarRental objects and update the state
-        setState(() {
-          _carRental = carRentalSnapshot.docs.map((doc) => CarRental.fromFirestore(doc)).toList();
-        });
+        List<LocalBuddy> localBuddies = [];
+
+        // Loop through each localBuddy document to fetch details and profile image
+        for (var localBuddyDoc in localBuddySnapshot.docs) {
+          String userId = localBuddyDoc['userID'] as String;
+
+          // Fetch user details including profile image from 'users' collection
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+          String profileImage = userDoc['profileImage'] as String;
+          String localBuddyName = userDoc['name'] as String;
+
+          // Get full address from the document
+          String fullAddress = localBuddyDoc['location'];
+
+          // Call the Geocoding API to extract country and area
+          String? country = '';
+          String? area = '';
+
+          if (fullAddress.isNotEmpty) {
+            var locationData = await _getLocationAreaAndCountry(fullAddress);
+            country = locationData['country'];
+            area = locationData['area'];
+          }
+
+          String locationArea = '$area, $country';
+
+          LocalBuddy localBuddy = LocalBuddy.fromFirestore(localBuddyDoc);
+          localBuddy.image = profileImage;
+          localBuddy.locationArea = locationArea;
+          localBuddy.localBuddyName = localBuddyName;
+
+          localBuddies.add(localBuddy);
+
+          // Map the fetched documents to CarRental objects and update the state
+          setState(() {
+            _localBuddy = localBuddies;
+          });
+        }
       } else {
         setState(() {
-          _carRental = [];
+          _localBuddy = [];
         });
       }
 
@@ -130,6 +168,41 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  // Function to get area and country from the full address using the Google Geocoding API
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey; // Replace with your API key
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
     }
   }
 
@@ -209,8 +282,19 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
                         ),
                       )
                     : Center(child: Text('No car rental details found in your wishlist')),
-                  // Center(child: Icon(Icons.car_rental)),
-                  Center(child: Icon(Icons.person)),
+                  isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : _localBuddy.isNotEmpty
+                      ? Container(
+                        padding: EdgeInsets.only(right: 10, left: 10),
+                        child: ListView.builder(
+                          itemCount: _localBuddy.length,
+                          itemBuilder: (context, index) {
+                            return LBComponent(localBuddy: _localBuddy[index]);
+                          }
+                        ),
+                      )
+                    : Center(child: Text('No local buddy details found in your wishlist')),
                 ],
               ),
             ),
@@ -278,7 +362,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
       onTap: (){
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (context) => CarRentalDetailsScreen(userId: widget.userID, carId: carRental.carID))
+          MaterialPageRoute(builder: (context) => CarRentalDetailsScreen(userId: widget.userID, carId: carRental.carID, fromAppLink: 'false',))
         );
       },
       child: Container(
@@ -324,6 +408,76 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
                         SizedBox(height: 5),
                         Text(
                           'Provider: ${carRental.provider}',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: defaultFontSize
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      ],
+                    )
+                    
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      )
+    );
+  }
+
+  Widget LBComponent({required LocalBuddy localBuddy}) {
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => LocalBuddyDetailsScreen(userId: widget.userID, localBuddyId: localBuddy.localBuddyID, fromAppLink: 'false'))
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.only(top: 20, bottom: 10),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1.5))
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Wrap this inner Row with Expanded to make sure it takes the available space
+            Expanded(
+              child: Row(
+                children: [
+                  // Image container with fixed width and height
+                  Container(
+                    width: getScreenWidth(context) * 0.18,
+                    height: getScreenHeight(context) * 0.13,
+                    margin: EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(localBuddy.image),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  // Text widget wrapped in Expanded to take remaining space
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localBuddy.localBuddyName, 
+                          style: TextStyle(
+                            color: Colors.black, 
+                            fontWeight: FontWeight.bold, 
+                            fontSize: defaultLabelFontSize,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Location: ${localBuddy.locationArea}',
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.w500,
@@ -404,29 +558,30 @@ class CarRental {
 }
 
 class LocalBuddy {
-  final String localBuddyName;
+  late String localBuddyName;
   final String localBuddyID;
-  final String image;
-  final String locationArea;
+  late String image; // Late variable, can be assigned later
+  late String locationArea; // Late variable, can be assigned later
 
-  // Named parameters constructor
+  // Constructor without image and locationArea
   LocalBuddy({
-    required this.localBuddyName,
     required this.localBuddyID,
-    required this.image,
-    required this.locationArea,
   });
 
-  // Add a factory constructor to convert Firestore document to TourPackage object
+  // Factory constructor to convert Firestore document to LocalBuddy object
   factory LocalBuddy.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    return LocalBuddy(
+    LocalBuddy localBuddy = LocalBuddy(
       localBuddyID: doc.id, // Firestore document ID
-      localBuddyName: data['localBuddyName'] ?? '',
-      image: data['profileImage'] ?? '',
-      locationArea: data['locationArea'] ?? '',
     );
+
+    localBuddy.image = data['profileImage'] ?? '';
+    localBuddy.locationArea = data['locationArea'] ?? '';
+    localBuddy.localBuddyName = data['localBuddyName'] ?? '';
+
+    return localBuddy;
   }
 }
+
 

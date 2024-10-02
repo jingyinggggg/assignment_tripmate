@@ -604,7 +604,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
 
                             SizedBox(height:20),
 
-                            _buildDetailRow('Previous Experience', localBuddyData?['previousExperience'] != null ? '' : 'N/A', 130),
+                            _buildDetailRow('Previous Experience', localBuddyData?['previousExperience'] ?? 'N/A', 90),
                             SizedBox(height: 10),
                             _buildDetailRow('Identification Card', localBuddyData?['idCardImage'] != null ? '' : 'N/A', 130),
                             SizedBox(height: 10),

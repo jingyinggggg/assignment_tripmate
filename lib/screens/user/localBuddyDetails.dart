@@ -1,19 +1,23 @@
 import 'dart:convert';
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/screens/user/localBuddyHomepage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 class LocalBuddyDetailsScreen extends StatefulWidget {
   final String userId;
   final String localBuddyId;
+  final String fromAppLink;
 
   const LocalBuddyDetailsScreen({
     super.key,
     required this.userId,
     required this.localBuddyId,
+    required this.fromAppLink
   });
 
   @override
@@ -266,6 +270,8 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String shareLink = 'https://tripmate.com/localBuddyDetails/${widget.userId}/${widget.localBuddyId}/true';
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -282,10 +288,22 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LocalBuddyHomepageScreen(userId: widget.userId)),
-            );
+            if (widget.fromAppLink == 'true') {
+              // Show a message (SnackBar, Dialog, etc.)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please log into your account or register an account to explore more.'),
+                ),
+              );
+
+              // Delay the navigation to the login page
+              Future.delayed(const Duration(milliseconds: 500), () {
+                // context.go('/login'); // Ensure you have a route defined for '/login'
+                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+              });
+            } else {
+              Navigator.pop(context);
+            }
           },
         ),
         actions: [
@@ -296,17 +314,14 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                 width: 35,
                 child: IconButton(
                   onPressed: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: carData?['agencyID'] ?? ''))
-                    // );
+                    Share.share(shareLink, subject: 'Check out this local buddy package!');
                   },
                   icon: Icon(
                     Icons.share,
                     color: Colors.white,
                     size: 21,
                   ),
-                  tooltip: "Chat",
+                  tooltip: "Share",
                 )
               ),
               Container(
@@ -460,7 +475,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                 ],
               ),
             ),
-      bottomNavigationBar: (localBuddyData != null && widget.userId != localBuddyData!['userID'])
+      bottomNavigationBar: (localBuddyData != null && widget.userId == localBuddyData!['userID'])
           ? null // Hides the bottom navigation bar
           : Container(
               height: 60,

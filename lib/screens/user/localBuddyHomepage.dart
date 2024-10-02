@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
 import 'package:http/http.dart' as http;
@@ -6,7 +7,6 @@ import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyBottomNavigationBar.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyEditInfo.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyMeScreen.dart';
-import 'package:assignment_tripmate/screens/user/localBuddyRegistration.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -49,14 +49,12 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
 
       _localBuddyList = [];
 
-      for (var doc in querySnapshot.docs){
+      for (var doc in querySnapshot.docs) {
         DocumentSnapshot userSnapshot = await userRef.doc(doc['userID']).get();
 
-        if(userSnapshot.exists){
-          // Get full address from the document
+        if (userSnapshot.exists) {
           String fullAddress = doc['location'];
 
-          // Call the Geocoding API to extract country and area
           String? country = '';
           String? area = '';
 
@@ -69,11 +67,12 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
           String locationArea = '$area, $country';
 
           _localBuddyList.add(LocalBuddy(
-            localBuddyID: doc['localBuddyID'], 
-            localBuddyName: userSnapshot['name'], 
-            localBuddyImage: userSnapshot['profileImage'], 
+            localBuddyID: doc['localBuddyID'],
+            localBuddyName: userSnapshot['name'],
+            localBuddyImage: userSnapshot['profileImage'],
             languageSpoken: doc['languageSpoken'],
-            locationArea: locationArea
+            locationArea: locationArea,
+            locationAddress: doc['location'],
           ));
         }
       }
@@ -81,6 +80,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       setState(() {
         _localBuddyList;
         isLoading = false;
+        _foundedLocalBuddy = _localBuddyList;
       });
     } catch (e) {
       print('Error fetching local buddy data: $e');
@@ -90,9 +90,8 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     }
   }
 
-  // Function to get area and country from the full address using the Google Geocoding API
   Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-    final String apiKeys = apiKey; // Replace with your API key
+    final String apiKeys = apiKey;
     final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
 
     final response = await http.get(Uri.parse(url));
@@ -125,10 +124,9 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     }
   }
 
-  // Handling bottom navigation bar tap
   void _onTabTapped(int index) {
     setState(() {
-      _currentIndex = index; // Update the current index
+      _currentIndex = index;
     });
   }
 
@@ -137,15 +135,13 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       isVerifyLoading = true;
     });
     try {
-      // Fetch the user document based on the userId using a where condition
       QuerySnapshot userQuerySnapshot = await FirebaseFirestore.instance
           .collection('localBuddy')
-          .where('userID', isEqualTo: widget.userId) // Filter by userID
+          .where('userID', isEqualTo: widget.userId)
           .get();
 
       if (userQuerySnapshot.docs.isNotEmpty) {
-        // If the query returns documents
-        var userSnapshot = userQuerySnapshot.docs.first; // Get the first document
+        var userSnapshot = userQuerySnapshot.docs.first;
         registrationStatus = userSnapshot['registrationStatus'];
 
         print(registrationStatus);
@@ -156,8 +152,67 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       print('Error checking current user: $e');
     } finally {
       setState(() {
-        isVerifyLoading = false; // Stop loading
+        isVerifyLoading = false;
       });
+    }
+  }
+
+  Future<Map<String, double>> getCoordinatesFromAddress(String address) async {
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final location = data['results'][0]['geometry']['location'];
+        double lat = location['lat'];
+        double lng = location['lng'];
+        return {'lat': lat, 'lng': lng};
+      }
+    }
+    throw Exception('Failed to get coordinates for address: $response');
+  }
+
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double radiusOfEarth = 6371;
+    double latDistance = (lat2 - lat1) * (pi / 180.0);
+    double lonDistance = (lon2 - lon1) * (pi / 180.0);
+
+    double a = sin(latDistance / 2) * sin(latDistance / 2) +
+        cos(lat1 * (pi / 180.0)) * cos(lat2 * (pi / 180.0)) *
+        sin(lonDistance / 2) * sin(lonDistance / 2);
+
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return radiusOfEarth * c;
+  }
+
+  void onSearch(String searchQuery) async {
+    try {
+      Map<String, double> userLocation = await getCoordinatesFromAddress(searchQuery);
+      double userLat = userLocation['lat']!;
+      double userLng = userLocation['lng']!;
+
+      List<LocalBuddy> filteredBuddies = [];
+
+      for (var localBuddy in _localBuddyList) {
+        Map<String, double> buddyLocation = await getCoordinatesFromAddress(localBuddy.locationAddress ?? '');
+        double buddyLat = buddyLocation['lat']!;
+        double buddyLng = buddyLocation['lng']!;
+
+        double distance = calculateDistance(userLat, userLng, buddyLat, buddyLng);
+
+        if (distance <= 50) {
+          filteredBuddies.add(localBuddy);
+        }
+      }
+
+      setState(() {
+        _foundedLocalBuddy = filteredBuddies;
+      });
+    } catch (e) {
+      print('Error during search: $e');
     }
   }
 
@@ -171,7 +226,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
             child: Container(
               height: 60,
               child: TextField(
-                // onChanged: (value) => onSearch(value),
+                onChanged: (value) => onSearch(value),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
@@ -205,28 +260,25 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
           ),
 
           isLoading
-            ? Center(child: CircularProgressIndicator(color: primaryColor))
-            : _localBuddyList.isNotEmpty
-              ? Expanded(  // Constrain ListView to available space
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: ListView.builder(
-                      itemCount: _localBuddyList.length,
-                      itemBuilder: (context, index) {
-                        return buildLocalBuddyButton(localBuddy: _localBuddyList[index]);
-                      },
-                    ),
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    'No local buddy exist in the system.',
-                    style: TextStyle(
-                      fontSize: defaultFontSize,
-                      color: Colors.black,
-                    ),
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
+          : _foundedLocalBuddy.isNotEmpty
+            ? Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10),
+                  child: ListView.builder(
+                    itemCount: _foundedLocalBuddy.length,
+                    itemBuilder: (context, index) {
+                      return buildLocalBuddyButton(localBuddy: _foundedLocalBuddy[index]);
+                    },
                   ),
                 ),
+              )
+            : Center(
+                child: Text(
+                  'No local buddy found in nearby of the input address.',
+                  style: TextStyle(fontSize: defaultFontSize, color: Colors.black),
+                ),
+              ),
         ],
       ),
 
@@ -270,7 +322,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       onTap: () {
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (context) => LocalBuddyDetailsScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID))
+          MaterialPageRoute(builder: (context) => LocalBuddyDetailsScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID, fromAppLink: 'false'))
         );
       },
       child: Container(

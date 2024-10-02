@@ -1,17 +1,20 @@
 import 'dart:convert';
+import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 // import 'package:latlong2/latlong.dart';
 
 class CarRentalDetailsScreen extends StatefulWidget {
   final String userId;
   final String carId;
+  final String fromAppLink;
 
-  const CarRentalDetailsScreen({super.key, required this.userId, required this.carId});
+  const CarRentalDetailsScreen({super.key, required this.userId, required this.carId, required this.fromAppLink});
 
   @override
   State<StatefulWidget> createState() => _CarRentalDetailsScreenState();
@@ -204,6 +207,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String shareLink = 'https://tripmate.com/carRentalDetails/${widget.userId}/${widget.carId}/true';
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -220,7 +224,22 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            if (widget.fromAppLink == 'true') {
+              // Show a message (SnackBar, Dialog, etc.)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please log into your account or register an account to explore more.'),
+                ),
+              );
+
+              // Delay the navigation to the login page
+              Future.delayed(const Duration(milliseconds: 500), () {
+                // context.go('/login'); // Ensure you have a route defined for '/login'
+                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+              });
+            } else {
+              Navigator.pop(context);
+            }
           },
         ),
         actions: [
@@ -255,6 +274,20 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                   tooltip: 'Wishlist',
                   onPressed: () {
                     _toggleWishlist();
+                  },
+                ),
+              ),
+              Container(
+                width: 30,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.share,
+                    size: 23,
+                    color:  Colors.white,
+                  ),
+                  tooltip: 'Share',
+                  onPressed: () {
+                    Share.share(shareLink, subject: 'Check out this car rental!');
                   },
                 ),
               ),

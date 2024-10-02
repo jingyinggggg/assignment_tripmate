@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
@@ -273,7 +274,8 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
 
               // Delay the navigation to the login page
               Future.delayed(const Duration(milliseconds: 500), () {
-                context.go('/login'); // Ensure you have a route defined for '/login'
+                // context.go('/login'); // Ensure you have a route defined for '/login'
+                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
               });
             } else {
               Navigator.pop(context);

@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -196,17 +197,31 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
 
               isLoading
                 ? Expanded(child: Center(child: CircularProgressIndicator()))
-                : Expanded( // Ensures the ListView takes up the available space
-                  child: Padding(
-                    padding: EdgeInsets.only(right: 15, left: 15, top: 10), // Adjust padding
-                    child: ListView.builder(
-                      itemCount: _foundedMessageList.length,
-                      itemBuilder: (context, index) {
-                        return messageListComponent(messageList: _foundedMessageList[index]);
-                      },
-                    ),
-                  ),
-                ),
+                : _foundedMessageList.isNotEmpty
+                  ? Expanded( // Ensures the ListView takes up the available space
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 15, left: 15, top: 10), // Adjust padding
+                        child: ListView.builder(
+                          itemCount: _foundedMessageList.length,
+                          itemBuilder: (context, index) {
+                            return messageListComponent(messageList: _foundedMessageList[index]);
+                          },
+                        ),
+                      ),
+                    )
+                  : Expanded(
+                    child: Center(
+                      child: Text(
+                        'There are no message received currently.',
+                        style: TextStyle(
+                          fontSize: defaultFontSize,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  )
             ],
           ),
         ],
