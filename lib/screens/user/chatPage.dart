@@ -39,7 +39,9 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
 
       // Fetch all chat_rooms where the document ID contains widget.userId
       CollectionReference chatRef = FirebaseFirestore.instance.collection('chat_rooms');
-      QuerySnapshot chatRoomsSnapshot = await chatRef.get();
+      QuerySnapshot chatRoomsSnapshot = await chatRef
+        .orderBy('lastUpdate', descending: true) // Order by lastUpdate field in descending order
+        .get();
 
       // Clear the previous message list
       _MessageList.clear();
@@ -144,7 +146,6 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     // If older than a week, display the date
     return DateFormat('MM/dd/yyyy').format(messageDateTime);
   }
-
 
   @override
   Widget build(BuildContext context) {

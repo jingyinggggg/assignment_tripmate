@@ -4,6 +4,7 @@ const String apiKey = "AIzaSyCHTQkSfA59c9agWbthQ-w1X4YxcQLxpYo";
 
 const Color primaryColor = Color(0xFF467BA1);
 const Color secondaryColor = Colors.black54;
+const Color appBarColor = Color(0xFF749CB9);
 const defaultFontSize = 14.0;
 const defaultLabelFontSize = 16.0;
 const defaultAppBarTitleFontSize = 20.0;
