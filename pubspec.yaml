@@ -70,6 +70,7 @@ dependencies:
   convex_bottom_bar: ^3.2.0
   share_plus: ^10.0.2
   app_links: ^6.3.2
+  google_generative_ai: ^0.4.6
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20
   # google_ml_vision: ^0.0.7

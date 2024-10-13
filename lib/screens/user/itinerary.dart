@@ -1,15 +1,15 @@
+import 'package:assignment_tripmate/screens/user/itineraryAI.dart';
 import 'package:flutter/material.dart';
 
 class ItineraryScreen extends StatefulWidget {
-  const ItineraryScreen({super.key});
+  final String userId;
+  const ItineraryScreen({super.key, required this.userId});
 
   @override
   State<ItineraryScreen> createState() => _ItineraryScreenState();
 }
 
 class _ItineraryScreenState extends State<ItineraryScreen> {
-
-  int currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +52,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                         width: 150,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: (){}, 
+                          onPressed: (){
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(builder: (context) => AIItineraryScreen(userId: widget.userId,))
+                            );
+                          }, 
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0xFF467BA1),
                             textStyle: const TextStyle(
