@@ -22,6 +22,7 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
   final TextEditingController _departureDateController = TextEditingController();
   final TextEditingController _returnDateController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _paxController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   String? _selectedTravelStyle;
 
@@ -37,6 +38,7 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
     "Select your departure and return dates:",
     "Enter the country you want to visit:",
     "Enter your budget:",
+    "Enter the number of people in this trip:",
     "Select your travel style:"
   ];
 
@@ -44,13 +46,13 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
   final List<String> travelStyles = ["Adventure", "Relaxation", "Cultural", "Romantic", "Family", "Luxury"];
 
   Future<void>submitUserPreference() async{
-    if(_departureDateController.text.isNotEmpty && _returnDateController.text.isNotEmpty && _countryController.text.isNotEmpty && _budgetController.text.isNotEmpty && _selectedTravelStyle != ''){
+    if(_departureDateController.text.isNotEmpty && _returnDateController.text.isNotEmpty && _countryController.text.isNotEmpty && _budgetController.text.isNotEmpty && _selectedTravelStyle != '' && _paxController.text.isNotEmpty){
       setState(() {
         isGenerating = true;
       });
 
       try{
-        final generatingResult = await geminiApi.generateItinerary(_departureDateController.text, _returnDateController.text, _countryController.text, _budgetController.text, _selectedTravelStyle!);
+        final generatingResult = await geminiApi.generateItinerary(_departureDateController.text, _returnDateController.text, _countryController.text, _budgetController.text, _selectedTravelStyle!, _paxController.text);
 
         setState(() {
           generatedItinerary = generatingResult;
@@ -102,21 +104,48 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
 
     // If the user provided a title, save the itinerary to Firebase
     if (itineraryTitle.isNotEmpty && generatedItinerary != null) {
-      // Save to Firebase
-      await FirebaseFirestore.instance.collection('itineraries').add({
-        'title': itineraryTitle,
-        'content': generatedItinerary!,
-        'userId': widget.userId,
-        'isDelete': 0,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      try {
+        // Save to Firebase
+        await FirebaseFirestore.instance.collection('itineraries').add({
+          'title': itineraryTitle,
+          'content': generatedItinerary!,
+          'userId': widget.userId,
+          'isDelete': 0,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
 
-      // Show a confirmation message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Itinerary '$itineraryTitle' saved successfully!")),
-      );
+        showCustomDialog(
+          context: context, 
+          title: 'Success', 
+          content: 'Itinerary saved successfully!',
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.pop(context);
+          }
+        );
+      } catch (e) {
+        // Show a failure dialog in case of an error
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Error"),
+              content: Text("Failed to save itinerary: $e"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
+
 
   void _showExitConfirmationDialog(BuildContext context) {
     showDialog(
@@ -167,232 +196,235 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
           },
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            children: [
-              isGenerating
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            color: primaryColor,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                children: [
+                  if (generatedItinerary != null && !isGenerating) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Generated Itinerary:",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Generating Itinerary ...',
-                            style: TextStyle(
-                              fontSize: defaultLabelFontSize,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                          textAlign: TextAlign.left,
+                        ),
+                        const Divider(),
+                        const SizedBox(height: 10),
+                        Text(
+                          generatedItinerary!,
+                          style: const TextStyle(fontSize: defaultLabelFontSize),
+                          textAlign: TextAlign.justify,
+                        ),
+                        const Divider(),
+                        const SizedBox(height: 10),
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Handle saving the itinerary here
+                              saveItinerary();
+                            },
+                            child: const Text(
+                              "Save Itinerary",
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              textStyle: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (!isGenerating) ...[
+                    // Form part
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6, // Adjust the height as needed
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: questions.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentPage = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  "Question ${index + 1} / ${questions.length}",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 10),
+                                const Divider(),
+                                Text(
+                                  questions[index],
+                                  style: TextStyle(
+                                    fontSize: defaultLabelFontSize,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                                const SizedBox(height: 15),
+                                getInputForQuestion(index),
+                                if (_dateError.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(_dateError, style: TextStyle(color: Colors.red)),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Back Button
+                        if (_currentPage > 0) ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                            child: const Text(
+                              "Back",
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(90, 45),
+                              backgroundColor: const Color(0xFF467BA1),
+                              textStyle: const TextStyle(
+                                fontSize: defaultLabelFontSize,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                    )
-                  : generatedItinerary != null
-                      ? Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Generated Itinerary:",
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                              textAlign: TextAlign.left,
-                            ),
-                            const Divider(),
-                            const SizedBox(height: 10),
-                            Text(
-                              generatedItinerary!, 
-                              style: const TextStyle(fontSize: defaultLabelFontSize),
-                              textAlign: TextAlign.justify,
-                            ),
-                            const Divider(),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  // Handle saving the itinerary here
-                                  saveItinerary();
-                                },
-                                child: const Text(
-                                  "Save Itinerary",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  textStyle: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  alignment: Alignment.center
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            // This part handles the questions
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.6, // Adjust the height as needed
-                              child: PageView.builder(
-                                controller: _pageController,
-                                itemCount: questions.length,
-                                onPageChanged: (index) {
-                                  setState(() {
-                                    _currentPage = index;
-                                  });
-                                },
-                                itemBuilder: (context, index) {
-                                  return Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        Text(
-                                          "Question ${index + 1} / ${questions.length}",
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                        const SizedBox(height: 10),
-                                        const Divider(),
-                                        Text(
-                                          questions[index],
-                                          style: TextStyle(
-                                            fontSize: defaultLabelFontSize,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.justify,
-                                        ),
-                                        const SizedBox(height: 15),
-                                        getInputForQuestion(index),
-                                        if (_dateError.isNotEmpty) ...[
-                                          const SizedBox(height: 10),
-                                          Text(_dateError, style: TextStyle(color: Colors.red)),
-                                        ],
-                                      ],
-                                    ),
+                        const SizedBox(width: 20),
+                        if (_currentPage < questions.length - 1) ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              if (_currentPage == 0) {
+                                if (_validateDates()) {
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
                                   );
-                                },
+                                }
+                              } else {
+                                _pageController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                            child: const Text(
+                              "Next",
+                              style: TextStyle(
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Back Button
-                                if (_currentPage > 0) ...[
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      _pageController.previousPage(
-                                        duration: const Duration(milliseconds: 300),
-                                        curve: Curves.easeInOut,
-                                      );
-                                    },
-                                    child: const Text(
-                                      "Back",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: Size(90, 45),
-                                      backgroundColor: const Color(0xFF467BA1),
-                                      textStyle: const TextStyle(
-                                        fontSize: defaultLabelFontSize,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                SizedBox(width: 20),
-                                if (_currentPage < questions.length - 1) ...[
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      if (_currentPage == 0) {
-                                        if (_validateDates()) {
-                                          _pageController.nextPage(
-                                            duration: const Duration(milliseconds: 300),
-                                            curve: Curves.easeInOut,
-                                          );
-                                        }
-                                      } else {
-                                        _pageController.nextPage(
-                                          duration: const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
-                                      }
-                                    },
-                                    child: const Text(
-                                      "Next",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: Size(90, 45),
-                                      backgroundColor: const Color(0xFF467BA1),
-                                      textStyle: const TextStyle(
-                                        fontSize: defaultLabelFontSize,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ),
-                                ] 
-                                else ...[ // Check if it's the last question
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // Handle submission here
-                                      submitUserPreference(); // Implement this method to process the answers
-                                    },
-                                    child: const Text(
-                                      "Submit",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: Size(90, 45),
-                                      backgroundColor: const Color(0xFF467BA1),
-                                      textStyle: const TextStyle(
-                                        fontSize: defaultLabelFontSize,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              ],
-                            )
-                            
-                          ],
-                        ),
-            ],
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(90, 45),
+                              backgroundColor: const Color(0xFF467BA1),
+                              textStyle: const TextStyle(
+                                fontSize: defaultLabelFontSize,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          ElevatedButton(
+                            onPressed: () {
+                              // Handle submission here
+                              submitUserPreference(); // Implement this method to process the answers
+                            },
+                            child: const Text(
+                              "Submit",
+                              style: TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(90, 45),
+                              backgroundColor: const Color(0xFF467BA1),
+                              textStyle: const TextStyle(
+                                fontSize: defaultLabelFontSize,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          )
+                        ],
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (isGenerating) ...[
+            // Overlay the CircularProgressIndicator
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: primaryColor,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Generating Itinerary ...',
+                    style: TextStyle(
+                      fontSize: defaultLabelFontSize,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
+
     );
   }
 
@@ -438,7 +470,9 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
         return country();
       case 2: // Budget
         return budget();
-      case 3: // Travel Style
+      case 3: // Pax
+        return pax();
+      case 4: // Travel Style
         return travel(
           travelStyles, 
           "Select a travel style", "Travel Style", 
@@ -605,8 +639,8 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
         fontSize: defaultFontSize,
       ),
       decoration: InputDecoration(
-        hintText: 'Enter Country',
-        labelText: 'Country',
+        hintText: 'E.g. Penang, Malaysia',
+        labelText: 'Destination',
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -656,6 +690,56 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
       decoration: InputDecoration(
         hintText: 'Enter your budget with current unit',
         labelText: 'Budget',
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: const TextStyle(
+          fontSize: defaultLabelFontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+          shadows: [
+            Shadow(
+              offset: Offset(0.5, 0.5),
+              color: Colors.black87,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget pax() {
+    return TextField(
+      controller: _paxController,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: defaultFontSize,
+      ),
+      keyboardType: TextInputType.number, // Set keyboard type to number
+      decoration: InputDecoration(
+        hintText: 'Enter the number of people',  
+        labelText: 'Number of People (Pax)',     
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
