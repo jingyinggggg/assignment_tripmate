@@ -236,161 +236,161 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
     );
   }
 
-Widget tourListComponent({
-  required UserViewTourList tour,
-}) {
-  // Find the cheapest price from the availability list
-  double cheapestPrice = double.infinity; // Start with a high value
-  if (tour.availability.isNotEmpty) {
-    cheapestPrice = tour.availability
-      .map((item) {
-        final priceNum = item['price'] as num?;
-        return priceNum?.toDouble(); // Convert num to double
-      })
-      .where((price) => price != null)
-      .map((price) => price!) // Convert from double? to double
-      .fold<double>(double.infinity, (currentMin, price) => price < currentMin ? price : currentMin);
-  }
+  Widget tourListComponent({
+    required UserViewTourList tour,
+  }) {
+    // Find the cheapest price from the availability list
+    double cheapestPrice = double.infinity; // Start with a high value
+    if (tour.availability.isNotEmpty) {
+      cheapestPrice = tour.availability
+        .map((item) {
+          final priceNum = item['price'] as num?;
+          return priceNum?.toDouble(); // Convert num to double
+        })
+        .where((price) => price != null)
+        .map((price) => price!) // Convert from double? to double
+        .fold<double>(double.infinity, (currentMin, price) => price < currentMin ? price : currentMin);
+    }
 
-  return InkWell(
-    onTap: (){
-      Navigator.push(
-        context, 
-        MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour.tourID, fromAppLink: 'false',))
-      );
-      // context.go('/viewTourDetails/${widget.userId}/${widget.countryName}/${widget.cityName}/${tour.tourID}');
-    },
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(width: 1.5, color: const Color(0xFF467BA1)),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children to the same height
-          children: [
-            Container(
-              width: 105,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(tour.image),
-                  fit: BoxFit.cover, // Ensure the image covers the available space
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                ),
-                border: const Border(
-                  right: BorderSide(color: Color(0xFF467BA1), width: 1.5),
+    return InkWell(
+      onTap: (){
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour.tourID, fromAppLink: 'false',))
+        );
+        // context.go('/viewTourDetails/${widget.userId}/${widget.countryName}/${widget.cityName}/${tour.tourID}');
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(width: 1.5, color: const Color(0xFF467BA1)),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children to the same height
+            children: [
+              Container(
+                width: 105,
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: NetworkImage(tour.image),
+                    fit: BoxFit.cover, // Ensure the image covers the available space
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    bottomLeft: Radius.circular(10),
+                  ),
+                  border: const Border(
+                    right: BorderSide(color: Color(0xFF467BA1), width: 1.5),
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tour.tourName,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tour.tourName,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.justify,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.justify,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Text(
-                          "Agency: ",
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          tour.agency,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Displaying tour highlights
-                    ...tour.tourHighlight.map((highlight) {
-                      final no = highlight["no"] ?? 'No Numbering';
-                      final description = highlight["description"] ?? 'No Description';
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start, 
-                          children: [
-                            Text(
-                              "$no. ",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.left,
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            "Agency: ",
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
-                            Expanded(
-                              child: Text(
-                                description,
+                          ),
+                          Text(
+                            tour.agency,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Displaying tour highlights
+                      ...tour.tourHighlight.map((highlight) {
+                        final no = highlight["no"] ?? 'No Numbering';
+                        final description = highlight["description"] ?? 'No Description';
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start, 
+                            children: [
+                              Text(
+                                "$no. ",
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: Colors.black,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                textAlign: TextAlign.justify,
-                                maxLines: null, 
-                                overflow: TextOverflow.visible, 
+                                textAlign: TextAlign.left,
                               ),
+                              Expanded(
+                                child: Text(
+                                  description,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black,
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                  maxLines: null, 
+                                  overflow: TextOverflow.visible, 
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Price from ",
+                            style: const TextStyle(
+                              color: Color(0xFF467BA1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Price from ",
-                          style: const TextStyle(
-                            color: Color(0xFF467BA1),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            fontStyle: FontStyle.italic
                           ),
-                        ),
-                        Text(
-                          cheapestPrice == double.infinity
-                              ? "N/A"
-                              : "RM${cheapestPrice.toStringAsFixed(0)}/pax",
-                          style: const TextStyle(
-                            color: Color(0xFF467BA1),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            fontStyle: FontStyle.italic
+                          Text(
+                            cheapestPrice == double.infinity
+                                ? "N/A"
+                                : "RM${cheapestPrice.toStringAsFixed(0)}/pax",
+                            style: const TextStyle(
+                              color: Color(0xFF467BA1),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              fontStyle: FontStyle.italic
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

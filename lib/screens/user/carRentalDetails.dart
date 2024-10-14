@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/screens/user/createBooking.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:flutter/material.dart';
@@ -382,7 +383,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                               ),
                             ),
                             ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context, 
+                                  MaterialPageRoute(builder: (context) => createBookingScreen(userId: widget.userId, carRental: true, carRentalID: widget.carId,))
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primaryColor,
                                 shape: RoundedRectangleBorder(

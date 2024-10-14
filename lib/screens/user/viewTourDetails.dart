@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/screens/user/createBooking.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -610,7 +611,12 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => createBookingScreen(userId: widget.userId, tour: true, tourID: widget.tourID,))
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
               shape: RoundedRectangleBorder(

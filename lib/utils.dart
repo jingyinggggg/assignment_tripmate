@@ -277,8 +277,9 @@ class CarList{
   final String? agencyName;
   final String? agencyContact;
   final String? pickUpLocation;
+  final String? dropOffLocation;
 
-  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation});
+  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation, this.dropOffLocation});
 }
 
 class LocalBuddy{
