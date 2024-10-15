@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/screens/user/createBooking.dart';
 import 'package:http/http.dart' as http;
-import 'package:assignment_tripmate/screens/user/localBuddyHomepage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -504,7 +504,12 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: (){}, 
+                        onPressed: (){
+                          Navigator.push(
+                            context, 
+                            MaterialPageRoute(builder: (context) => createBookingScreen(userId: widget.userId, localBuddy: true, localBuddyID: widget.localBuddyId,))
+                          );
+                        }, 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
                           shape: RoundedRectangleBorder(

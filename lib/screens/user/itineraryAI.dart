@@ -67,6 +67,24 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
     }
   }
 
+  // Future<String?> fetchImageUrl(String query) async {
+  //   final url = 'https://api.unsplash.com/photos/random?query=$query&client_id=$apiKey';
+
+  //   try {
+  //     final response = await http.get(Uri.parse(url));
+  //     if (response.statusCode == 200) {
+  //       final data = json.decode(response.body);
+  //       return data['urls']['regular']; // Get the URL of the image
+  //     } else {
+  //       print('Failed to load image: ${response.statusCode}');
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching image: $e');
+  //     return null;
+  //   }
+  // }
+
   Future<void> saveItinerary() async {
     String itineraryTitle = '';
 
@@ -102,6 +120,10 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
       },
     );
 
+    // Retrieve the current number of users
+    final usersSnapshot = await FirebaseFirestore.instance.collection('itineraries').get();
+    final id = 'Itinerary${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
     // If the user provided a title, save the itinerary to Firebase
     if (itineraryTitle.isNotEmpty && generatedItinerary != null) {
       try {
@@ -112,6 +134,7 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
           'userId': widget.userId,
           'isDelete': 0,
           'timestamp': FieldValue.serverTimestamp(),
+          'itineraryID': id
         });
 
         showCustomDialog(

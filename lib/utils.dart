@@ -292,7 +292,17 @@ class LocalBuddy{
   final String? locationArea;
   final String? languageSpoken;
   final String? locationAddress;
+  final int? pricePerHour;
 
-  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken, this.locationAddress});
+  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken, this.locationAddress, this.pricePerHour});
 
+}
+
+class itinerary{
+  final String title;
+  final String content;
+  final String itineraryID;
+  final String image;
+
+  itinerary(this.title, this.content, this.itineraryID, this.image);
 }

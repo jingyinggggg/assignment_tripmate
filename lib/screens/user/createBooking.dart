@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class createBookingScreen extends StatefulWidget {
   final String userId;
@@ -51,6 +54,16 @@ class _createBookingScreenState extends State<createBookingScreen> {
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
 
+  // Local Buddy
+  bool isLoadingLocalBuddy = false;
+  bool isBookLocalBuddy = false;
+  LocalBuddy? _localBuddy;
+  final TextEditingController _LbStartDateController = TextEditingController();
+  final TextEditingController _LbEndDateController = TextEditingController();
+  DateTime? _selectedLbStartDate;
+  DateTime? _selectedLbEndDate;
+  String? locationArea;
+
   @override
   void initState() {
     super.initState();
@@ -59,7 +72,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
     } else if (widget.carRental) {
       _fetchCarDetails();
     } else {
-      // _fetchLocalBuddyDetails();
+      _fetchLocalBuddyDetails();
     }
   }
 
@@ -83,7 +96,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
               tourData['tourCover'],
               tourData['agency'],
               tourData['tourHighlight'],
-              tourData['availability'], // Assuming this is the whole array
+              tourData['availability'], 
             );
 
             if (tourData['availability'] != null) {
@@ -139,6 +152,100 @@ class _createBookingScreenState extends State<createBookingScreen> {
       setState(() {
         isLoadingCarRental = false;
       });
+    }
+  }
+
+  Future<void> _fetchLocalBuddyDetails() async {
+    setState(() {
+      isLoadingLocalBuddy = true;
+    });
+
+    try {
+      DocumentReference LBRef = FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyID);
+      DocumentSnapshot LBSnapshot = await LBRef.get();
+
+      if (LBSnapshot.exists) {
+        Map<String, dynamic>? LBData = LBSnapshot.data() as Map<String, dynamic>?;
+
+        if (LBData != null) {
+          DocumentReference ref = FirebaseFirestore.instance.collection('users').doc(LBData['userID']);
+          DocumentSnapshot snapshot = await ref.get();
+
+          Map<String, dynamic>? userData = snapshot.data() as Map<String, dynamic>?;
+
+          if (LBData.containsKey('location')) {
+            String fullAddress = LBData['location'] ?? '';
+
+            String? country = '';
+            String? area = '';
+
+            if (fullAddress.isNotEmpty) {
+              var locationData = await _getLocationAreaAndCountry(fullAddress);
+              country = locationData['country'];
+              area = locationData['area'];
+            } else {
+              country = 'Unknown Country';
+              area = 'Unknown Area';
+            }
+
+            locationArea = '$area, $country';
+
+            setState(() {
+              _localBuddy = LocalBuddy(
+                localBuddyID: LBData['localBuddyID'],
+                localBuddyName: userData?['name'],
+                localBuddyImage: userData?['profileImage'],
+                locationArea: locationArea,
+                pricePerHour: LBData['pricePerHour']
+              );
+            });
+          } else{
+            setState(() {
+              isLoadingLocalBuddy = false;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching local buddy data: $e');
+    } finally {
+      setState(() {
+        isLoadingLocalBuddy = false;
+      });
+    }
+  }
+
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey; // Replace with your API key
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
     }
   }
 
@@ -575,7 +682,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                 width: double.infinity,
                                 height: 50,
                                 child: ElevatedButton(
-                                  onPressed: isBookTour ? null : () {
+                                  onPressed: () {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
@@ -620,14 +727,12 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                       },
                                     );
                                   },
-                                  child: isBookTour
-                                      ? const CircularProgressIndicator(color: Colors.white,)
-                                      : const Text(
-                                          'Pay Deposit',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                  child: Text(
+                                    'Pay Deposit',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
                                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -673,13 +778,29 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             _buildDatePickerTextFieldCell(
                               _rentStartDateController, 
                               'Start Date', 
-                              'Select a date'
+                              'Select a date',
+                              onDateSelected: (DateTime selectedDate){
+                                setState(() {
+                                  _selectedStartDate = selectedDate;
+                                });
+
+                                DateTime firstEndDate = selectedDate.add(Duration(days:1));
+                                _updateReturnDatePicker(firstEndDate);
+                              }
                             ),
                             SizedBox(height: 15),
                             _buildDatePickerTextFieldCell(
                               _rentEndDateController, 
                               'End Date', 
-                              'Select a date'
+                              'Select a date',
+                              firstDate: _getFirstReturnDate(),
+                              isEndDate: true,
+                              startDateSelected: _rentStartDateController.text.isNotEmpty,
+                              onDateSelected: (DateTime selectedDate){
+                                setState(() {
+                                  _selectedEndDate = selectedDate;
+                                });
+                              }
                             ),
                             SizedBox(height: 15),
                             Container(
@@ -808,84 +929,308 @@ class _createBookingScreenState extends State<createBookingScreen> {
 
                             SizedBox(height: 20),
 
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: isBookTour ? null : () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text("Confirmation"),
-                                        content: Text(
-                                          "Please review your booking details and read the terms and conditions carefully before proceeding with payment.",
-                                          textAlign: TextAlign.justify,
-                                        ),
-                                        actions: <Widget>[
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop(); // Close the dialog
-                                            },
-                                            style: TextButton.styleFrom(
-                                              backgroundColor: primaryColor, // Set the background color
-                                              foregroundColor: Colors.white, // Set the text color
-                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                                              ),
-                                            ),
-                                            child: const Text("Cancel"),
+                            if(_selectedEndDate != null && _selectedStartDate != null)...[
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text("Confirmation"),
+                                          content: Text(
+                                            "Please review your booking details and read the terms and conditions carefully before proceeding with payment.",
+                                            textAlign: TextAlign.justify,
                                           ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop(); // Close the dialog
-                                              Navigator.pop(context); // Exit the current screen
-                                            },
-                                            style: TextButton.styleFrom(
-                                              backgroundColor: primaryColor, // Set the background color
-                                              foregroundColor: Colors.white, // Set the text color
-                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop(); // Close the dialog
+                                              },
+                                              style: TextButton.styleFrom(
+                                                backgroundColor: primaryColor, // Set the background color
+                                                foregroundColor: Colors.white, // Set the text color
+                                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                ),
                                               ),
+                                              child: const Text("Cancel"),
                                             ),
-                                            child: const Text("Pay"),
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop(); // Close the dialog
+                                                Navigator.pop(context); // Exit the current screen
+                                              },
+                                              style: TextButton.styleFrom(
+                                                backgroundColor: primaryColor, // Set the background color
+                                                foregroundColor: Colors.white, // Set the text color
+                                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                ),
+                                              ),
+                                              child: const Text("Pay"),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Text(
+                                          'Book',
+                                          style: TextStyle(
+                                            color: Colors.white,
                                           ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                                child: isBookTour
-                                    ? const CircularProgressIndicator(color: Colors.white,)
-                                    : const Text(
-                                        'Book',
-                                        style: TextStyle(
-                                          color: Colors.white,
                                         ),
-                                      ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  padding: const EdgeInsets.symmetric(vertical: 15),
-                                  textStyle: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    padding: const EdgeInsets.symmetric(vertical: 15),
+                                    textStyle: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ]
                           ]
                         )
                       : Center(child: CircularProgressIndicator(color: primaryColor))
                 )
               )
               : widget.localBuddy
-                  ? Container() // Placeholder for local buddy details
-                  : Container(), // Fallback in case none is selected
+                ? SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: _localBuddy != null
+                        ? Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              LBComponent(localBuddy: _localBuddy!),
+                              SizedBox(height: 20),
+                              Text(
+                                'Availability',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: defaultLabelFontSize,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildDatePickerTextFieldCell(
+                                _LbStartDateController, 
+                                'Start Date', 
+                                'Select a date',
+                                onDateSelected: (DateTime selectedDate){
+                                  setState(() {
+                                    _selectedLbStartDate = selectedDate;
+                                  });
+
+                                  DateTime firstEndDate = selectedDate.add(Duration(days:1));
+                                  _updateReturnDatePicker(firstEndDate);
+                                }
+                              ),
+                              SizedBox(height: 15),
+                              _buildDatePickerTextFieldCell(
+                                _LbEndDateController, 
+                                'End Date', 
+                                'Select a date',
+                                firstDate: _getFirstReturnDate(),
+                                isEndDate: true,
+                                startDateSelected: _LbStartDateController.text.isNotEmpty,
+                                onDateSelected: (DateTime selectedDate){
+                                  setState(() {
+                                    _selectedLbEndDate = selectedDate;
+                                  });
+                                }
+                              ),
+                              SizedBox(height: 15),
+                              Container(
+                                padding: EdgeInsets.all(10.0),
+                                decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 236, 250, 255),
+                                  border: Border.all(color: primaryColor, width: 2.5),
+                                  borderRadius: BorderRadius.circular(10)
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Term and Conditions',
+                                      style: TextStyle(
+                                        fontSize: defaultLabelFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                    SizedBox(height: 10),
+                                    Column(
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '1. ',
+                                              style: TextStyle(
+                                                fontSize: defaultFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            Expanded( // Allow the Text to expand and wrap text
+                                              child: Text(
+                                                'Cancellations must be made at least 24 hours before the scheduled booking for a full refund.',
+                                                style: TextStyle(
+                                                  fontSize: defaultFontSize,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.justify,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '2. ',
+                                              style: TextStyle(
+                                                fontSize: defaultFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            Expanded( // Allow the Text to expand and wrap text
+                                              child: Text(
+                                                'Cancellations made less than 24 hours before the bookings may be subject to a RM 100.00 cancellation fee.',
+                                                style: TextStyle(
+                                                  fontSize: defaultFontSize,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.justify,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '3. ',
+                                              style: TextStyle(
+                                                fontSize: defaultFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            Expanded( // Allow the Text to expand and wrap text
+                                              child: Text(
+                                                'The payment can pay through online banking or QR pay.',
+                                                style: TextStyle(
+                                                  fontSize: defaultFontSize,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                                textAlign: TextAlign.justify,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: 20),
+
+                              if(_selectedLbStartDate != null && _selectedLbEndDate != null)...[
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Confirmation"),
+                                            content: Text(
+                                              "Please review your booking details and read the terms and conditions carefully before proceeding with payment.",
+                                              textAlign: TextAlign.justify,
+                                            ),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                  Navigator.pop(context); // Exit the current screen
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Pay"),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                    child: Text(
+                                      'Book',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      padding: const EdgeInsets.symmetric(vertical: 15),
+                                      textStyle: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            ]
+                          )
+                        : Center(child: CircularProgressIndicator(color: primaryColor))
+                  )
+                )
+                : Container(), // Fallback in case none is selected
     );
   }
 
@@ -1279,8 +1624,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
     String hintText, {
     DateTime? firstDate,
     void Function(DateTime)? onDateSelected,
-    bool isReturnDate = false,
-    bool departDateSelected = true,
+    bool isEndDate = false,
+    bool startDateSelected = true,
   }) {
     return GestureDetector(
       onTap: (){},
@@ -1337,11 +1682,11 @@ class _createBookingScreenState extends State<createBookingScreen> {
               size: 20,
             ),
             onPressed: () async {
-              // if (isReturnDate && !departDateSelected) {
-              //   // Show a message asking the user to select the departure date first
-              //   _showSelectDepartDateFirstMessage();
-              //   return;
-              // }
+              if (isEndDate && !startDateSelected) {
+                // Show a message asking the user to select the departure date first
+                _showSelectStartDateFirstMessage();
+                return;
+              }
 
               DateTime initialDate = firstDate ?? DateTime.now();
               DateTime firstAvailableDate = firstDate ?? DateTime.now();
@@ -1367,6 +1712,113 @@ class _createBookingScreenState extends State<createBookingScreen> {
         ),
       ),
 
+    );
+  }
+
+  void _updateReturnDatePicker(DateTime firstDate) {
+    setState(() {
+      // Reset the return date controller
+      _rentEndDateController.clear();
+      _rentEndDateController.text = ""; // Resetting the text field
+    });
+  }
+
+  DateTime _getFirstReturnDate() {
+    // Return the first available return date based on the selected depart date or a default date
+    return _selectedStartDate?.add(const Duration(days: 0)) ?? DateTime.now().add(const Duration(days: 0));
+  }
+
+  void _showSelectStartDateFirstMessage() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Select Start Date First"),
+        content: const Text("Please select the renatl start date before choosing the rental end date."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget LBComponent({required LocalBuddy localBuddy}) {
+    return Container(
+      padding: EdgeInsets.all(10.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: primaryColor, width: 2.5),
+        borderRadius: BorderRadius.circular(10)
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Wrap this inner Row with Expanded to make sure it takes the available space
+          Expanded(
+            child: Row(
+              children: [
+                // Image container with fixed width and height
+                Container(
+                  width: getScreenWidth(context) * 0.2,
+                  height: getScreenHeight(context) * 0.15,
+                  margin: EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(localBuddy.localBuddyImage),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                // Text widget wrapped in Expanded to take remaining space
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localBuddy.localBuddyName, 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.bold, 
+                          fontSize: defaultLabelFontSize,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        'Location: ${localBuddy.locationArea}',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: defaultFontSize
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        alignment: Alignment.bottomRight,
+                        child: Text(
+                          'RM${(localBuddy.pricePerHour ?? 0).toStringAsFixed(0)}/hour',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: defaultFontSize
+                          ),
+                          textAlign: TextAlign.right,
+                        )
+                      )
+                    ],
+                  )
+                  
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
