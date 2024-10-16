@@ -33,25 +33,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
   Uint8List? _referenceImage;
 
   List<String> selectedDays = [];
-  Map<String, TimeOfDay?> startTimes = {
-    'Monday': null,
-    'Tuesday': null,
-    'Wednesday': null,
-    'Thursday': null,
-    'Friday': null,
-    'Saturday': null,
-    'Sunday': null,
-  };
-
-  Map<String, TimeOfDay?> endTimes = {
-    'Monday': null,
-    'Tuesday': null,
-    'Wednesday': null,
-    'Thursday': null,
-    'Friday': null,
-    'Saturday': null,
-    'Sunday': null,
-  };
 
   @override
   void initState() {
@@ -81,39 +62,11 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
   void toggleDaySelection(String day) {
     setState(() {
       if (selectedDays.contains(day)) {
-        selectedDays.remove(day);
-        startTimes[day] = null;  // Reset start time when day is unselected
-        endTimes[day] = null;    // Reset end time when day is unselected
+        selectedDays.remove(day); // Unselect the day
       } else {
-        selectedDays.add(day);
+        selectedDays.add(day); // Select the day
       }
     });
-  }
-
-  Future<void> selectStartTime(String day) async {
-    TimeOfDay? selectedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-
-    if (selectedTime != null) {
-      setState(() {
-        startTimes[day] = selectedTime;
-      });
-    }
-  }
-
-  Future<void> selectEndTime(String day) async {
-    TimeOfDay? selectedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-
-    if (selectedTime != null) {
-      setState(() {
-        endTimes[day] = selectedTime;
-      });
-    }
   }
 
   Future<void> selectImage() async {
@@ -166,8 +119,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
       List<Map<String, dynamic>> availability = selectedDays.map((day) {
         return {
           'day': day,
-          'startTime': startTimes[day]?.format(context) ?? '',
-          'endTime': endTimes[day]?.format(context) ?? '',
         };
       }).toList();
 
@@ -195,7 +146,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
         userID: widget.userId,
         languageSpoken: _languageSpokenController.text,
         availability: availability,
-        pricePerHour: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
+        price: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
         idCard: _image!,  // Required field, already checked
         referenceImage: referenceImage,  // Optional field
         bio: _bioController.text,  // Required field, already checked
@@ -234,8 +185,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
       });
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -294,7 +243,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
           ),
           SizedBox(height: 5),
           Text(
-            'Select available days and set start and end times by clicking on the time fields.',
+            'Select available days by checking the boxes.',
             style: TextStyle(color: Colors.grey[600]),
             textAlign: TextAlign.justify,
           ),
@@ -308,23 +257,33 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
               TableRow(
                 decoration: BoxDecoration(
                   color: primaryColor.withOpacity(0.6),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10))
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
                 ),
                 children: [
-                  Padding(padding: const EdgeInsets.all(10.0), child: Text('Day', style: TextStyle(fontSize: defaultFontSize, fontWeight: FontWeight.w800, color: Colors.white),textAlign: TextAlign.center,)),
-                  Padding(padding: const EdgeInsets.all(10.0), child: Text('Start Time', style: TextStyle(fontSize: defaultFontSize, fontWeight: FontWeight.w800, color: Colors.white), textAlign: TextAlign.center,)),
-                  Padding(padding: const EdgeInsets.all(10.0), child: Text('End Time', style: TextStyle(fontSize: defaultFontSize, fontWeight: FontWeight.w800, color: Colors.white), textAlign: TextAlign.center,)),
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Text(
+                      'Day',
+                      style: TextStyle(
+                        fontSize: defaultFontSize,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ],
               ),
-              for (var day in startTimes.keys)
+              // Iterate over all days of the week
+              for (var day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
                 TableRow(
                   children: [
                     Row(
                       children: [
                         Checkbox(
-                          value: selectedDays.contains(day),
+                          value: selectedDays.contains(day), // Check if the day is selected
                           onChanged: (value) {
-                            toggleDaySelection(day);
+                            toggleDaySelection(day); // Handle checkbox toggle
                           },
                           activeColor: primaryColor, // Change checkbox color
                         ),
@@ -337,65 +296,13 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
                         ),
                       ],
                     ),
-                    TableCell(
-                      verticalAlignment: TableCellVerticalAlignment.middle, // Vertically centers the cell content
-                      child: GestureDetector(
-                        onTap: () {
-                          if (selectedDays.contains(day)) {
-                            selectStartTime(day);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          color: Colors.white,
-                          child: Center( // Horizontally and vertically centers the text
-                            child: Text(
-                              startTimes[day] != null
-                                  ? '${startTimes[day]?.hour}:${startTimes[day]?.minute.toString().padLeft(2, '0')}'
-                                  : 'Start Time',
-                              style: TextStyle(
-                                color: startTimes[day] != null ? Colors.black : Colors.grey,
-                                fontSize: defaultFontSize,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    TableCell(
-                      verticalAlignment: TableCellVerticalAlignment.middle, // Vertically centers the cell content
-                      child: GestureDetector(
-                        onTap: () {
-                          if (selectedDays.contains(day)) {
-                            selectEndTime(day);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8.0),
-                          color: Colors.white,
-                          child: Center( // Horizontally and vertically centers the text
-                            child: Text(
-                              endTimes[day] != null
-                                  ? '${endTimes[day]?.hour}:${endTimes[day]?.minute.toString().padLeft(2, '0')}'
-                                  : 'End Time',
-                              style: TextStyle(
-                                color: endTimes[day] != null ? Colors.black : Colors.grey,
-                                fontSize: defaultFontSize,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-
             ],
           ),
+
           SizedBox(height: 20),
-          buildTextField(_pricingController, 'Enter price', 'Price in RM (per hour)', isIntField: true),
+          buildTextField(_pricingController, 'Enter price', 'Price in RM (per day)', isIntField: true),
           SizedBox(height: 30),
 
           Text(

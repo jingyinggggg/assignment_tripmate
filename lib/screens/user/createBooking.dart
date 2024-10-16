@@ -63,6 +63,23 @@ class _createBookingScreenState extends State<createBookingScreen> {
   DateTime? _selectedLbStartDate;
   DateTime? _selectedLbEndDate;
   String? locationArea;
+  List<String> availableLocalBuddyDay = [];
+  List<String> availableLocalBuddyTime = [];
+  List<Map<String, dynamic>> availabilityLocalBuddyList = [];
+
+  List<int> _getValidWeekdays(List<String> availableDays) {
+    Map<String, int> dayToWeekdayMap = {
+      'Monday': DateTime.monday,
+      'Tuesday': DateTime.tuesday,
+      'Wednesday': DateTime.wednesday,
+      'Thursday': DateTime.thursday,
+      'Friday': DateTime.friday,
+      'Saturday': DateTime.saturday,
+      'Sunday': DateTime.sunday,
+    };
+
+    return availableDays.map((day) => dayToWeekdayMap[day]!).toList();
+  }
 
   @override
   void initState() {
@@ -196,9 +213,14 @@ class _createBookingScreenState extends State<createBookingScreen> {
                 localBuddyName: userData?['name'],
                 localBuddyImage: userData?['profileImage'],
                 locationArea: locationArea,
-                pricePerHour: LBData['pricePerHour']
+                price: LBData['price']
               );
             });
+
+            if(LBData['availability'] != null){
+              availabilityLocalBuddyList = List<Map<String, dynamic>>.from(LBData['availability']);
+              availableLocalBuddyDay = availabilityLocalBuddyList.map((item) => item['day'] as String).toList();
+            }
           } else{
             setState(() {
               isLoadingLocalBuddy = false;
@@ -1024,8 +1046,18 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                 ),
                                 textAlign: TextAlign.left,
                               ),
+                              const SizedBox(height: 5),
+                              Text(
+                                '***Please noted that only local buddy working day will be enabled in the calendar.***',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: defaultFontSize,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.justify,
+                              ),
                               const SizedBox(height: 10),
-                              _buildDatePickerTextFieldCell(
+                              _buildDatePickerLocalBuddyTextFieldCell(
                                 _LbStartDateController, 
                                 'Start Date', 
                                 'Select a date',
@@ -1034,16 +1066,16 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                     _selectedLbStartDate = selectedDate;
                                   });
 
-                                  DateTime firstEndDate = selectedDate.add(Duration(days:1));
-                                  _updateReturnDatePicker(firstEndDate);
+                                  DateTime firstEndDate = selectedDate.add(Duration(days:0));
+                                  _updateLocalBuddyEndDatePicker(firstEndDate);
                                 }
                               ),
                               SizedBox(height: 15),
-                              _buildDatePickerTextFieldCell(
+                              _buildDatePickerLocalBuddyTextFieldCell(
                                 _LbEndDateController, 
                                 'End Date', 
                                 'Select a date',
-                                firstDate: _getFirstReturnDate(),
+                                firstDate: _getFirstLocalBuddyStartDate(),
                                 isEndDate: true,
                                 startDateSelected: _LbStartDateController.text.isNotEmpty,
                                 onDateSelected: (DateTime selectedDate){
@@ -1715,6 +1747,112 @@ class _createBookingScreenState extends State<createBookingScreen> {
     );
   }
 
+  // Widget _buildDatePickerLocalBuddyTextFieldCell(
+  //   TextEditingController controller,
+  //   String labeltext,
+  //   String hintText, {
+  //   DateTime? firstDate,
+  //   void Function(DateTime)? onDateSelected,
+  //   bool isEndDate = false,
+  //   bool startDateSelected = true,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: () {},
+  //     child: TextField(
+  //       controller: controller,
+  //       style: TextStyle(
+  //         fontWeight: FontWeight.w800,
+  //         fontSize: defaultFontSize,
+  //         color: Colors.black,
+  //       ),
+  //       readOnly: true,
+  //       decoration: InputDecoration(
+  //         hintText: hintText,
+  //         labelText: labeltext,
+  //         filled: true,
+  //         fillColor: Colors.white,
+  //         border: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         focusedBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         enabledBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         floatingLabelBehavior: FloatingLabelBehavior.always,
+  //         labelStyle: const TextStyle(
+  //           fontSize: defaultLabelFontSize,
+  //           fontWeight: FontWeight.bold,
+  //           color: Colors.black87,
+  //           shadows: [
+  //             Shadow(
+  //               offset: Offset(0.5, 0.5),
+  //               color: Colors.black87,
+  //             ),
+  //           ],
+  //         ),
+  //         suffixIcon: IconButton(
+  //           icon: const Icon(
+  //             Icons.calendar_today_outlined,
+  //             color: Color(0xFF467BA1),
+  //             size: 20,
+  //           ),
+  //           onPressed: () async {
+  //             if (isEndDate && !startDateSelected) {
+  //               // Show a message asking the user to select the departure date first
+  //               _showSelectStartDateFirstMessage();
+  //               return;
+  //             }
+
+  //             // Fetch the available days for the local buddy from your fetched data
+  //             List<int> availableDays = availableLocalBuddyDay
+  //                 .map((day) => dayStringToInt[day] ?? 0)
+  //                 .where((day) => day != 0)
+  //                 .toList(); // Convert string to weekday integers
+
+  //             DateTime initialDate = firstDate ?? DateTime.now();
+  //             DateTime firstAvailableDate = firstDate ?? DateTime.now();
+
+  //             // Show date picker with a minimum date constraint and working day restriction
+  //             DateTime? pickedDate = await showDatePicker(
+  //               context: context,
+  //               initialDate: initialDate,
+  //               firstDate: firstAvailableDate,
+  //               lastDate: DateTime(2101),
+  //               selectableDayPredicate: (DateTime day) {
+  //                 // Enable only the available days from Firebase
+  //                 return availableDays.contains(day.weekday);
+  //               },
+  //             );
+
+  //             if (pickedDate != null) {
+  //               // Format the date
+  //               String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+  //               controller.text = formattedDate;
+  //               if (onDateSelected != null) {
+  //                 onDateSelected(pickedDate);
+  //               }
+  //             }
+  //           },
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   void _updateReturnDatePicker(DateTime firstDate) {
     setState(() {
       // Reset the return date controller
@@ -1801,7 +1939,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                       Container(
                         alignment: Alignment.bottomRight,
                         child: Text(
-                          'RM${(localBuddy.pricePerHour ?? 0).toStringAsFixed(0)}/hour',
+                          'RM${(localBuddy.price ?? 0).toStringAsFixed(0)}/day',
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
@@ -1821,5 +1959,173 @@ class _createBookingScreenState extends State<createBookingScreen> {
       ),
     );
   }
+
+  DateTime _getFirstLocalBuddyStartDate() {
+    // Return the first available return date based on the selected depart date or a default date
+    return _selectedLbStartDate?.add(const Duration(days: 0)) ?? DateTime.now().add(const Duration(days: 0));
+  }
+
+  // // Find the next valid date that matches one of the available weekdays
+  // DateTime _getNextValidDate(List<int> validWeekdays) {
+  //   DateTime currentDate = DateTime.now();
+    
+  //   // Keep adding days until we find a valid one
+  //   while (!validWeekdays.contains(currentDate.weekday)) {
+  //     currentDate = currentDate.add(Duration(days: 1));
+  //   }
+    
+  //   return currentDate;
+  // }
+
+    DateTime _getNextValidDate(List<int> validWeekdays, DateTime firstDate) {
+    // Start with firstDate instead of DateTime.now() to ensure initial date is valid
+    DateTime currentDate = firstDate;
+
+    // Keep adding days until we find a valid one
+    while (!validWeekdays.contains(currentDate.weekday)) {
+      currentDate = currentDate.add(Duration(days: 1));
+    }
+
+    return currentDate;
+  }
+
+
+  void _updateLocalBuddyEndDatePicker(DateTime firstDate) {
+    setState(() {
+      // Reset the return date controller
+      _LbEndDateController.clear();
+      _LbEndDateController.text = ""; // Resetting the text field
+    });
+  }
+
+  Widget _buildDatePickerLocalBuddyTextFieldCell(
+    TextEditingController controller,
+    String labeltext,
+    String hintText, {
+    DateTime? firstDate,
+    void Function(DateTime)? onDateSelected,
+    bool isEndDate = false,
+    bool startDateSelected = true,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        if (isEndDate && !startDateSelected) {
+          // Show a message asking the user to select the start date first
+          _showSelectStartDateFirstMessage();
+          return;
+        }
+
+        // Get valid weekdays from availableLocalBuddyDay
+        List<int> validWeekdays = _getValidWeekdays(availableLocalBuddyDay);
+
+        // For the start date picker, find the next valid date
+        DateTime initialDate = _getNextValidDate(validWeekdays, DateTime.now());
+        DateTime firstAvailableDate = firstDate ?? initialDate;
+
+        // For the end date picker, set the first available date to the selected start date or the first valid date
+        if (isEndDate && _selectedLbStartDate != null) {
+          firstAvailableDate = _selectedLbStartDate!;
+        } else {
+          // If no start date is selected, show a message and return
+          if (isEndDate && _selectedLbStartDate == null) {
+            _showSelectStartDateFirstMessage();
+            return;
+          }
+        }
+
+        // Ensure initialDate for end date picker starts from selected start date or is the first valid date
+        DateTime initialEndDate = _selectedLbStartDate ?? initialDate; // Use selected start date or next valid date
+        if (initialEndDate.isBefore(firstAvailableDate)) {
+          initialEndDate = firstAvailableDate; // Adjust if it is before the first available date
+        }
+
+        // Show the date picker with valid dates and constraints
+        DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: initialEndDate,
+          firstDate: firstAvailableDate,
+          lastDate: DateTime(2101),
+          selectableDayPredicate: (DateTime day) {
+            // Only allow picking dates that match valid weekdays (for both start and end dates)
+            // if (isEndDate && _selectedLbStartDate != null) {
+            //   return day.isAfter(_selectedLbStartDate!) || day.isAtSameMomentAs(_selectedLbStartDate!);
+            // }
+            return validWeekdays.contains(day.weekday);
+          },
+        );
+
+        if (pickedDate != null) {
+          // Format the picked date
+          controller.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+
+          // If a date is selected, trigger the callback
+          if (onDateSelected != null) {
+            onDateSelected(pickedDate);
+          }
+        }
+      },
+      child: AbsorbPointer(
+        child: TextField(
+          controller: controller,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: defaultFontSize,
+            color: Colors.black,
+          ),
+          readOnly: true,
+          decoration: InputDecoration(
+            hintText: hintText,
+            labelText: labeltext,
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Color(0xFF467BA1),
+                width: 2.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Color(0xFF467BA1),
+                width: 2.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Color(0xFF467BA1),
+                width: 2.5,
+              ),
+            ),
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            labelStyle: const TextStyle(
+              fontSize: defaultLabelFontSize,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              shadows: [
+                Shadow(
+                  offset: Offset(0.5, 0.5),
+                  color: Colors.black87,
+                ),
+              ],
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(
+                Icons.calendar_today_outlined,
+                color: Color(0xFF467BA1),
+                size: 20,
+              ),
+              onPressed: () async {
+                // Date picker logic handled in onTap
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 }
 

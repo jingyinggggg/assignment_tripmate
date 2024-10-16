@@ -415,7 +415,7 @@ class StoreData {
     String? userID,
     required String languageSpoken,
     required List<Map<String, dynamic>> availability,
-    required int pricePerHour,
+    required int price,
     Uint8List? idCard,
     Uint8List? referenceImage,
     required String bio,
@@ -433,7 +433,7 @@ class StoreData {
         'location': location,
         'languageSpoken': languageSpoken,
         'availability': availability,
-        'pricePerHour': pricePerHour,
+        'price': price,
         'bio': bio,
         'registrationStatus': registrationStatus,
       };

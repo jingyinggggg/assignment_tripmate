@@ -370,10 +370,15 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 35,
                                 child: IconButton(
                                   icon: isOpenFile
-                                      ? CircularProgressIndicator(color:Color(0xFF467BA1)) // Show loading indicator when loading
+                                      ? SizedBox(
+                                          width: 20.0, // Set the desired width
+                                          height: 20.0, // Set the desired height
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF467BA1), // Set the color
+                                          ),
+                                        ) // Show loading indicator when loading
                                       : const ImageIcon(
                                           AssetImage("images/download-pdf.png"),
                                           size: 23,

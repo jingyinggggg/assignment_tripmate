@@ -470,116 +470,63 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
 
                             SizedBox(height:20),
 
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Row for 'Working Time :'
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 90,
-                                      child: Text(
-                                        'Working Time',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: defaultFontSize,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                      child: Text(
-                                        ':',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: defaultFontSize,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            _buildDetailRow('Working Time', getAvailableDays(localBuddyData?['availability']), 90),
 
-                                // Table for availability data
-                                localBuddyData!['availability'] != null
-                                    ? Table(
-                                        columnWidths: {
-                                          0: FixedColumnWidth(100), // Fixed width for day column
-                                          1: FixedColumnWidth(120), // Fixed width for time column
-                                        },
-                                        border: TableBorder.all(), // Adds borders to the table
-                                        children: [
-                                          // Header Row
-                                          TableRow(
-                                            decoration: BoxDecoration(
-                                              color: Color(0xFF749CB9)
-                                            ),
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text(
-                                                  'Day',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: defaultFontSize,
-                                                    color: Colors.white
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Text(
-                                                  'Time',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: defaultFontSize,
-                                                    color: Colors.white
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          // Availability Rows
-                                          for (var availability in localBuddyData!['availability'])
-                                            TableRow(
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text(
-                                                    availability['day'],
-                                                    style: TextStyle(
-                                                      fontSize: defaultFontSize,
-                                                      fontWeight: FontWeight.w600
-                                                    ),
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text(
-                                                    '${availability['startTime']} - ${availability['endTime']}',
-                                                    style: TextStyle(
-                                                      fontSize: defaultFontSize,
-                                                      fontWeight: FontWeight.w600
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                        ],
-                                      )
-                                    : Padding(
-                                        padding: const EdgeInsets.only(left: 110),
-                                        child: Text('No availability data'),
-                                      ),
-                              ],
-                            ),
+                            // Row(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     // Row for 'Working Time :'
+                            //     Row(
+                            //       children: [
+                            //         SizedBox(
+                            //           width: 90,
+                            //           child: Text(
+                            //             'Working Time',
+                            //             style: TextStyle(
+                            //               color: Colors.black,
+                            //               fontSize: defaultFontSize,
+                            //               fontWeight: FontWeight.w600,
+                            //             ),
+                            //           ),
+                            //         ),
+                            //         SizedBox(
+                            //           width: 10,
+                            //           child: Text(
+                            //             ':',
+                            //             style: TextStyle(
+                            //               color: Colors.black,
+                            //               fontSize: defaultFontSize,
+                            //               fontWeight: FontWeight.w600,
+                            //             ),
+                            //           ),
+                            //         ),
+                            //         localBuddyData!['availability'] != null
+                            //         ? Padding(
+                            //             padding: const EdgeInsets.all(0.0),
+                            //             child: Text(
+                            //               '${getAvailableDays(localBuddyData!['availability'])}',
+                            //               style: TextStyle(
+                            //                 fontWeight: FontWeight.w600,
+                            //                 fontSize: defaultFontSize,
+                            //                 color: Colors.black,
+                            //               ),
+                            //               textAlign: TextAlign.justify,
+                            //             ),
+                            //           )
+                            //         : Padding(
+                            //             padding: const EdgeInsets.only(left: 110),
+                            //             child: Text('No availability data'),
+                            //           )
+                            //       ],
+                            //     ),
+
+                                
+                              // ],
+                            // ),
 
 
                             SizedBox(height: 10),
-                            _buildDetailRow('Price', 'RM ${localBuddyData?['pricePerHour'].toString()}/hour', 90),
+                            _buildDetailRow('Price', 'RM ${localBuddyData?['price'].toString()}/day', 90),
 
                             SizedBox(height: 20),
 
@@ -810,6 +757,13 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                 ),
               ),
     );
+  }
+
+  // Function to extract and format the available days
+  String getAvailableDays(List availability) {
+    // Extract the list of days from the availability data
+    List<dynamic> availableDays = localBuddyData!['availability'].map((item) => item['day']).toList();
+    return availableDays.join(', '); // Join the days into a single string
   }
 
   Widget _buildImage(String? imageUrl, double width, double height) {

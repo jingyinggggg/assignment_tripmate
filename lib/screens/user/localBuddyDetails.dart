@@ -410,7 +410,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                                       width: 18, // Set width as needed
                                       height: 18, // Set height as needed
                                     ),
-                                    'RM ${localBuddyData?['pricePerHour'].toString()}/per hour', 
+                                    'RM ${localBuddyData?['price'].toString()}/per day', 
                                     null
                                   )
                                 ],
@@ -476,7 +476,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
               ),
             ),
       bottomNavigationBar: (localBuddyData != null && widget.userId == localBuddyData!['userID'])
-          ? null // Hides the bottom navigation bar
+          ? SizedBox()
           : Container(
               height: 60,
               decoration: BoxDecoration(
@@ -496,7 +496,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'RM ${localBuddyData?['pricePerHour']}/per hour',
+                        'RM ${localBuddyData?['price']}/per day',
                         style: TextStyle(
                           fontSize: defaultLabelFontSize,
                           fontWeight: FontWeight.bold,
