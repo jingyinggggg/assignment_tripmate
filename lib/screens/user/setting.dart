@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/screens/leaveFeedback.dart';
 import 'package:assignment_tripmate/screens/user/updatePassword.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -159,20 +160,23 @@ class _SettingScreenState extends State<SettingScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: 20),
-                    _buildButton(
-                      icon: Icons.delete_forever,
-                      text: "Delete Account",
-                      onPressed: () {
-                        // Handle navigation or other actions here.
-                      },
-                    ),
+                    // SizedBox(height: 20),
+                    // _buildButton(
+                    //   icon: Icons.delete_forever,
+                    //   text: "Delete Account",
+                    //   onPressed: () {
+                    //     // Handle navigation or other actions here.
+                    //   },
+                    // ),
                     SizedBox(height: 20),
                     _buildButton(
                       icon: AssetImage("images/leave_feedback.png"),
                       text: "Leave a feedback",
                       onPressed: () {
-                        // Handle navigation or other actions here.
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(builder: (context) => FeedbackScreen(userID: widget.userId))
+                        );
                       },
                     ),
                   ],
