@@ -262,7 +262,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
       
       ItineraryScreen(userId: widget.userId,),
       ChatScreen(userId: widget.userId),
-      BookingsScreen(),
+      BookingsScreen(userID: widget.userId),
       AccountScreen(userId: widget.userId), // Access widget.userId here
     ];
 

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:file_picker/file_picker.dart';
@@ -305,4 +306,138 @@ class itinerary{
   final String image;
 
   itinerary(this.title, this.content, this.itineraryID, this.image);
+}
+
+class tourBooking{
+  final String tourBookingID;
+  final String tourID;
+  late String tourName;
+  late String tourImage;
+  final int fullyPaid;
+  final String travelDate;
+  final double totalPrice;
+  final int pax;
+  final int bookingStatus;
+
+  tourBooking({
+    required this.tourBookingID, 
+    required this.tourID,
+    required this.fullyPaid, 
+    required this.travelDate, 
+    required this.totalPrice, 
+    required this.pax,
+    required this.bookingStatus
+  });
+
+  factory tourBooking.fromFirestore(DocumentSnapshot doc){
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    tourBooking tourbooking = tourBooking(
+      tourBookingID: doc.id, 
+      tourID: data['tourID'],
+      fullyPaid: data['fullyPaid'], 
+      travelDate: data['travelDate'], 
+      totalPrice: data['totalPrice'], 
+      pax: data['numberOfPeople'],
+      bookingStatus: data['bookingStatus']
+    );
+
+    tourbooking.tourName = data['tourName'] ?? '';
+    tourbooking.tourImage = data['tourCover'] ?? '';
+
+    return tourbooking;
+  }
+}
+
+class carRentalBooking{
+  final String carRentalBookingID;
+  final String carID;
+  late String carName;
+  late String carImage;
+  final String bookingDate;
+  final double totalPrice;
+  final int bookingStatus;
+
+  carRentalBooking({
+    required this.carRentalBookingID, 
+    required this.carID,
+    required this.bookingDate, 
+    required this.totalPrice,
+    required this.bookingStatus
+  });
+
+
+  factory carRentalBooking.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    // Convert bookingStartDate and bookingEndDate to DateTime objects
+    DateTime bookingStartDate = data['bookingStartDate'].toDate();
+    DateTime bookingEndDate = data['bookingEndDate'].toDate();
+
+    // Format the dates as dd/MM/yyyy
+    String formattedStartDate = DateFormat('dd/MM/yyyy').format(bookingStartDate);
+    String formattedEndDate = DateFormat('dd/MM/yyyy').format(bookingEndDate);
+
+    // Combine the start and end dates into a single string
+    String bookingDateRange = "$formattedStartDate - $formattedEndDate";
+
+    carRentalBooking carRentalBookings = carRentalBooking(
+      carRentalBookingID: doc.id,
+      carID: data['carID'],
+      totalPrice: data['totalPrice'],
+      bookingDate: bookingDateRange, // Use the formatted date range here
+      bookingStatus: data['bookingStatus'],
+    );
+
+    carRentalBookings.carName = data['carModel'] ?? '';
+    carRentalBookings.carImage = data['carImage'] ?? '';
+
+    return carRentalBookings;
+  }
+}
+
+class localBuddyBooking{
+  final String localBuddyBookingID;
+  final String localBuddyID;
+  late String localBuddyName;
+  late String localBuddyImage;
+  final String bookingDate;
+  final double totalPrice;
+  final int bookingStatus;
+
+  localBuddyBooking({
+    required this.localBuddyBookingID, 
+    required this.localBuddyID, 
+    required this.bookingDate, 
+    required this.totalPrice, 
+    required this.bookingStatus
+  });
+
+  factory localBuddyBooking.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    // Convert bookingStartDate and bookingEndDate to DateTime objects
+    DateTime bookingStartDate = data['bookingStartDate'].toDate();
+    DateTime bookingEndDate = data['bookingEndDate'].toDate();
+
+    // Format the dates as dd/MM/yyyy
+    String formattedStartDate = DateFormat('dd/MM/yyyy').format(bookingStartDate);
+    String formattedEndDate = DateFormat('dd/MM/yyyy').format(bookingEndDate);
+
+    // Combine the start and end dates into a single string
+    String bookingDateRange = "$formattedStartDate - $formattedEndDate";
+
+    localBuddyBooking localBuddyBookings = localBuddyBooking(
+      localBuddyBookingID: doc.id,
+      localBuddyID: data['localBuddyID'],
+      totalPrice: data['totalPrice'],
+      bookingDate: bookingDateRange, // Use the formatted date range here
+      bookingStatus: data['bookingStatus'],
+    );
+
+    localBuddyBookings.localBuddyName = data['localBuddyName'] ?? '';
+    localBuddyBookings.localBuddyImage = data['profileImage'] ?? '';
+
+    return localBuddyBookings;
+  }
 }

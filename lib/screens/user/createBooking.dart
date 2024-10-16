@@ -1,11 +1,9 @@
 import 'dart:convert';
 
 import 'package:assignment_tripmate/constants.dart';
-import 'package:assignment_tripmate/screens/user/bookings.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -297,7 +295,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'userID': widget.userId,
         'tourID': widget.tourID,
         'travelDate': selectedDateRange,
-        'numberOfPeople': _paxController.text,
+        'numberOfPeople': int.parse(_paxController.text),
         'totalPrice': calculatedToalTourPrice,
         'fullyPaid': 0,
         'remainingPrice': remainingPrice,

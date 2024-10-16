@@ -257,7 +257,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
               child: TabBarView(
                 children: [
                   isLoading
-                      ? Center(child: CircularProgressIndicator())
+                      ? Center(child: CircularProgressIndicator(color: primaryColor))
                       : _tourPackage.isNotEmpty
                           ? Container(
                               padding: EdgeInsets.only(right: 10, left: 10),
@@ -270,7 +270,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
                             )
                           : Center(child: Text('No tour packages found in your wishlist')),
                   isLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator(color: primaryColor))
                     : _carRental.isNotEmpty
                       ? Container(
                         padding: EdgeInsets.only(right: 10, left: 10),
@@ -283,7 +283,7 @@ class _WishlistScreenState extends State<WishlistScreen> with SingleTickerProvid
                       )
                     : Center(child: Text('No car rental details found in your wishlist')),
                   isLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? Center(child: CircularProgressIndicator(color: primaryColor))
                     : _localBuddy.isNotEmpty
                       ? Container(
                         padding: EdgeInsets.only(right: 10, left: 10),
