@@ -13,15 +13,16 @@ import 'package:assignment_tripmate/screens/user/bottom_nav_bar.dart';
 
 class UserHomepageScreen extends StatefulWidget {
   final String userId;
+  final int? currentPageIndex;
 
-  const UserHomepageScreen({super.key, required this.userId});
+  const UserHomepageScreen({super.key, required this.userId, this.currentPageIndex = 0});
 
   @override
   State<UserHomepageScreen> createState() => _UserHomepageScreenState();
 }
 
 class _UserHomepageScreenState extends State<UserHomepageScreen> {
-  int currentPageIndex = 0;
+  late int currentPageIndex;
 
   final List<String> _screenTitles = [
     "Tripmate",
@@ -30,6 +31,12 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
     "Bookings",
     "Account",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    currentPageIndex = widget.currentPageIndex ?? 0;
+  }
 
   void _onNavBarTap(int index) {
     setState(() {

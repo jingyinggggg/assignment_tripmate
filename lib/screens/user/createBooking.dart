@@ -1,8 +1,11 @@
 import 'dart:convert';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/bookings.dart';
+import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -41,6 +44,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
   String? selectedDateRange;
   int? selectedSlot;
   int? price;
+  double? calculatedToalTourPrice;
   double? remainingPrice;
   String? _paxErrorMessage;
   final TextEditingController _paxController = TextEditingController();
@@ -53,6 +57,10 @@ class _createBookingScreenState extends State<createBookingScreen> {
   final TextEditingController _rentEndDateController = TextEditingController();
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
+  double carRentalDeposit = 300.0;
+  double? carRentalTotalPrice;
+  double? rentPrice;
+  int? CRDifferenceInDays;
 
   // Local Buddy
   bool isLoadingLocalBuddy = false;
@@ -66,6 +74,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
   List<String> availableLocalBuddyDay = [];
   List<String> availableLocalBuddyTime = [];
   List<Map<String, dynamic>> availabilityLocalBuddyList = [];
+  double? LBTotalPrice;
+  int? LBDifferenceInDays;
 
   List<int> _getValidWeekdays(List<String> availableDays) {
     Map<String, int> dayToWeekdayMap = {
@@ -271,6 +281,412 @@ class _createBookingScreenState extends State<createBookingScreen> {
     }
   }
 
+  Future<void> bookTour() async {
+    setState(() {
+      isBookTour = true;
+    });
+
+    try {
+      // Retrieve the current number of tour booking
+      final snapshot = await FirebaseFirestore.instance.collection('tourBooking').get();
+      final id = 'TBK${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      // Add the booking details
+      await FirebaseFirestore.instance.collection('tourBooking').doc(id).set({
+        'bookingID': id,
+        'userID': widget.userId,
+        'tourID': widget.tourID,
+        'travelDate': selectedDateRange,
+        'numberOfPeople': _paxController.text,
+        'totalPrice': calculatedToalTourPrice,
+        'fullyPaid': 0,
+        'remainingPrice': remainingPrice,
+        'isCancel': 0,
+        'bookingStatus': 0,
+        'bookingCreateTime': DateTime.now()
+      });
+
+      // Get the current availability of the tour package
+      final tourPackageDoc = await FirebaseFirestore.instance.collection('tourPackage').doc(widget.tourID).get();
+      
+      if (tourPackageDoc.exists) {
+        List availability = tourPackageDoc.data()?['availability'] ?? [];
+
+        // Find the availability entry for the selected date range
+        for (int i = 0; i < availability.length; i++) {
+          if (availability[i]['dateRange'] == selectedDateRange) {
+            // Reduce the slot count by the number of people booked
+            int updatedSlots = availability[i]['slot'] - int.parse(_paxController.text);
+            
+            // Ensure slots don't go negative
+            if (updatedSlots < 0) {
+              throw Exception('Not enough slots available for the selected date.');
+            }
+
+            // Update the slots for the specific date range
+            availability[i]['slot'] = updatedSlots;
+
+            // Save the updated availability back to Firestore
+            await FirebaseFirestore.instance.collection('tourPackage').doc(widget.tourID).update({
+              'availability': availability,
+            });
+
+            break;
+          }
+        }
+      }
+
+      // Show success dialog
+      showCustomDialog(
+        context: context, 
+        title: "Payment Successful", 
+        content: "You have booked this tour package successfully.", 
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+          );
+        }
+      );
+    } catch (e) {
+      // Show failure dialog
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: () {
+          Navigator.pop(context);
+        }
+      );
+    } finally {
+      setState(() {
+        isBookTour = false;
+      });
+    }
+  }
+
+  Future<void> bookCarRental() async {
+    setState(() {
+      isBookCar = true;
+    });
+
+    try {
+      // Retrieve the current number of tour booking
+      final snapshot = await FirebaseFirestore.instance.collection('carRentalBooking').get();
+      final id = 'CarBK${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      // Add the booking details
+      await FirebaseFirestore.instance.collection('carRentalBooking').doc(id).set({
+        'bookingID': id,
+        'userID': widget.userId,
+        'carID': widget.carRentalID,
+        'bookingStartDate': _selectedStartDate,
+        'bookingEndDate': _selectedEndDate,
+        'totalPrice': carRentalTotalPrice,
+        'isCancel': 0,
+        'isRefund': 0,
+        'bookingStatus': 0,
+        'bookingCreateTime': DateTime.now()
+      });
+
+      // Show success dialog
+      showCustomDialog(
+        context: context, 
+        title: "Payment Successful", 
+        content: "You have rented this car successfully.", 
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+          );
+        }
+      );
+    } catch (e) {
+      // Show failure dialog
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: () {
+          Navigator.pop(context);
+        }
+      );
+    } finally {
+      setState(() {
+        isBookCar = false;
+      });
+    }
+  }
+
+  Future<void> bookLocalBuddy() async {
+    setState(() {
+      isBookLocalBuddy = true;
+    });
+
+    try {
+      // Retrieve the current number of local buddy booking
+      final snapshot = await FirebaseFirestore.instance.collection('localBuddyBooking').get();
+      final id = 'LBK${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      // Add the booking details
+      await FirebaseFirestore.instance.collection('localBuddyBooking').doc(id).set({
+        'bookingID': id,
+        'userID': widget.userId,
+        'localBuddyID': widget.localBuddyID,
+        'bookingStartDate': _selectedLbStartDate,
+        'bookingEndDate': _selectedLbEndDate,
+        'totalPrice': LBTotalPrice,
+        'isCancel': 0,
+        'bookingStatus': 0,
+        'isRefund': 0,
+        'bookingCreateTime': DateTime.now()
+      });
+
+      // Show success dialog
+      showCustomDialog(
+        context: context, 
+        title: "Payment Successful", 
+        content: "You have booked this local buddy successfully.", 
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+          );
+        }
+      );
+    } catch (e) {
+      // Show failure dialog
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: () {
+          Navigator.pop(context);
+        }
+      );
+    } finally {
+      setState(() {
+        isBookLocalBuddy = false;
+      });
+    }
+  }
+
+  Future<void> showPaymentOption(BuildContext context, String deposit, Function onOptionSelected) async {
+    String? selectedPaymentOption; // To store the selected payment option
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Select Payment Option', 
+            style: TextStyle(
+              fontSize: defaultLabelFontSize,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // To adjust based on content
+                  children: <Widget>[
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: "Touch'n Go",
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            "Touch'n Go",
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/TNG-eWallet.png'),
+                            width: 40,
+                            alignment: Alignment.centerRight,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'Credit Card',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'Credit Card',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/credit_card.png'),
+                            width: 40,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'PayPal',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'PayPal',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/paypal.png'),
+                            width: 50,
+                            height: 40,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'Online Banking',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'Online Banking',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Icon(Icons.account_balance, color: primaryColor, size: 20), // Icon for Bank Transfer
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+                    Text(
+                      'Total Price: $deposit',
+                      style: TextStyle(
+                        fontSize: defaultLabelFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 10),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          child: Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: primaryColor, // Set the background color
+                            foregroundColor: Colors.white, // Set the text color
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        // Move Pay Button inside the StatefulBuilder
+
+                        TextButton(
+                          child: Text('Pay'),
+                          style: TextButton.styleFrom(
+                            backgroundColor: selectedPaymentOption != null ? primaryColor : Colors.grey.shade300, // Set the background color
+                            foregroundColor: Colors.white, // Set the text color
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                            ),
+                          ),
+                          onPressed: selectedPaymentOption != null
+                            ? () {
+                                onOptionSelected(selectedPaymentOption!); // Pass the selected payment option to the callback
+                                Navigator.of(context).pop(); // Close the dialog
+                              }
+                            : null,
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -552,7 +968,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
 
                           const SizedBox(height: 20),
 
-                          if(selectedDateRange != '' && _paxController.text.isNotEmpty)...[
+                          if(selectedDateRange != '' && _paxController.text.isNotEmpty && _paxErrorMessage == null)...[
                             Text(
                                 'Summary',
                                 style: TextStyle(
@@ -591,7 +1007,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 60,
+                                        width: 70,
                                         child: Text(
                                           '${NumberFormat('#,##0.00').format(1000)}',
                                           style: TextStyle(
@@ -636,9 +1052,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 60,
+                                        width: 70,
                                         child: Text(
-                                          '${NumberFormat('#,##0.00').format((price! * int.parse(_paxController.text)) - 1000)}',
+                                          '${NumberFormat('#,##0.00').format(remainingPrice)}',
                                           style: TextStyle(
                                             fontSize: defaultFontSize,
                                             fontWeight: FontWeight.w500,
@@ -651,7 +1067,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                   ),
                                 ],
                               ),
-
 
                               Divider(),
 
@@ -682,9 +1097,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 60,
+                                        width: 70,
                                         child: Text(
-                                          '${NumberFormat('#,##0.00').format(price! * int.parse(_paxController.text))}',
+                                          '${NumberFormat('#,##0.00').format(calculatedToalTourPrice)}',
                                           style: TextStyle(
                                             fontSize: defaultFontSize,
                                             fontWeight: FontWeight.bold,
@@ -732,7 +1147,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                             TextButton(
                                               onPressed: () {
                                                 Navigator.of(context).pop(); // Close the dialog
-                                                Navigator.pop(context); // Exit the current screen
+                                                showPaymentOption(context, 'RM 1000.00', (selectedOption) {
+                                                  bookTour(); // Call bookTour when payment option is selected
+                                                });
                                               },
                                               style: TextButton.styleFrom(
                                                 backgroundColor: primaryColor, // Set the background color
@@ -749,12 +1166,21 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                       },
                                     );
                                   },
-                                  child: Text(
-                                    'Pay Deposit',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                  child: isBookTour
+                                    ? SizedBox(
+                                        width: 20, 
+                                        height: 20, 
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 3, 
+                                        ),
+                                      )
+                                    : Text(
+                                        'Pay Deposit',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
                                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -768,6 +1194,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                   ),
                                 ),
                               ),
+
                           ]
                         ],
                       )
@@ -860,7 +1287,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                           Expanded( // Allow the Text to expand and wrap text
                                             child: Text(
-                                              'Deposit with RM 500.00 is required at the time of booking. It will be returned after car is inspected and found to be in the same condition as when rented.',
+                                              'Deposit with RM 300.00 is required at the time of booking. It will be returned after car is inspected and found to be in the same condition as when rented.',
                                               style: TextStyle(
                                                 fontSize: defaultFontSize,
                                                 fontWeight: FontWeight.w500,
@@ -952,6 +1379,150 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             SizedBox(height: 20),
 
                             if(_selectedEndDate != null && _selectedStartDate != null)...[
+                              Text(
+                                'Summary',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: defaultLabelFontSize,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+
+                              const SizedBox(height: 5),
+
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Rent Price (RM ${NumberFormat('#,##0.00').format(_carRental!.price!)} x ${CRDifferenceInDays} day(s))',
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 35, 
+                                        child: Text(
+                                          'RM',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 50,
+                                        child: Text(
+                                          '${NumberFormat('#,##0.00').format(rentPrice)}',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                              SizedBox(height: 5),
+
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Deposit (Refundable)',
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 35, 
+                                        child: Text(
+                                          'RM',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 50,
+                                        child: Text(
+                                          '${NumberFormat('#,##0.00').format(carRentalDeposit)}',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                              Divider(),
+
+                              // Car rental Total Price Row
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Total Price',
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 35, // Set fixed width for "RM"
+                                        child: Text(
+                                          'RM',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 50,
+                                        child: Text(
+                                          '${NumberFormat('#,##0.00').format(carRentalTotalPrice)}',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.right,
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 20,),
+
                               SizedBox(
                                 width: double.infinity,
                                 height: 50,
@@ -983,9 +1554,11 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                Navigator.of(context).pop(); // Close the dialog
-                                                Navigator.pop(context); // Exit the current screen
-                                              },
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                  showPaymentOption(context, 'RM ${NumberFormat('#,##0.00').format(carRentalTotalPrice)}', (selectedOption) {
+                                                    bookCarRental(); 
+                                                  });
+                                                },
                                               style: TextButton.styleFrom(
                                                 backgroundColor: primaryColor, // Set the background color
                                                 foregroundColor: Colors.white, // Set the text color
@@ -1001,12 +1574,21 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                       },
                                     );
                                   },
-                                  child: Text(
-                                          'Book',
-                                          style: TextStyle(
+                                  child: isBookCar
+                                  ? SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: CircularProgressIndicator(
                                             color: Colors.white,
+                                            strokeWidth: 3, 
                                           ),
-                                        ),
+                                        )
+                                  : Text(
+                                      'Book',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
                                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -1188,6 +1770,105 @@ class _createBookingScreenState extends State<createBookingScreen> {
                               SizedBox(height: 20),
 
                               if(_selectedLbStartDate != null && _selectedLbEndDate != null)...[
+                                Text(
+                                  'Summary',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: defaultLabelFontSize,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+
+                                const SizedBox(height: 5),
+
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Price (RM ${NumberFormat('#,##0.00').format(_localBuddy!.price!)} x ${LBDifferenceInDays} day(s))',
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 35, // Set fixed width for "RM"
+                                          child: Text(
+                                            'RM',
+                                            style: TextStyle(
+                                              fontSize: defaultFontSize,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 50,
+                                          child: Text(
+                                            '${NumberFormat('#,##0.00').format(LBTotalPrice)}',
+                                            style: TextStyle(
+                                              fontSize: defaultFontSize,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Divider(),
+
+                                // Local Buddy Total Price Row
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Total Price',
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 35, // Set fixed width for "RM"
+                                          child: Text(
+                                            'RM',
+                                            style: TextStyle(
+                                              fontSize: defaultFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 50,
+                                          child: Text(
+                                            '${NumberFormat('#,##0.00').format(LBTotalPrice)}',
+                                            style: TextStyle(
+                                              fontSize: defaultFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 20,),
+
                                 SizedBox(
                                   width: double.infinity,
                                   height: 50,
@@ -1208,11 +1889,11 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                                   Navigator.of(context).pop(); // Close the dialog
                                                 },
                                                 style: TextButton.styleFrom(
-                                                  backgroundColor: primaryColor, // Set the background color
-                                                  foregroundColor: Colors.white, // Set the text color
-                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  backgroundColor: primaryColor,
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                                   shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                    borderRadius: BorderRadius.circular(8),
                                                   ),
                                                 ),
                                                 child: const Text("Cancel"),
@@ -1220,14 +1901,16 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop(); // Close the dialog
-                                                  Navigator.pop(context); // Exit the current screen
+                                                  showPaymentOption(context, 'RM ${NumberFormat('#,##0.00').format(LBTotalPrice)}', (selectedOption) {
+                                                    bookLocalBuddy(); 
+                                                  });
                                                 },
                                                 style: TextButton.styleFrom(
-                                                  backgroundColor: primaryColor, // Set the background color
-                                                  foregroundColor: Colors.white, // Set the text color
-                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  backgroundColor: primaryColor,
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                                                   shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                    borderRadius: BorderRadius.circular(8),
                                                   ),
                                                 ),
                                                 child: const Text("Pay"),
@@ -1237,12 +1920,21 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         },
                                       );
                                     },
-                                    child: Text(
-                                      'Book',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                    child: isBookLocalBuddy
+                                      ? SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 3, 
+                                          ),
+                                        )
+                                      : Text(
+                                          'Book',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: primaryColor,
                                       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -1255,14 +1947,23 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                       ),
                                     ),
                                   ),
-                                ),
+                                )
+
                               ]
                             ]
                           )
                         : Center(child: CircularProgressIndicator(color: primaryColor))
                   )
                 )
-                : Container(), // Fallback in case none is selected
+                : Container(
+                  child: Text(
+                    'Something went wrong. Please try again later...', 
+                    style: TextStyle(
+                      fontSize: defaultLabelFontSize, 
+                      fontWeight: FontWeight.w500, 
+                      color: Colors.black)
+                    )
+                  ) 
     );
   }
 
@@ -1438,6 +2139,12 @@ class _createBookingScreenState extends State<createBookingScreen> {
         } else {
           setState(() {
             _paxErrorMessage = null; // Clear the error message if valid
+
+            // Calculate the remaining price 
+            remainingPrice = ((price! * paxValue) - 1000);
+
+            // // Calculate the total price
+            calculatedToalTourPrice = remainingPrice! + 1000;
           });
         }
       },
@@ -1731,6 +2438,23 @@ class _createBookingScreenState extends State<createBookingScreen> {
                 lastDate: DateTime(2101),
               );
 
+              // Calculate the number of days between start date and end date
+              if (isEndDate && _selectedStartDate != null) {
+                CRDifferenceInDays = pickedDate!.difference(_selectedStartDate!).inDays + 1;
+
+                setState(() { 
+                  // Ensure _carRental and its price are not null
+                  if (_carRental != null && _carRental!.price != null) {
+                    double price = _carRental!.price!.toDouble(); // Convert price to double
+                    rentPrice = CRDifferenceInDays! * price; // Calculate rent price
+                    carRentalTotalPrice = rentPrice! + carRentalDeposit; 
+                  } else {
+                    // Log an error if _carRental or price is null
+                    print("Error: _carRental or its price is null");
+                  }
+                });
+              }
+
               if (pickedDate != null) {
                 // Format the date
                 String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
@@ -1746,112 +2470,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
 
     );
   }
-
-  // Widget _buildDatePickerLocalBuddyTextFieldCell(
-  //   TextEditingController controller,
-  //   String labeltext,
-  //   String hintText, {
-  //   DateTime? firstDate,
-  //   void Function(DateTime)? onDateSelected,
-  //   bool isEndDate = false,
-  //   bool startDateSelected = true,
-  // }) {
-  //   return GestureDetector(
-  //     onTap: () {},
-  //     child: TextField(
-  //       controller: controller,
-  //       style: TextStyle(
-  //         fontWeight: FontWeight.w800,
-  //         fontSize: defaultFontSize,
-  //         color: Colors.black,
-  //       ),
-  //       readOnly: true,
-  //       decoration: InputDecoration(
-  //         hintText: hintText,
-  //         labelText: labeltext,
-  //         filled: true,
-  //         fillColor: Colors.white,
-  //         border: OutlineInputBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //           borderSide: const BorderSide(
-  //             color: Color(0xFF467BA1),
-  //             width: 2.5,
-  //           ),
-  //         ),
-  //         focusedBorder: OutlineInputBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //           borderSide: const BorderSide(
-  //             color: Color(0xFF467BA1),
-  //             width: 2.5,
-  //           ),
-  //         ),
-  //         enabledBorder: OutlineInputBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //           borderSide: const BorderSide(
-  //             color: Color(0xFF467BA1),
-  //             width: 2.5,
-  //           ),
-  //         ),
-  //         floatingLabelBehavior: FloatingLabelBehavior.always,
-  //         labelStyle: const TextStyle(
-  //           fontSize: defaultLabelFontSize,
-  //           fontWeight: FontWeight.bold,
-  //           color: Colors.black87,
-  //           shadows: [
-  //             Shadow(
-  //               offset: Offset(0.5, 0.5),
-  //               color: Colors.black87,
-  //             ),
-  //           ],
-  //         ),
-  //         suffixIcon: IconButton(
-  //           icon: const Icon(
-  //             Icons.calendar_today_outlined,
-  //             color: Color(0xFF467BA1),
-  //             size: 20,
-  //           ),
-  //           onPressed: () async {
-  //             if (isEndDate && !startDateSelected) {
-  //               // Show a message asking the user to select the departure date first
-  //               _showSelectStartDateFirstMessage();
-  //               return;
-  //             }
-
-  //             // Fetch the available days for the local buddy from your fetched data
-  //             List<int> availableDays = availableLocalBuddyDay
-  //                 .map((day) => dayStringToInt[day] ?? 0)
-  //                 .where((day) => day != 0)
-  //                 .toList(); // Convert string to weekday integers
-
-  //             DateTime initialDate = firstDate ?? DateTime.now();
-  //             DateTime firstAvailableDate = firstDate ?? DateTime.now();
-
-  //             // Show date picker with a minimum date constraint and working day restriction
-  //             DateTime? pickedDate = await showDatePicker(
-  //               context: context,
-  //               initialDate: initialDate,
-  //               firstDate: firstAvailableDate,
-  //               lastDate: DateTime(2101),
-  //               selectableDayPredicate: (DateTime day) {
-  //                 // Enable only the available days from Firebase
-  //                 return availableDays.contains(day.weekday);
-  //               },
-  //             );
-
-  //             if (pickedDate != null) {
-  //               // Format the date
-  //               String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
-  //               controller.text = formattedDate;
-  //               if (onDateSelected != null) {
-  //                 onDateSelected(pickedDate);
-  //               }
-  //             }
-  //           },
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   void _updateReturnDatePicker(DateTime firstDate) {
     setState(() {
@@ -1965,18 +2583,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
     return _selectedLbStartDate?.add(const Duration(days: 0)) ?? DateTime.now().add(const Duration(days: 0));
   }
 
-  // // Find the next valid date that matches one of the available weekdays
-  // DateTime _getNextValidDate(List<int> validWeekdays) {
-  //   DateTime currentDate = DateTime.now();
-    
-  //   // Keep adding days until we find a valid one
-  //   while (!validWeekdays.contains(currentDate.weekday)) {
-  //     currentDate = currentDate.add(Duration(days: 1));
-  //   }
-    
-  //   return currentDate;
-  // }
-
     DateTime _getNextValidDate(List<int> validWeekdays, DateTime firstDate) {
     // Start with firstDate instead of DateTime.now() to ensure initial date is valid
     DateTime currentDate = firstDate;
@@ -2046,13 +2652,21 @@ class _createBookingScreenState extends State<createBookingScreen> {
           firstDate: firstAvailableDate,
           lastDate: DateTime(2101),
           selectableDayPredicate: (DateTime day) {
-            // Only allow picking dates that match valid weekdays (for both start and end dates)
-            // if (isEndDate && _selectedLbStartDate != null) {
-            //   return day.isAfter(_selectedLbStartDate!) || day.isAtSameMomentAs(_selectedLbStartDate!);
-            // }
             return validWeekdays.contains(day.weekday);
           },
         );
+
+        // Calculate the number of days between start date and end date
+        if (isEndDate && _selectedLbStartDate != null) {
+          LBDifferenceInDays = pickedDate!.difference(_selectedLbStartDate!).inDays + 1;
+
+          setState(() { 
+            // Ensure _localBuddy.price is treated as a double
+            double price = _localBuddy!.price!.toDouble(); // Convert to double if it's an int
+            LBTotalPrice = (LBDifferenceInDays! * price); // Now this is safe as both are doubles
+          });
+
+        }
 
         if (pickedDate != null) {
           // Format the picked date

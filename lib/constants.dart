@@ -30,11 +30,19 @@ void showCustomDialog({
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text(title),
-        content: Text(content),
+        content: Text(content, textAlign: TextAlign.justify,),
         actions: [
           TextButton(
             onPressed: onPressed,
             child: const Text('OK'),
+            style: TextButton.styleFrom(
+              backgroundColor: primaryColor, // Set the background color
+              foregroundColor: Colors.white, // Set the text color
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+              ),
+            ),
           ),
         ],
       );

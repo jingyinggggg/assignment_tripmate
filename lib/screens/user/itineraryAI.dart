@@ -120,7 +120,7 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
       },
     );
 
-    // Retrieve the current number of users
+    // Retrieve the current number of itinerary
     final usersSnapshot = await FirebaseFirestore.instance.collection('itineraries').get();
     final id = 'Itinerary${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
