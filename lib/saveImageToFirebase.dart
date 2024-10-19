@@ -478,4 +478,43 @@ class StoreData {
     }
     return resp;
   }
+
+  Future<String> saveInvoice({
+    required String userID,
+    required String bookingID,
+    required String servicesType,
+    required String collectionName,
+    required String pdfName,
+    required File pdf, 
+    bool isDeposit = false,
+  }) async {
+    String resp = "Some Error Occurred";
+
+    try {
+      // Upload the PDF file to Firebase Storage
+      String pdfURL = await uploadPdfToStorage("invoice/$servicesType/$userID/$bookingID/$pdfName", pdf);
+
+    // Save the PDF URL in Firestore
+    print('isDeposit: $isDeposit'); // Debugging line
+
+    if (isDeposit) {
+      await _firestore.collection(collectionName).doc(bookingID).update({
+        'depositInvoice': pdfURL,
+      });
+      print('Deposit invoice updated.'); // Debugging line
+    } else {
+      await _firestore.collection(collectionName).doc(bookingID).update({
+        'invoice': pdfURL,
+      });
+      print('Standard invoice updated.'); // Debugging line
+    }
+
+      resp = 'Success';
+    } catch (e) {
+      resp = e.toString();
+    }
+
+    return resp;
+  }
+
 }

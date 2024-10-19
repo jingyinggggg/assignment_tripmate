@@ -248,10 +248,11 @@ class UserViewTourList{
   final String tourID;
   final String image;
   final String agency;
+  final String? agentID;
   final List<dynamic> tourHighlight;
   final List<dynamic> availability;
 
-  UserViewTourList(this.tourName, this.tourID, this.image, this.agency, this.tourHighlight, this.availability);
+  UserViewTourList(this.tourName, this.tourID, this.image, this.agency, this.tourHighlight, this.availability, {this.agentID});
 }
 
 class MessageList{

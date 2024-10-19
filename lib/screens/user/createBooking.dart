@@ -1,7 +1,11 @@
 import 'dart:convert';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/customerModel.dart';
+import 'package:assignment_tripmate/invoiceModel.dart';
+import 'package:assignment_tripmate/pdf_invoice_api.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
+import 'package:assignment_tripmate/supplierModel.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +37,12 @@ class createBookingScreen extends StatefulWidget {
 }
 
 class _createBookingScreenState extends State<createBookingScreen> {
+  // User (Customer)
+  Map<String, dynamic> _userData = {};
+
+  // Company 
+  Map<String, dynamic> _companyData = {};
+
   // Tour 
   UserViewTourList? _tour; 
   bool isLoadingTour = false;
@@ -42,7 +52,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
   String? selectedDateRange;
   int? selectedSlot;
   int? price;
-  double? calculatedToalTourPrice;
+  double? calculatedTotalTourPrice;
   double? remainingPrice;
   String? _paxErrorMessage;
   final TextEditingController _paxController = TextEditingController();
@@ -75,6 +85,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
   double? LBTotalPrice;
   int? LBDifferenceInDays;
 
+  bool isInvoiceLoading = false;
+
   List<int> _getValidWeekdays(List<String> availableDays) {
     Map<String, int> dayToWeekdayMap = {
       'Monday': DateTime.monday,
@@ -92,12 +104,32 @@ class _createBookingScreenState extends State<createBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchUserDetails();
     if (widget.tour) {
       _fetchTourDetails();
     } else if (widget.carRental) {
       _fetchCarDetails();
     } else {
       _fetchLocalBuddyDetails();
+    }
+  }
+
+  Future<void> _fetchUserDetails() async{
+    try{
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(widget.userId);
+      DocumentSnapshot userSnapshot = await userRef.get();
+
+      if(userSnapshot.exists){
+        Map<String, dynamic>? userData = userSnapshot.data() as Map<String, dynamic>?;
+
+        if(userData != null){
+          setState(() {
+            _userData = userData;
+          });
+        }
+      }
+    }catch(e){
+      print('Error fetching user data: $e');
     }
   }
 
@@ -129,6 +161,19 @@ class _createBookingScreenState extends State<createBookingScreen> {
               availableDateRanges = availabilityList.map((item) => item['dateRange'] as String).toList();
             }
           });
+
+          DocumentReference companyRef = FirebaseFirestore.instance.collection('travelAgent').doc(tourData['agentID']);
+          DocumentSnapshot companySnapshot = await companyRef.get();
+
+          if(companySnapshot.exists){
+            Map<String, dynamic>? companyData = companySnapshot.data() as Map<String, dynamic>?;
+
+            if(companyData != null){
+              setState(() {
+                _companyData = companyData;
+              });
+            }
+          }
         }
       }
     } catch (e) {
@@ -169,6 +214,19 @@ class _createBookingScreenState extends State<createBookingScreen> {
               dropOffLocation: carData['dropOffLocation']
             );
           });
+
+          DocumentReference companyRef = FirebaseFirestore.instance.collection('travelAgent').doc(carData['agencyID']);
+          DocumentSnapshot companySnapshot = await companyRef.get();
+
+          if(companySnapshot.exists){
+            Map<String, dynamic>? companyData = companySnapshot.data() as Map<String, dynamic>?;
+
+            if(companyData != null){
+              setState(() {
+                _companyData = companyData;
+              });
+            }
+          }
         }
       }
     } catch (e) {
@@ -229,6 +287,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
               availabilityLocalBuddyList = List<Map<String, dynamic>>.from(LBData['availability']);
               availableLocalBuddyDay = availabilityLocalBuddyList.map((item) => item['day'] as String).toList();
             }
+            
           } else{
             setState(() {
               isLoadingLocalBuddy = false;
@@ -296,7 +355,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'tourID': widget.tourID,
         'travelDate': selectedDateRange,
         'numberOfPeople': int.parse(_paxController.text),
-        'totalPrice': calculatedToalTourPrice,
+        'totalPrice': calculatedTotalTourPrice,
         'fullyPaid': 0,
         'remainingPrice': remainingPrice,
         'isCancel': 0,
@@ -339,12 +398,62 @@ class _createBookingScreenState extends State<createBookingScreen> {
         context: context, 
         title: "Payment Successful", 
         content: "You have booked this tour package successfully.", 
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+        onPressed: () async {
+          // Close the payment successful dialog
+          Navigator.of(context).pop();
+
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          Future.microtask(() {
+            showLoadingDialog(context, "Generating Invoice...");
+          });
+
+          final date = DateTime.now();
+
+          final invoice = Invoice(
+            supplier: Supplier(
+              name: _companyData['companyName'],
+              address: _companyData['companyAddress'],
+            ),
+            customer: Customer(
+              name: _userData['name'],
+              address: _userData['address'],
+            ),
+            info: InvoiceInfo(
+              date: date,
+              description: "You have paid the deposit. Below is the invoice summary:",
+              number: '${DateTime.now().year}-$id',
+            ),
+            // Wrap the single InvoiceItem in a list
+            items: [
+              InvoiceItem(
+                description: "${_tour!.tourName} - (${selectedDateRange!})",
+                quantity: int.parse(_paxController.text),
+                unitPrice: price ?? 0,
+                total: calculatedTotalTourPrice ?? 0.0,
+              ),
+            ],
           );
-        }
+
+          // Perform some async operation
+          await generateInvoice(id, invoice, "Tour Package", "tourBooking", "deposit", true);
+
+          // After the operation is done, hide the loading dialog
+          Navigator.of(context).pop(); // This will close the loading dialog
+
+          // Navigate to the homepage after PDF viewer
+          Future.delayed(Duration(milliseconds: 500), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserHomepageScreen(
+                  userId: widget.userId,
+                  currentPageIndex: 3,
+                ),
+              ),
+            );
+          });
+        },
+        textButton: "View Invoice",
       );
     } catch (e) {
       // Show failure dialog
@@ -392,12 +501,69 @@ class _createBookingScreenState extends State<createBookingScreen> {
         context: context, 
         title: "Payment Successful", 
         content: "You have rented this car successfully.", 
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+        onPressed: () async {
+          // Close the payment successful dialog
+          Navigator.of(context).pop();
+
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          Future.microtask(() {
+            showLoadingDialog(context, "Generating Invoice...");
+          });
+
+          final date = DateTime.now();
+          final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
+
+          final invoice = Invoice(
+            supplier: Supplier(
+              name: _companyData['companyName'] ?? "Unknown Company",
+              address: _companyData['companyAddress'] ?? "Unknown Company Address",
+            ),
+            customer: Customer(
+              name: _userData['name'] ?? "Unknown Customer",
+              address: _userData['address'] ?? "Unknown Customer Address",
+            ),
+            info: InvoiceInfo(
+              date: date,
+              description: "You have paid the bill. Below is the invoice summary:",
+              number: '${DateTime.now().year}-$id',
+            ),
+            // Wrap the single InvoiceItem in a list
+            items: [
+              InvoiceItem(
+                description: "Deposit (Refundable)",
+                quantity: 1,
+                unitPrice: carRentalDeposit.toInt(),
+                total: carRentalDeposit,
+              ),
+              InvoiceItem(
+                description: "${_carRental!.carModel} (${dateFormat.format(_selectedStartDate!)} - ${dateFormat.format(_selectedEndDate!)})",
+                quantity: CRDifferenceInDays!,
+                unitPrice: _carRental!.price!.toInt(),
+                total:  rentPrice ?? 0.0,
+              ),
+            ],
           );
-        }
+
+          // Perform some async operation
+          await generateInvoice(id, invoice, "Car Rental", "carRentalBooking", "invoice", false);
+
+          // After the operation is done, hide the loading dialog
+          Navigator.of(context).pop(); // This will close the loading dialog
+
+          // Navigate to the homepage after PDF viewer
+          Future.delayed(Duration(milliseconds: 500), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserHomepageScreen(
+                  userId: widget.userId,
+                  currentPageIndex: 3,
+                ),
+              ),
+            );
+          });
+        },
+        textButton: "View Invoice"
       );
     } catch (e) {
       // Show failure dialog
@@ -445,12 +611,69 @@ class _createBookingScreenState extends State<createBookingScreen> {
         context: context, 
         title: "Payment Successful", 
         content: "You have booked this local buddy successfully.", 
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId,currentPageIndex: 3))
+        onPressed: () async {
+          // Close the payment successful dialog
+          Navigator.of(context).pop();
+
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          Future.microtask(() {
+            showLoadingDialog(context, "Generating Invoice...");
+          });
+
+          final date = DateTime.now();
+          final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
+
+          final invoice = Invoice(
+            supplier: Supplier(
+              name: "Admin",
+              address: "admin@tripmate.com",
+            ),
+            customer: Customer(
+              name: _userData['name'] ?? "Unknown Customer",
+              address: _userData['address'] ?? "Unknown Customer Address",
+            ),
+            info: InvoiceInfo(
+              date: date,
+              description: "You have paid the bill. Below is the invoice summary:",
+              number: '${DateTime.now().year}-$id',
+            ),
+            // Wrap the single InvoiceItem in a list
+            items: [
+              // InvoiceItem(
+              //   description: "Deposit (Refundable)",
+              //   quantity: 1,
+              //   unitPrice: carRentalDeposit.toInt(),
+              //   total: carRentalDeposit,
+              // ),
+              InvoiceItem(
+                description: "Local Buddy: ${_localBuddy!.localBuddyName} (${dateFormat.format(_selectedLbStartDate!)} - ${dateFormat.format(_selectedLbEndDate!)})",
+                quantity: LBDifferenceInDays!,
+                unitPrice: _localBuddy!.price!.toInt(),
+                total:  LBTotalPrice ?? 0.0,
+              ),
+            ],
           );
-        }
+
+          // Perform some async operation
+          await generateInvoice(id, invoice, "Local Buddy", "localBuddyBooking", "invoice", false);
+
+          // After the operation is done, hide the loading dialog
+          Navigator.of(context).pop(); // This will close the loading dialog
+
+          // Navigate to the homepage after PDF viewer
+          Future.delayed(Duration(milliseconds: 500), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserHomepageScreen(
+                  userId: widget.userId,
+                  currentPageIndex: 3,
+                ),
+              ),
+            );
+          });
+        },
+        textButton: "View Invoice"
       );
     } catch (e) {
       // Show failure dialog
@@ -655,7 +878,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
                           ),
                         ),
                         SizedBox(width: 10),
-                        // Move Pay Button inside the StatefulBuilder
 
                         TextButton(
                           child: Text('Pay'),
@@ -680,6 +902,79 @@ class _createBookingScreenState extends State<createBookingScreen> {
                 ),
               );
             },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit) async {
+    setState(() {
+      bool isGeneratingInvoice = true; // Correctly set the loading state variable
+    });
+
+    try {
+      // Small delay to allow the UI to update
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Generate the PDF file
+      final pdfFile = await PdfInvoiceApi.generate(
+        invoices, 
+        widget.userId, 
+        id, 
+        servicesType, 
+        collectionName, 
+        pdfFileName, 
+        isDeposit
+      );
+
+      // Open the generated PDF file
+      await PdfInvoiceApi.openFile(pdfFile);
+
+      // // After viewing the PDF, replace the current route with the homepage
+      // Future.microtask(() {
+      //   Navigator.pushReplacement(
+      //     context,
+      //     MaterialPageRoute(
+      //       builder: (context) => UserHomepageScreen(
+      //         userId: widget.userId, 
+      //         currentPageIndex: 3,
+      //       ),
+      //     ),
+      //   );
+      // });
+
+    } catch (e) {
+      // Handle errors during invoice generation
+      showCustomDialog(
+        context: context,
+        title: "Invoice Generation Failed",
+        content: "Could not generate invoice. Please try again.",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    } finally {
+      setState(() {
+        bool isGeneratingInvoice = false; // Reset loading state correctly
+      });
+    }
+  }
+
+
+  void showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Please Wait'),
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: primaryColor,), // Loading indicator
+              SizedBox(width: 20),
+              Expanded(child: Text(message)),
+            ],
           ),
         );
       },
@@ -1097,7 +1392,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                       SizedBox(
                                         width: 70,
                                         child: Text(
-                                          '${NumberFormat('#,##0.00').format(calculatedToalTourPrice)}',
+                                          '${NumberFormat('#,##0.00').format(calculatedTotalTourPrice)}',
                                           style: TextStyle(
                                             fontSize: defaultFontSize,
                                             fontWeight: FontWeight.bold,
@@ -1415,7 +1710,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 50,
+                                        width: 60,
                                         child: Text(
                                           '${NumberFormat('#,##0.00').format(rentPrice)}',
                                           style: TextStyle(
@@ -1459,7 +1754,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 50,
+                                        width: 60,
                                         child: Text(
                                           '${NumberFormat('#,##0.00').format(carRentalDeposit)}',
                                           style: TextStyle(
@@ -1504,7 +1799,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 50,
+                                        width: 60,
                                         child: Text(
                                           '${NumberFormat('#,##0.00').format(carRentalTotalPrice)}',
                                           style: TextStyle(
@@ -1806,7 +2101,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                         ),
                                         SizedBox(
-                                          width: 50,
+                                          width: 60,
                                           child: Text(
                                             '${NumberFormat('#,##0.00').format(LBTotalPrice)}',
                                             style: TextStyle(
@@ -1850,7 +2145,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                         ),
                                         SizedBox(
-                                          width: 50,
+                                          width: 60,
                                           child: Text(
                                             '${NumberFormat('#,##0.00').format(LBTotalPrice)}',
                                             style: TextStyle(
@@ -2142,7 +2437,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
             remainingPrice = ((price! * paxValue) - 1000);
 
             // // Calculate the total price
-            calculatedToalTourPrice = remainingPrice! + 1000;
+            calculatedTotalTourPrice = remainingPrice! + 1000;
           });
         }
       },

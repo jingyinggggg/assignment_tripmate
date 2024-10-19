@@ -20,30 +20,35 @@ double getScreenHeight(BuildContext context) {
 
 // Method to show a dialog with a title and content
 void showCustomDialog({
-  required BuildContext context,  // Pass context from the caller
+  required BuildContext context,
   required String title,
   required String content,
   required VoidCallback onPressed,
+  String? textButton,
+  bool showLoading = false, // Add showLoading parameter
 }) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text(title),
-        content: Text(content, textAlign: TextAlign.justify,),
+        content: showLoading
+            ? Center(child: CircularProgressIndicator()) // Show loading indicator
+            : Text(content, textAlign: TextAlign.justify),
         actions: [
-          TextButton(
-            onPressed: onPressed,
-            child: const Text('OK'),
-            style: TextButton.styleFrom(
-              backgroundColor: primaryColor, // Set the background color
-              foregroundColor: Colors.white, // Set the text color
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+          if (!showLoading) // Only show button if not loading
+            TextButton(
+              onPressed: onPressed,
+              child: Text(textButton ?? 'OK'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
-          ),
         ],
       );
     },
