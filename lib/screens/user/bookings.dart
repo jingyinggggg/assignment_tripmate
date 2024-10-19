@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,13 +22,19 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   List<carRentalBooking> _carRentalBookingCompleted = [];
   List<carRentalBooking> _carRentalBookingUpcoming = [];
   List<carRentalBooking> _carRentalBookingCanceled = [];
+  List<localBuddyBooking> _localBuddyBookingCompleted = [];
+  List<localBuddyBooking> _localBuddyBookingUpcoming = [];
+  List<localBuddyBooking> _localBuddyBookingCanceled = [];
   bool isFetching = false;
+  int _outerTabIndex = 0;  // For the outer Upcoming, Completed, Canceled
+  int _innerTabIndex = 0;  // For the inner Tour Package, Car Rental, Local Buddy
 
   @override
   void initState(){
     super.initState();
     _fetchTourBooking();
     _fetchCarRentalBooking();
+    _fetchLocalBuddyBooking();
   }
 
   @override
@@ -168,7 +176,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  // Fetch tour bookings
+  // Fetch car rental bookings
   Future<void> _fetchCarRentalBooking() async {
     setState(() {
       isFetching = true;
@@ -301,25 +309,435 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
+  // Fetch local buddy bookings
+  Future<void> _fetchLocalBuddyBooking() async {
+    setState(() {
+      isFetching = true;
+    });
 
-  @override
-  Widget build(BuildContext content) {
+    try {
+      CollectionReference upLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      QuerySnapshot upLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
+          .where('userID', isEqualTo: widget.userID)
+          .where('bookingStatus', isEqualTo: 0)
+          .get();
+
+      List<String> localBuddyIDs = [];
+      List<localBuddyBooking> upLocalBuddyBookings = [];
+
+      if (upLocalBuddyBookingSnapshot.docs.isNotEmpty) {
+        // Inside the loop for the localBuddyBooking collection
+        for (var upLBDoc in upLocalBuddyBookingSnapshot.docs) {
+          localBuddyBooking localBuddyBooks = localBuddyBooking.fromFirestore(upLBDoc); // Use the booking doc here
+          
+          String localBuddyID = upLBDoc['localBuddyID'] as String;
+
+          // Fetch the local buddy details
+          DocumentSnapshot localBuddyDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(localBuddyID).get();
+          String userId = localBuddyDoc['userID'] as String;
+
+          // Fetch user details including profile image from 'users' collection
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+          String profileImage = userDoc['profileImage'] as String;
+          String localBuddyName = userDoc['name'] as String;
+
+          // Get full address from the document
+          String fullAddress = localBuddyDoc['location'];
+
+          // Call the Geocoding API to extract country and area
+          String? country = '';
+          String? area = '';
+
+          if (fullAddress.isNotEmpty) {
+            var locationData = await _getLocationAreaAndCountry(fullAddress);
+            country = locationData['country'];
+            area = locationData['area'];
+          }
+
+          String locationArea = '$area, $country';
+
+          // Assign the user details to the localBuddyBooking object
+          localBuddyBooks.localBuddyName = localBuddyName;
+          localBuddyBooks.localBuddyImage = profileImage;
+          localBuddyBooks.locationArea = locationArea;
+
+          upLocalBuddyBookings.add(localBuddyBooks);
+        }
+        setState(() {
+          _localBuddyBookingUpcoming = upLocalBuddyBookings;
+        });
+      } else {
+        setState(() {
+          _localBuddyBookingUpcoming = [];
+        });
+      }
+
+      // CollectionReference comLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      // QuerySnapshot comLocalBuddyBookingSnapshot = await comLocalBuddyBookingRef
+      //     .where('userID', isEqualTo: widget.userID)
+      //     .where('bookingStatus', isEqualTo: 1)
+      //     .get();
+
+      // List<String> comLocalBuddyIDs = [];
+
+      // if (comLocalBuddyBookingSnapshot.docs.isNotEmpty) {
+      //   for (var comLBDoc in comLocalBuddyBookingSnapshot.docs) {
+      //     String comLBID = comLBDoc['localBuddyID'] as String;
+      //     comLocalBuddyIDs.add(comLBID);
+      //   }
+
+      //   if(comLocalBuddyIDs.isNotEmpty){
+      //     CollectionReference comLocalBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
+      //     QuerySnapshot comLocalBuddySnapshot = await comLocalBuddyRef.where(FieldPath.documentId, whereIn: comLocalBuddyIDs).get();
+
+      //     List<localBuddyBooking> comLocalBuddyBookings = [];
+
+      //     for(var comLocalBuddyDoc in comLocalBuddySnapshot.docs){
+      //       String userId = comLocalBuddyDoc['userID'] as String;
+
+      //       // Fetch user details including profile image from 'users' collection
+      //       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      //       String profileImage = userDoc['profileImage'] as String;
+      //       String localBuddyName = userDoc['name'] as String;
+
+      //       // Get full address from the document
+      //       String fullAddress = comLocalBuddyDoc['location'];
+
+      //       // Call the Geocoding API to extract country and area
+      //       String? country = '';
+      //       String? area = '';
+
+      //       if (fullAddress.isNotEmpty) {
+      //         var locationData = await _getLocationAreaAndCountry(fullAddress);
+      //         country = locationData['country'];
+      //         area = locationData['area'];
+      //       }
+
+      //       String locationArea = '$area, $country';
+
+      //       localBuddyBooking comLocalBuddyBooks = localBuddyBooking.fromFirestore(comLocalBuddyDoc);
+      //       comLocalBuddyBooks.localBuddyName = localBuddyName;
+      //       comLocalBuddyBooks.localBuddyImage = profileImage;
+      //       comLocalBuddyBooks.locationArea = locationArea;
+
+      //       comLocalBuddyBookings.add(comLocalBuddyBooks);
+      //     }
+
+      //     setState(() {
+      //       _localBuddyBookingCompleted = comLocalBuddyBookings;
+      //     });
+      //   }
+      // } else {
+      //   setState(() {
+      //     _localBuddyBookingCompleted = [];
+      //   });
+      // }
+
+      // CollectionReference canLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      // QuerySnapshot canLocalBuddyBookingSnapshot = await canLocalBuddyBookingRef
+      //     .where('userID', isEqualTo: widget.userID)
+      //     .where('bookingStatus', isEqualTo: 2)
+      //     .get();
+
+      // List<String> canLocalBuddyIDs = [];
+
+      // if (canLocalBuddyBookingSnapshot.docs.isNotEmpty) {
+      //   for (var canLBDoc in canLocalBuddyBookingSnapshot.docs) {
+      //     String canLBID = canLBDoc['localBuddyID'] as String;
+      //     canLocalBuddyIDs.add(canLBID);
+      //   }
+
+      //   if(canLocalBuddyIDs.isNotEmpty){
+      //     CollectionReference canLocalBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
+      //     QuerySnapshot canLocalBuddySnapshot = await canLocalBuddyRef.where(FieldPath.documentId, whereIn: canLocalBuddyIDs).get();
+
+      //     List<localBuddyBooking> canLocalBuddyBookings = [];
+
+      //     for(var canLocalBuddyDoc in canLocalBuddySnapshot.docs){
+      //       String userId = canLocalBuddyDoc['userID'] as String;
+
+      //       // Fetch user details including profile image from 'users' collection
+      //       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      //       String profileImage = userDoc['profileImage'] as String;
+      //       String localBuddyName = userDoc['name'] as String;
+
+      //       // Get full address from the document
+      //       String fullAddress = canLocalBuddyDoc['location'];
+
+      //       // Call the Geocoding API to extract country and area
+      //       String? country = '';
+      //       String? area = '';
+
+      //       if (fullAddress.isNotEmpty) {
+      //         var locationData = await _getLocationAreaAndCountry(fullAddress);
+      //         country = locationData['country'];
+      //         area = locationData['area'];
+      //       }
+
+      //       String locationArea = '$area, $country';
+
+      //       localBuddyBooking canLocalBuddyBooks = localBuddyBooking.fromFirestore(canLocalBuddyDoc);
+      //       canLocalBuddyBooks.localBuddyName = localBuddyName;
+      //       canLocalBuddyBooks.localBuddyImage = profileImage;
+      //       canLocalBuddyBooks.locationArea = locationArea;
+
+      //       canLocalBuddyBookings.add(canLocalBuddyBooks);
+      //     }
+
+      //     setState(() {
+      //       _localBuddyBookingCanceled = canLocalBuddyBookings;
+      //     });
+      //   }
+      // } else {
+      //   setState(() {
+      //     _localBuddyBookingCanceled = [];
+      //   });
+      // }
+
+      setState(() {
+        isFetching = false;
+      });
+    } catch (e) {
+      print('Error fetching local buddy booking: $e');
+      setState(() {
+        isFetching = false;
+      });
+    }
+  }
+
+  // Function to get area and country from the full address using the Google Geocoding API
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey; // Replace with your API key
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
+    }
+  }
+
+
+  // @override
+  // Widget build(BuildContext content) {
+  //   return DefaultTabController(
+  //     length: 3,
+  //     child: Scaffold(
+  //       backgroundColor: Color.fromARGB(255, 241, 245, 247),
+  //       resizeToAvoidBottomInset: true,
+  //       body: Column(
+  //         children: [
+  //           Padding(
+  //             padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
+  //             child: Container(
+  //               height: 50,
+  //               child: TextField(
+  //                 // controller: _searchController, // Bind search controller
+  //                 // onChanged: (value) {
+  //                 //   setState(() {}); // Trigger the UI update on text change
+  //                 // },
+  //                 decoration: InputDecoration(
+  //                   filled: true,
+  //                   fillColor: Colors.white,
+  //                   contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+  //                   prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 20),
+  //                   border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                     borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+  //                   ),
+  //                   enabledBorder: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                     borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+  //                   ),
+  //                   focusedBorder: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                     borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+  //                   ),
+  //                   errorBorder: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(10),
+  //                     borderSide: BorderSide(color: Colors.red, width: 2),
+  //                   ),
+  //                   hintText: "Search bookings ...",
+  //                   hintStyle: TextStyle(
+  //                     fontSize: 14,
+  //                     color: Colors.grey.shade500,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+
+  //           const TabBar(
+  //             labelColor: Color(0xFF467BA1),
+  //             unselectedLabelColor: Colors.grey,
+  //             indicatorColor: Color(0xFF467BA1),
+  //             indicatorSize: TabBarIndicatorSize.tab,
+  //             labelStyle: TextStyle(
+  //               fontSize: 15,
+  //               fontWeight: FontWeight.bold
+  //             ),
+  //             unselectedLabelStyle: TextStyle(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w600
+  //             ),
+  //             tabs: [
+  //               Tab(text: "Upcoming"),
+  //               Tab(text: "Completed"),
+  //               Tab(text: "Canceled"),
+  //             ],
+  //           ),
+
+  //           Expanded(
+  //             child: TabBarView(
+  //               children: [
+  //                 isFetching
+  //                   ? Center(child: CircularProgressIndicator(color: primaryColor))
+  //                   : _tourBookingUpcoming.isNotEmpty
+  //                     ? SingleChildScrollView(
+  //                         child: Container(
+  //                           padding: EdgeInsets.all(10.0),
+  //                           child: Column(
+  //                             mainAxisAlignment: MainAxisAlignment.start,
+  //                             crossAxisAlignment: CrossAxisAlignment.start,
+  //                             children: [
+  //                               ListView.builder(
+  //                                 itemCount: _tourBookingUpcoming.length,
+  //                                 shrinkWrap: true, // Allows ListView to be nested
+  //                                 physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+  //                                 itemBuilder: (context, index){
+  //                                   return tourComponent(tourbookings: _tourBookingUpcoming[index]);
+  //                                 }
+  //                               ),
+                                
+  //                               if(_carRentalBookingUpcoming.length != 0)...[
+  //                                 SizedBox(height: 10),
+  //                                 ListView.builder(
+  //                                   itemCount: _carRentalBookingUpcoming.length,
+  //                                   shrinkWrap: true, // Allows ListView to be nested
+  //                                   physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+  //                                   itemBuilder: (context, index){
+  //                                     return carComponent(carRentalbookings: _carRentalBookingUpcoming[index]);
+  //                                   }
+  //                                 ),
+  //                               ]
+  //                             ],
+  //                           )
+  //                         ),
+  //                       )
+  //                     : Center(child: Text('No upcoming bookings found.')),
+
+  //                 // Completed Tab
+  //                 isFetching
+  //                   ? Center(child: CircularProgressIndicator(color: primaryColor))
+  //                   : _tourBookingCompleted.isNotEmpty
+  //                     ? SingleChildScrollView(
+  //                         child: Container(
+  //                           padding: EdgeInsets.all(10.0),
+  //                           child: Column(
+  //                             mainAxisAlignment: MainAxisAlignment.start,
+  //                             crossAxisAlignment: CrossAxisAlignment.start,
+  //                             children: [
+  //                               Text(
+  //                                 "Tour Package", 
+  //                                 style: TextStyle(
+  //                                   color: Colors.black, 
+  //                                   fontWeight: FontWeight.bold, 
+  //                                   fontSize: defaultLabelFontSize,
+  //                                 ),
+  //                               ),
+  //                               ListView.builder(
+  //                                 itemCount: _tourBookingCompleted.length,
+  //                                 shrinkWrap: true, // Allows ListView to be nested
+  //                                 physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+  //                                 itemBuilder: (context, index){
+  //                                   return tourComponent(tourbookings: _tourBookingCompleted[index]);
+  //                                 }
+  //                               ),
+  //                             ],
+  //                           )
+  //                         ),
+  //                       )
+  //                     : Center(child: Text('No completed bookings found.')),
+
+  //                 // Canceled Tab
+  //                 isFetching
+  //                   ? Center(child: CircularProgressIndicator(color: primaryColor))
+  //                   : _tourBookingCanceled.isNotEmpty
+  //                     ? SingleChildScrollView(
+  //                         child: Container(
+  //                           padding: EdgeInsets.all(10.0),
+  //                           child: Column(
+  //                             mainAxisAlignment: MainAxisAlignment.start,
+  //                             crossAxisAlignment: CrossAxisAlignment.start,
+  //                             children: [
+  //                               Text(
+  //                                 "Tour Package", 
+  //                                 style: TextStyle(
+  //                                   color: Colors.black, 
+  //                                   fontWeight: FontWeight.bold, 
+  //                                   fontSize: defaultLabelFontSize,
+  //                                 ),
+  //                               ),
+  //                               ListView.builder(
+  //                                 itemCount: _tourBookingCanceled.length,
+  //                                 shrinkWrap: true, // Allows ListView to be nested
+  //                                 physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+  //                                 itemBuilder: (context, index){
+  //                                   return tourComponent(tourbookings: _tourBookingCanceled[index]);
+  //                                 }
+  //                               ),
+  //                             ],
+  //                           )
+  //                         ),
+  //                       )
+  //                     : Center(child: Text('No canceled bookings found.')),
+  //               ],
+  //             ),
+  //           )
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+   @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 3,  // Outer tab count
       child: Scaffold(
-        backgroundColor: Colors.white,
-        resizeToAvoidBottomInset: true,
+        backgroundColor: Color.fromARGB(255, 241, 246, 249),
         body: Column(
           children: [
+            // Search Field
             Padding(
               padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
               child: Container(
                 height: 50,
                 child: TextField(
-                  // controller: _searchController, // Bind search controller
-                  // onChanged: (value) {
-                  //   setState(() {}); // Trigger the UI update on text change
-                  // },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -329,42 +747,27 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide(color: Colors.blueGrey, width: 2),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.red, width: 2),
-                    ),
                     hintText: "Search bookings ...",
-                    hintStyle: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
             ),
 
-            const TabBar(
+            // Outer TabBar (Upcoming, Completed, Canceled)
+            TabBar(
+              onTap: (index) {
+                setState(() {
+                  _outerTabIndex = index;
+                  _innerTabIndex = 0;  // Reset inner tab index on outer tab change
+                });
+              },
               labelColor: Color(0xFF467BA1),
               unselectedLabelColor: Colors.grey,
               indicatorColor: Color(0xFF467BA1),
               indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold
-              ),
-              unselectedLabelStyle: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600
-              ),
+              labelStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               tabs: [
                 Tab(text: "Upcoming"),
                 Tab(text: "Completed"),
@@ -372,140 +775,301 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
               ],
             ),
 
-            Expanded(
-              child: TabBarView(
+            // Inner Tabs (Tour Package, Car Rental, Local Buddy) using buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  isFetching
-                    ? Center(child: CircularProgressIndicator(color: primaryColor))
-                    : _tourBookingUpcoming.isNotEmpty
-                      ? SingleChildScrollView(
-                          child: Container(
-                            padding: EdgeInsets.all(10.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Text(
-                                //   "Tour Package", 
-                                //   style: TextStyle(
-                                //     color: Colors.black, 
-                                //     fontWeight: FontWeight.bold, 
-                                //     fontSize: defaultLabelFontSize,
-                                //   ),
-                                // ),
-                                // ListView.builder wrapped with shrinkWrap: true and physics set to NeverScrollableScrollPhysics
-                                ListView.builder(
-                                  itemCount: _tourBookingUpcoming.length,
-                                  shrinkWrap: true, // Allows ListView to be nested
-                                  physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-                                  itemBuilder: (context, index){
-                                    return tourComponent(tourbookings: _tourBookingUpcoming[index]);
-                                  }
-                                ),
-                                
-                                if(_carRentalBookingUpcoming.length != 0)...[
-                                  SizedBox(height: 10),
-                                  // Text(
-                                  //   "Car Rental", 
-                                  //   style: TextStyle(
-                                  //     color: Colors.black54, 
-                                  //     fontWeight: FontWeight.bold, 
-                                  //     fontSize: defaultLabelFontSize,
-                                  //   ),
-                                  // ),
-                                  // ListView.builder wrapped with shrinkWrap: true and physics set to NeverScrollableScrollPhysics
-                                  ListView.builder(
-                                    itemCount: _carRentalBookingUpcoming.length,
-                                    shrinkWrap: true, // Allows ListView to be nested
-                                    physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-                                    itemBuilder: (context, index){
-                                      return carComponent(carRentalbookings: _carRentalBookingUpcoming[index]);
-                                    }
-                                  ),
-                                ]
-                              ],
-                            )
-                          ),
-                        )
-                      : Center(child: Text('No upcoming bookings found.')),
-
-                  // Completed Tab
-                  isFetching
-                    ? Center(child: CircularProgressIndicator(color: primaryColor))
-                    : _tourBookingCompleted.isNotEmpty
-                      ? SingleChildScrollView(
-                          child: Container(
-                            padding: EdgeInsets.all(10.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Tour Package", 
-                                  style: TextStyle(
-                                    color: Colors.black, 
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: defaultLabelFontSize,
-                                  ),
-                                ),
-                                // ListView.builder wrapped with shrinkWrap: true and physics set to NeverScrollableScrollPhysics
-                                ListView.builder(
-                                  itemCount: _tourBookingCompleted.length,
-                                  shrinkWrap: true, // Allows ListView to be nested
-                                  physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-                                  itemBuilder: (context, index){
-                                    return tourComponent(tourbookings: _tourBookingCompleted[index]);
-                                  }
-                                ),
-                              ],
-                            )
-                          ),
-                        )
-                      : Center(child: Text('No completed bookings found.')),
-
-                  // Canceled Tab
-                  isFetching
-                    ? Center(child: CircularProgressIndicator(color: primaryColor))
-                    : _tourBookingCanceled.isNotEmpty
-                      ? SingleChildScrollView(
-                          child: Container(
-                            padding: EdgeInsets.all(10.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Tour Package", 
-                                  style: TextStyle(
-                                    color: Colors.black, 
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: defaultLabelFontSize,
-                                  ),
-                                ),
-                                // ListView.builder wrapped with shrinkWrap: true and physics set to NeverScrollableScrollPhysics
-                                ListView.builder(
-                                  itemCount: _tourBookingCanceled.length,
-                                  shrinkWrap: true, // Allows ListView to be nested
-                                  physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-                                  itemBuilder: (context, index){
-                                    return tourComponent(tourbookings: _tourBookingCanceled[index]);
-                                  }
-                                ),
-                              ],
-                            )
-                          ),
-                        )
-                      : Center(child: Text('No canceled bookings found.')),
+                  _buildInnerTabButton(0, "Tour Package"),
+                  _buildInnerTabButton(1, "Car Rental"),
+                  _buildInnerTabButton(2, "Local Buddy"),
                 ],
               ),
-            )
+            ),
+
+            // TabBarView for the outer tabs
+            Expanded(
+              child: isFetching 
+                ? Center(
+                    child: CircularProgressIndicator(color: primaryColor,),  // Show loading indicator when isFetching is true
+                  )
+                : TabBarView(
+                    physics: NeverScrollableScrollPhysics(), // Prevents swipe gesture
+                    children: [
+                      _buildContentForTab(),  // For Upcoming
+                      _buildContentForTab(),  // For Completed
+                      _buildContentForTab(),  // For Canceled
+                    ],
+                  ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget tourComponent({required tourBooking tourbookings}){
+  // Helper method to create inner tab buttons
+  Widget _buildInnerTabButton(int index, String title) {
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _innerTabIndex = index; // Update inner tab index on button press
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _innerTabIndex == index ? Color(0xFF749CB9) : Colors.white,  // Active color
+        foregroundColor: _innerTabIndex == index ? Colors.white : Color(0xFF749CB9),  // Text color
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: primaryColor)
+        ),
+      ),
+      child: Text(title, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),),
+    );
+  }
+
+  // Method to build content for the selected outer and inner tabs
+  Widget _buildContentForTab() {
+    if (_outerTabIndex == 0) {
+      // Handle Upcoming
+      if (_innerTabIndex == 0) {
+        return _buildTourPackageContent(_tourBookingUpcoming, 0);
+      } else if (_innerTabIndex == 1) {
+        return _buildCarRentalContent(_carRentalBookingUpcoming, 0);
+      } else {
+        return _buildLocalBuddyContent(_localBuddyBookingUpcoming, 0);
+      }
+    } else if (_outerTabIndex == 1) {
+      // Handle Completed
+      if (_innerTabIndex == 0) {
+        return _buildTourPackageContent(_tourBookingCompleted, 1);
+      } else if (_innerTabIndex == 1) {
+        return _buildCarRentalContent(_carRentalBookingCompleted, 1);
+      } else {
+        return _buildLocalBuddyContent(_localBuddyBookingCompleted, 1);
+      }
+    } else {
+      // Handle Canceled
+      if (_innerTabIndex == 0) {
+        return _buildTourPackageContent(_tourBookingCanceled, 2);
+      } else if (_innerTabIndex == 1) {
+        return _buildCarRentalContent(_carRentalBookingCanceled, 2);
+      } else {
+        return _buildLocalBuddyContent(_localBuddyBookingCanceled, 2);
+      }
+    }
+  }
+
+  // Mock content for different inner tabs
+  Widget _buildTourPackageContent(List<tourBooking> bookings,int status) {
+    if(bookings.isNotEmpty){
+      // If data exists, show the list of bookings
+      return SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListView.builder(
+                itemCount: bookings.length,
+                shrinkWrap: true, // Allows ListView to be nested
+                physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+                itemBuilder: (context, index) {
+                  return tourComponent(tourbookings: bookings[index], status: status);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Center(child: Text(status == 0 ? 'You have no upcoming tour bookings.' : status == 1 ? 'You have no completed tour bookings' : status == 2 ? 'You have no canceled tour bookings.' : 'Error'));
+    }
+  }
+
+  Widget _buildCarRentalContent(List<carRentalBooking> bookings, int status) {
+      if(bookings.isNotEmpty){
+      // If data exists, show the list of bookings
+      return SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListView.builder(
+                itemCount: bookings.length,
+                shrinkWrap: true, // Allows ListView to be nested
+                physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+                itemBuilder: (context, index) {
+                  return carComponent(carRentalbookings: bookings[index], status: status);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Center(child: Text(status == 0 ? 'You have no upcoming car rental bookings.' : status == 1 ? 'You have no completed car rental bookings' : status == 2 ? 'You have no canceled car rental bookings.' : 'Error'));
+    }
+    // if(status == 0 && _carRentalBookingUpcoming.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _carRentalBookingUpcoming.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return carComponent(carRentalbookings: _carRentalBookingUpcoming[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else if(status == 1 && _carRentalBookingCompleted.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _carRentalBookingCompleted.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return carComponent(carRentalbookings: _carRentalBookingCompleted[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else if(status == 2 && _carRentalBookingCanceled.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _carRentalBookingCanceled.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return carComponent(carRentalbookings: _carRentalBookingCanceled[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else {
+    //   return Center(child: Text('You have no upcoming car rental bookings.'));
+    // }
+  }
+
+  Widget _buildLocalBuddyContent(List<localBuddyBooking> bookings, int status) {
+      if(bookings.isNotEmpty){
+      // If data exists, show the list of bookings
+      return SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.all(10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListView.builder(
+                itemCount: bookings.length,
+                shrinkWrap: true, // Allows ListView to be nested
+                physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+                itemBuilder: (context, index) {
+                  return localBuddyComponent(localBuddyBookings: bookings[index], status: status);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Center(child: Text(status == 0 ? 'You have no upcoming local buddy bookings.' : status == 1 ? 'You have no completed local buddy bookings' : status == 2 ? 'You have no canceled local buddy bookings.' : 'Error'));
+    }
+    // if(status == 0 && _localBuddyBookingUpcoming.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _localBuddyBookingUpcoming.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingUpcoming[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else if(status == 1 && _localBuddyBookingCompleted.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _localBuddyBookingCompleted.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingCompleted[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else if(status == 2 && _localBuddyBookingCanceled.isNotEmpty){
+    //   return SingleChildScrollView(
+    //     child: Container(
+    //       padding: EdgeInsets.all(10.0),
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.start,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           ListView.builder(
+    //             itemCount: _localBuddyBookingCanceled.length,
+    //             shrinkWrap: true, // Allows ListView to be nested
+    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
+    //             itemBuilder: (context, index){
+    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingCanceled[index], status: status);
+    //             }
+    //           ),
+    //         ]
+    //       )
+    //     )
+    //   );
+    // } else {
+    //   return Center(child: Text('You have no upcoming local buddy bookings.'));
+    // }
+  }
+
+  Widget tourComponent({required tourBooking tourbookings, required int status}){
     return GestureDetector(
       onTap: (){
         // Navigator.push(
@@ -514,23 +1078,58 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         // );
       },
       child: Container(
-        padding: EdgeInsets.only(top: 10, bottom: 10),
+        margin: EdgeInsets.only(bottom: 10.0),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1.5))
+          color: Colors.white,
+          border:Border.all(color: Colors.grey.shade200, width: 1.5),
+          borderRadius: BorderRadius.circular(10.0)
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           children: [
-            // Wrap this inner Row with Expanded to make sure it takes the available space
-            Expanded(
+            Container(
+              padding: EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "ID: ${tourbookings.tourBookingID}",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
+                      color: status == 0 ? Colors.orange.shade100 : status == 1 ? Colors.green.shade100 : status == 2 ? Colors.red.shade100 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(5)
+                    ),
+                    child: Text(
+                      status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
+                      style: TextStyle(
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        fontSize: 10,
+                        fontWeight: FontWeight.normal
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image container with fixed width and height
                   Container(
-                    width: getScreenWidth(context) * 0.23,
-                    height: getScreenHeight(context) * 0.15,
+                    width: getScreenWidth(context) * 0.15,
+                    height: getScreenHeight(context) * 0.1,
                     margin: EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       image: DecorationImage(
@@ -539,103 +1138,130 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                       ),
                     ),
                   ),
-                  // Text widget wrapped in Expanded to take remaining space
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tourbookings.tourName, 
-                          style: TextStyle(
-                            color: Colors.black, 
-                            fontWeight: FontWeight.bold, 
-                            fontSize: defaultLabelFontSize,
-                          ),
-                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                  SizedBox(width: 5),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tourbookings.tourName, 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 12,
                         ),
-                        SizedBox(height: 5),
-                        Text(
-                          "Date: ${tourbookings.travelDate}", 
-                          style: TextStyle(
-                            color: Colors.black, 
-                            fontWeight: FontWeight.w500, 
-                            fontSize: defaultFontSize,
-                          ),
-                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Date: ${tourbookings.travelDate}", 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.w500, 
+                          fontSize: 10,
                         ),
-                        SizedBox(height: 5),
-                        Row(
-                          children: [
-                            Text(
-                              "Payment: ", 
-                              style: TextStyle(
-                                color: Colors.black, 
-                                fontWeight: FontWeight.w500, 
-                                fontSize: defaultFontSize,
-                              ),
-                            ),
-                            Text(
-                              "${tourbookings.fullyPaid == 0 ? 'Half Payment' : 'Completed'}", 
-                              style: TextStyle(
-                                color: tourbookings.fullyPaid == 0 ? Colors.red : const Color.fromARGB(255, 103, 178, 105), 
-                                fontWeight: FontWeight.bold, 
-                                fontSize: defaultFontSize,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 5),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Price: RM ${NumberFormat('#,##0.00').format((tourbookings.totalPrice / tourbookings.pax))}", 
-                              style: TextStyle(
-                                color: Colors.black, 
-                                fontWeight: FontWeight.w500, 
-                                fontSize: defaultFontSize,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                            ),
-                              Text(
-                              "Pax: ${tourbookings.pax}", 
-                              style: TextStyle(
-                                color: Colors.black, 
-                                fontWeight: FontWeight.w500, 
-                                fontSize: defaultFontSize,
-                              ),
-                              overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 5),
-                        Container(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "Total Price: RM ${NumberFormat('#,##0.00').format(tourbookings.totalPrice)}", 
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text(
+                            "Payment: ", 
                             style: TextStyle(
                               color: Colors.black, 
-                              fontWeight: FontWeight.bold, 
-                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500, 
+                              fontSize: 10,
                             ),
-                            textAlign: TextAlign.right,
+                          ),
+                          Text(
+                            "${tourbookings.fullyPaid == 0 ? 'Half Payment' : 'Completed'}", 
+                            style: TextStyle(
+                              color: tourbookings.fullyPaid == 0 ? Colors.red : const Color.fromARGB(255, 103, 178, 105), 
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ),
+            Container(
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Total Price: RM ${NumberFormat('#,##0.00').format(tourbookings.totalPrice)}", 
+                    style: TextStyle(
+                      color: Colors.black, 
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (tourbookings.fullyPaid == 0) 
+                          SizedBox(
+                            height: 30, // Set the button height
+                            child: TextButton(
+                              onPressed: (){}, 
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                backgroundColor: Colors.white,
+                                foregroundColor: Color(0xFF749CB9),
+                                shape: RoundedRectangleBorder(
+                                  side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              child: Text(
+                                "Pay", 
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        SizedBox(width: 5), // Space between buttons
+                        SizedBox(
+                          height: 30, // Set the button height
+                          child: TextButton(
+                            onPressed: (){}, 
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF749CB9),
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Text(
+                              "Cancel", 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ],
-                    )
-                    
+                    ),
                   ),
                 ],
               ),
-            ),
+            )
           ],
-        ),
+        )
       )
     );
   }
 
-  Widget carComponent({required carRentalBooking carRentalbookings}){
+  Widget carComponent({required carRentalBooking carRentalbookings, required int status}){
     return GestureDetector(
       onTap: (){
         // Navigator.push(
@@ -644,78 +1270,294 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         // );
       },
       child: Container(
-        padding: EdgeInsets.only(top: 10, bottom: 10),
+        margin: EdgeInsets.only(bottom: 10.0),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1.5))
+          color: Colors.white,
+          border:Border.all(color: Colors.grey.shade200, width: 1.5),
+          borderRadius: BorderRadius.circular(10.0)
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           children: [
-            // Wrap this inner Row with Expanded to make sure it takes the available space
-            Expanded(
+            Container(
+              padding: EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "ID: ${carRentalbookings.carRentalBookingID}",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
+                      color: status == 0 ? Colors.orange.shade100 : status == 1 ? Colors.green.shade100 : status == 2 ? Colors.red.shade100 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(5)
+                    ),
+                    child: Text(
+                      status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
+                      style: TextStyle(
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        fontSize: 10,
+                        fontWeight: FontWeight.normal
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image container with fixed width and height
                   Container(
-                    width: getScreenWidth(context) * 0.23,
-                    height: getScreenHeight(context) * 0.11,
-                    margin: EdgeInsets.only(right: 10),
+                    width: getScreenWidth(context) * 0.2,
+                    height: getScreenHeight(context) * 0.12,
+                    margin: EdgeInsets.only(right: 10, left: 10),
                     decoration: BoxDecoration(
                       image: DecorationImage(
                         image: NetworkImage(carRentalbookings.carImage),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 5),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        carRentalbookings.carName, 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Date: ${carRentalbookings.bookingDate}", 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.w500, 
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                    ],
+                  )
+                ],
+              )
+            ),
+            Container(
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Total Price: RM ${NumberFormat('#,##0.00').format(carRentalbookings.totalPrice)}", 
+                    style: TextStyle(
+                      color: Colors.black, 
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      height: 30, // Set the button height
+                      child: TextButton(
+                        onPressed: (){}, 
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Color(0xFF749CB9),
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        child: Text(
+                          "Cancel", 
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        )
+      )
+    );
+  }
+
+  Widget localBuddyComponent({required localBuddyBooking localBuddyBookings, required int status}){
+    return GestureDetector(
+      onTap: (){
+        // Navigator.push(
+        //   context, 
+        //   MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID, fromAppLink: 'false',))
+        // );
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 10.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border:Border.all(color: Colors.grey.shade200, width: 1.5),
+          borderRadius: BorderRadius.circular(10.0)
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "ID: ${localBuddyBookings.localBuddyBookingID}",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
+                      color: status == 0 ? Colors.orange.shade100 : status == 1 ? Colors.green.shade100 : status == 2 ? Colors.red.shade100 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(5)
+                    ),
+                    child: Text(
+                      status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
+                      style: TextStyle(
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        fontSize: 10,
+                        fontWeight: FontWeight.normal
+                      ),
+                    ),
+                  )
+                ],
+              )
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1.5))
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: getScreenWidth(context) * 0.15,
+                    height: getScreenHeight(context) * 0.1,
+                    margin: EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(localBuddyBookings.localBuddyImage),
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                  // Text widget wrapped in Expanded to take remaining space
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          carRentalbookings.carName, 
-                          style: TextStyle(
-                            color: Colors.black, 
-                            fontWeight: FontWeight.bold, 
-                            fontSize: defaultLabelFontSize,
-                          ),
-                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                  SizedBox(width: 5),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localBuddyBookings.localBuddyName, 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 12,
                         ),
-                        SizedBox(height: 5),
-                        Text(
-                          "Date: ${carRentalbookings.bookingDate}", 
-                          style: TextStyle(
-                            color: Colors.black, 
-                            fontWeight: FontWeight.w500, 
-                            fontSize: defaultFontSize,
-                          ),
-                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Date: ${localBuddyBookings.bookingDate}", 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.w500, 
+                          fontSize: 10,
                         ),
-                        SizedBox(height: 5),
-                        Container(
-                          alignment: Alignment.centerRight,
-                          child: Text(
-                            "Total Price: RM ${NumberFormat('#,##0.00').format(carRentalbookings.totalPrice)}", 
-                            style: TextStyle(
-                              color: Colors.black, 
-                              fontWeight: FontWeight.bold, 
-                              fontSize: defaultFontSize,
-                            ),
-                            textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Location: ${localBuddyBookings.locationArea}", 
+                        style: TextStyle(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.w500, 
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ),
+            Container(
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Total Price: RM ${NumberFormat('#,##0.00').format(localBuddyBookings.totalPrice)}", 
+                    style: TextStyle(
+                      color: Colors.black, 
+                      fontWeight: FontWeight.bold, 
+                      fontSize: 11,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      height: 30, // Set the button height
+                      child: TextButton(
+                        onPressed: (){}, 
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Color(0xFF749CB9),
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
                         ),
-                      ],
-                    )
-                    
+                        child: Text(
+                          "Cancel", 
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ],
-        ),
+        )
       )
     );
   }
