@@ -1,18 +1,90 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/screens/user/viewQuestionDetails.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-class UserHelpCenterScreen extends StatefulWidget{
+class HelpCenterScreen extends StatefulWidget{
   final String userId;
+  final bool isUser;
+  final bool isTravelAgent;
+  final bool isAdmin;
 
-  const UserHelpCenterScreen({super.key, required this.userId});
+  const HelpCenterScreen({
+    super.key, 
+    required this.userId,
+    this.isUser = false,
+    this.isTravelAgent = false,
+    this.isAdmin = false
+  });
 
   @override
-  State<UserHelpCenterScreen> createState() => _UserHelpCenterScreenState();
+  State<HelpCenterScreen> createState() => _HelpCenterScreenState();
 }
 
-class _UserHelpCenterScreenState extends State<UserHelpCenterScreen>{
+class _HelpCenterScreenState extends State<HelpCenterScreen>{
+  List<Question> question = [];
+  bool isFetching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchQuestion();
+  }
+
+  Future<void>_fetchQuestion() async {
+    setState(() {
+      isFetching = true;
+    });
+    try{
+      CollectionReference helpCenterRef = FirebaseFirestore.instance.collection('helpCenter');
+      QuerySnapshot helpCenterSnapshot = await helpCenterRef.get();
+
+      List<Question> questionList = [];
+
+      for(var doc in helpCenterSnapshot.docs){
+        if(widget.isUser){
+          CollectionReference subCollection = await helpCenterRef.doc(doc.id).collection('user');
+          QuerySnapshot subSnapshot = await subCollection.get();
+
+          for(var subDoc in subSnapshot.docs){
+            Question fetchQuestion = Question.fromFirestore(subDoc);
+            questionList.add(fetchQuestion);
+          }
+
+        } else if (widget.isTravelAgent){
+          CollectionReference subCollection = await helpCenterRef.doc(doc.id).collection('travelAgent');
+          QuerySnapshot subSnapshot = await subCollection.get();
+
+          for(var subDoc in subSnapshot.docs){
+            Question fetchQuestion = Question.fromFirestore(subDoc);
+            questionList.add(fetchQuestion);
+          }
+
+        } else if (widget.isAdmin){
+          CollectionReference subCollection = await helpCenterRef.doc(doc.id).collection('admin');
+          QuerySnapshot subSnapshot = await subCollection.get();
+
+          for(var subDoc in subSnapshot.docs){
+            Question fetchQuestion = Question.fromFirestore(subDoc);
+            questionList.add(fetchQuestion);
+          }
+
+        }
+      }
+      setState(() {
+        question = questionList;
+      });
+      
+    } catch(e){
+      print("Error fetching question: $e");
+    } finally{
+      setState(() {
+        isFetching = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +109,9 @@ class _UserHelpCenterScreenState extends State<UserHelpCenterScreen>{
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(15.0),
-          child: Column(
+          child: isFetching
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
+          : Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -107,131 +181,106 @@ class _UserHelpCenterScreenState extends State<UserHelpCenterScreen>{
               ),
               SizedBox(height: 10),
 
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    Container(
-                      height: 140,
-                      width: 150,
-                      padding: EdgeInsets.all(15),
-                      margin: EdgeInsets.only(right: 10), // Add margin for spacing
-                      decoration: BoxDecoration(
-                        color: appBarColor,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'How do I book for tour package?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: defaultLabelFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Spacer(),
-                          Container(
-                            margin: EdgeInsets.only(top: 10),
-                            alignment: Alignment.bottomRight,
-                            child: Icon(
-                              Icons.tour,
-                              size: 25,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      height: 140,
-                      width: 150,
-                      padding: EdgeInsets.all(15),
-                      margin: EdgeInsets.only(right: 10), // Add margin for spacing
-                      decoration: BoxDecoration(
-                        color: appBarColor,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            'How do I apply to become local buddy?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: defaultLabelFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Spacer(),
-                          Container(
-                            margin: EdgeInsets.only(top: 10),
-                            alignment: Alignment.bottomRight,
-                            child: Icon(
-                              Icons.people,
-                              size: 25,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      height: 140,
-                      width: 150,
-                      padding: EdgeInsets.all(15),
-                      margin: EdgeInsets.only(right: 10), // Add margin for spacing
-                      decoration: BoxDecoration(
-                        color: appBarColor,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
-                        children: [
-                          Text(
-                            'How do I cancel my booking?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: defaultLabelFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Spacer(), // This pushes the icon to the bottom
-                          Align(
-                            alignment: Alignment.bottomRight, // Align icon to the bottom right
-                            child: Icon(
-                              Icons.history,
-                              size: 25,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-
-                  ],
-                ),
-              )
+              _buildFrequentlyAskedQuestions(question),
             ],
           ),
         )
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: appBarColor,
-        onPressed: (){
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'A1001'))
+      floatingActionButton: widget.isUser || widget.isTravelAgent
+      ? FloatingActionButton(
+          backgroundColor: appBarColor,
+          onPressed: (){
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: 'A1001'))
+            );
+          },
+          tooltip: 'Customer Support',
+          child: Icon(
+            Icons.contact_support,
+            color: Colors.white,
+          ),
+        )
+      : null
+    );
+  }
+
+  Widget _buildFrequentlyAskedQuestions(List<Question> questions) {
+    // Ensure we only display the top 4 questions
+    List<Question> topQuestions = questions.take(4).toList();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: topQuestions.map((q) {
+          return GestureDetector(
+            onTap: (){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => HelpCenterDetailsScreen(userId: widget.userId, questionTitle: q.title, questionContent: q.content,))
+              );
+            },
+            child: Container(
+              height: 140,
+              width: 150,
+              padding: EdgeInsets.all(15),
+              margin: EdgeInsets.only(right: 10), // Add margin for spacing
+              decoration: BoxDecoration(
+                color: appBarColor,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
+                children: [
+                  Text(
+                    q.title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: defaultLabelFontSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Spacer(), // Pushes the icon to the bottom
+                  Align(
+                    alignment: Alignment.bottomRight, // Align icon to the bottom right
+                    child: Icon(
+                      Icons.help_outline, 
+                      size: 25,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            )
           );
-        },
-        tooltip: 'Customer Support',
-        child: Icon(
-          Icons.contact_support,
-          color: Colors.white,
-        ),
+        }).toList(),
       ),
     );
   }
 }
+
+  class Question{
+    final String title;
+    final String content;
+    final int id;
+
+    Question({
+      required this.title,
+      required this.content,
+      required this.id,
+    });
+
+    factory Question.fromFirestore(DocumentSnapshot doc){
+      Map<String, dynamic>? data = doc.data() as Map<String, dynamic>;
+
+      Question question = Question(
+        content: data['content'],
+        title: data['title'],
+        id: data['id'],
+      );
+
+      return question;
+    }
+
+  }

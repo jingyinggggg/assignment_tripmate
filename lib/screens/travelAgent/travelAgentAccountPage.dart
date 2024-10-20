@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentProfile.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentSettingScreen.dart';
+import 'package:assignment_tripmate/screens/user/helpCenter.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -259,36 +260,36 @@ class _TravelAgentAccountScreenState extends State<TravelAgentAccountScreen> {
                   //     ],
                   //   ),
                   // ),
-                  Positioned(
-                    top: screenHeight * 0.55,
-                    left: screenWidth * 0.12,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Agenda",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 14),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: screenWidth * 0.1,
-                            height: screenWidth * 0.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: screenHeight * 0.55,
+                  //   left: screenWidth * 0.12,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Agenda",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 14),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           // Navigator.push(
+                  //           //   context,
+                  //           //   MaterialPageRoute(
+                  //           //       builder: (context) =>
+                  //           //           const SettingScreen()),
+                  //           // );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: screenWidth * 0.1,
+                  //           height: screenWidth * 0.1,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
                     top: screenHeight * 0.6,
                     left: screenWidth * 0.35,
@@ -303,12 +304,12 @@ class _TravelAgentAccountScreenState extends State<TravelAgentAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HelpCenterScreen(userId: widget.userId, isTravelAgent: true,)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',

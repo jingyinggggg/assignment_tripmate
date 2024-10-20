@@ -160,14 +160,6 @@ class _SettingScreenState extends State<SettingScreen> {
                         );
                       },
                     ),
-                    // SizedBox(height: 20),
-                    // _buildButton(
-                    //   icon: Icons.delete_forever,
-                    //   text: "Delete Account",
-                    //   onPressed: () {
-                    //     // Handle navigation or other actions here.
-                    //   },
-                    // ),
                     SizedBox(height: 20),
                     _buildButton(
                       icon: AssetImage("images/leave_feedback.png"),

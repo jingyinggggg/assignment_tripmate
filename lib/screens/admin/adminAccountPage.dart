@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/admin/adminProfile.dart';
 import 'package:assignment_tripmate/screens/admin/adminSetting.dart';
 import 'package:assignment_tripmate/screens/login.dart';
+import 'package:assignment_tripmate/screens/user/helpCenter.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -228,36 +229,36 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //     ],
                   //   ),
                   // ),
-                  // Positioned(
-                  //   top: 365,
-                  //   left: 20,
-                  //   child: Column(
-                  //     children: [
-                  //       const Text(
-                  //         "Posting",
-                  //         style: TextStyle(
-                  //             fontWeight: FontWeight.w900,
-                  //             color: Colors.black,
-                  //             fontSize: 16),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           // Navigator.push(
-                  //           //   context,
-                  //           //   MaterialPageRoute(
-                  //           //       builder: (context) =>
-                  //           //           const SettingScreen()),
-                  //           // );
-                  //         },
-                  //         child: Image.asset(
-                  //           'images/location-pin.png',
-                  //           width: 50,
-                  //           height: 50,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+                  Positioned(
+                    top: 365,
+                    left: 20,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Help Center",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              fontSize: 16),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HelpCenterScreen(userId: widget.userId, isAdmin: true,)),
+                            );
+                          },
+                          child: Image.asset(
+                            'images/location-pin.png',
+                            width: 50,
+                            height: 50,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   Positioned(
                     top: screenHeight * 0.58,
                     left: screenWidth * 0.12,

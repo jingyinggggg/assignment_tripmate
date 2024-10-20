@@ -199,66 +199,66 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: screenHeight * 0.37,
-                    left: screenWidth * 0.26,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Review",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 14),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: screenWidth * 0.1,
-                            height: screenWidth * 0.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: screenHeight * 0.42,
-                    left: screenWidth * 0.06,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Blog",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 14),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      BlogMainScreen(userId: widget.userId)),
-                            );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: screenWidth * 0.1,
-                            height: screenWidth * 0.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Positioned(
+                  //   top: screenHeight * 0.37,
+                  //   left: screenWidth * 0.26,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Review",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 14),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           // Navigator.push(
+                  //           //   context,
+                  //           //   MaterialPageRoute(
+                  //           //       builder: (context) =>
+                  //           //           const SettingScreen()),
+                  //           // );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: screenWidth * 0.1,
+                  //           height: screenWidth * 0.1,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+                  // Positioned(
+                  //   top: screenHeight * 0.42,
+                  //   left: screenWidth * 0.06,
+                  //   child: Column(
+                  //     children: [
+                  //       const Text(
+                  //         "Blog",
+                  //         style: TextStyle(
+                  //             fontWeight: FontWeight.w900,
+                  //             color: Colors.black,
+                  //             fontSize: 14),
+                  //       ),
+                  //       GestureDetector(
+                  //         onTap: () {
+                  //           Navigator.push(
+                  //             context,
+                  //             MaterialPageRoute(
+                  //                 builder: (context) =>
+                  //                     BlogMainScreen(userId: widget.userId)),
+                  //           );
+                  //         },
+                  //         child: Image.asset(
+                  //           'images/location-pin.png',
+                  //           width: screenWidth * 0.1,
+                  //           height: screenWidth * 0.1,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
                   Positioned(
                     top: screenHeight * 0.55,
                     left: screenWidth * 0.12,
@@ -307,7 +307,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      UserHelpCenterScreen(userId: widget.userId,)),
+                                      HelpCenterScreen(userId: widget.userId, isUser: true,)),
                             );
                           },
                           child: Image.asset(
