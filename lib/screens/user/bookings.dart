@@ -914,69 +914,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     } else {
       return Center(child: Text(status == 0 ? 'You have no upcoming car rental bookings.' : status == 1 ? 'You have no completed car rental bookings' : status == 2 ? 'You have no canceled car rental bookings.' : 'Error'));
     }
-    // if(status == 0 && _carRentalBookingUpcoming.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _carRentalBookingUpcoming.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return carComponent(carRentalbookings: _carRentalBookingUpcoming[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else if(status == 1 && _carRentalBookingCompleted.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _carRentalBookingCompleted.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return carComponent(carRentalbookings: _carRentalBookingCompleted[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else if(status == 2 && _carRentalBookingCanceled.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _carRentalBookingCanceled.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return carComponent(carRentalbookings: _carRentalBookingCanceled[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else {
-    //   return Center(child: Text('You have no upcoming car rental bookings.'));
-    // }
   }
 
   Widget _buildLocalBuddyContent(List<localBuddyBooking> bookings, int status) {
@@ -1004,69 +941,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     } else {
       return Center(child: Text(status == 0 ? 'You have no upcoming local buddy bookings.' : status == 1 ? 'You have no completed local buddy bookings' : status == 2 ? 'You have no canceled local buddy bookings.' : 'Error'));
     }
-    // if(status == 0 && _localBuddyBookingUpcoming.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _localBuddyBookingUpcoming.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingUpcoming[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else if(status == 1 && _localBuddyBookingCompleted.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _localBuddyBookingCompleted.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingCompleted[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else if(status == 2 && _localBuddyBookingCanceled.isNotEmpty){
-    //   return SingleChildScrollView(
-    //     child: Container(
-    //       padding: EdgeInsets.all(10.0),
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.start,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           ListView.builder(
-    //             itemCount: _localBuddyBookingCanceled.length,
-    //             shrinkWrap: true, // Allows ListView to be nested
-    //             physics: NeverScrollableScrollPhysics(), // Prevents ListView from scrolling independently
-    //             itemBuilder: (context, index){
-    //               return localBuddyComponent(localBuddyBookings: _localBuddyBookingCanceled[index], status: status);
-    //             }
-    //           ),
-    //         ]
-    //       )
-    //     )
-    //   );
-    // } else {
-    //   return Center(child: Text('You have no upcoming local buddy bookings.'));
-    // }
   }
 
   Widget tourComponent({required tourBooking tourbookings, required int status}){
@@ -1209,7 +1083,140 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (tourbookings.fullyPaid == 0) 
+                        if (status == 0) ...[
+                          if (tourbookings.fullyPaid == 0)
+                            SizedBox(
+                              height: 30, // Set the button height
+                              child: TextButton(
+                                onPressed: (){
+                                  showDialog(
+                                    context: context, 
+                                    builder: (BuildContext context){
+                                      return AlertDialog(
+                                        title: Text('Confirmation'),
+                                        content: Text(
+                                          "Please note that payments are non-refundable once the booking is canceled after full payment is made. Kindly ensure that all details are thoroughly checked before proceeding.",
+                                          textAlign: TextAlign.justify,
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(); // Close the dialog
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: primaryColor, // Set the background color
+                                              foregroundColor: Colors.white, // Set the text color
+                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                              ),
+                                            ),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(); // Close the dialog
+                                              // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
+                                              //   bookTour(); // Call bookTour when payment option is selected
+                                              // });
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: primaryColor, // Set the background color
+                                              foregroundColor: Colors.white, // Set the text color
+                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                              ),
+                                            ),
+                                            child: const Text("Pay"),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                  );
+                                }, 
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Color(0xFF749CB9),
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                child: Text(
+                                  "Pay", 
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          SizedBox(width: 5), // Space between buttons
+                          SizedBox(
+                            height: 30, // Set the button height
+                            child: TextButton(
+                              onPressed: (){
+                                showDialog(
+                                  context: context, 
+                                  builder: (BuildContext context){
+                                    return AlertDialog(
+                                      title: Text('Confirmation'),
+                                      content: Text(
+                                        "Please noted that the deposit of RM1000.00 will not be refunded once you can this booking. Are you sure you still want to cancel this booking?",
+                                        textAlign: TextAlign.justify,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: primaryColor, // Set the background color
+                                            foregroundColor: Colors.white, // Set the text color
+                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                            ),
+                                          ),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                            // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
+                                            //   bookTour(); // Call bookTour when payment option is selected
+                                            // });
+                                          },
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: primaryColor, // Set the background color
+                                            foregroundColor: Colors.white, // Set the text color
+                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                            ),
+                                          ),
+                                          child: const Text("Confirm"),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                );
+                              }, 
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                backgroundColor: Colors.white,
+                                foregroundColor: Color(0xFF749CB9),
+                                shape: RoundedRectangleBorder(
+                                  side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              child: Text(
+                                "Cancel Booking", 
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ] else if (status == 1) 
                           SizedBox(
                             height: 30, // Set the button height
                             child: TextButton(
@@ -1224,31 +1231,13 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                 ),
                               ),
                               child: Text(
-                                "Pay", 
+                                "Write a Review", 
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ),
-                        SizedBox(width: 5), // Space between buttons
-                        SizedBox(
-                          height: 30, // Set the button height
-                          child: TextButton(
-                            onPressed: (){}, 
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 8.0),
-                              backgroundColor: Colors.white,
-                              foregroundColor: Color(0xFF749CB9),
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            child: Text(
-                              "Cancel", 
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
+                          )
+                        else
+                          SizedBox.shrink(),  // Return an empty widget when no buttons are required
                       ],
                     ),
                   ),
@@ -1378,26 +1367,94 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      height: 30, // Set the button height
-                      child: TextButton(
-                        onPressed: (){}, 
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
-                          backgroundColor: Colors.white,
-                          foregroundColor: Color(0xFF749CB9),
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
-                            borderRadius: BorderRadius.circular(8.0),
+                    child: status == 0
+                      ? SizedBox(
+                          height: 30, // Set the button height
+                          child: TextButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context, 
+                                builder: (BuildContext context){
+                                  return AlertDialog(
+                                    title: Text('Confirmation'),
+                                    content: Text(
+                                      "Please noted that a cancellation fee of RM100.00 will be deducted from the total price which means that you will only received RM${NumberFormat('#,##0.00').format((carRentalbookings.totalPrice - 100))}. Are you sure you still want to cancel this booking?",
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor, // Set the background color
+                                          foregroundColor: Colors.white, // Set the text color
+                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                          ),
+                                        ),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                          // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
+                                          //   bookTour(); // Call bookTour when payment option is selected
+                                          // });
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor, // Set the background color
+                                          foregroundColor: Colors.white, // Set the text color
+                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                          ),
+                                        ),
+                                        child: const Text("Confirm"),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              );
+                            }, 
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF749CB9),
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Text(
+                              "Cancel Booking", 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          "Cancel", 
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
+                        )
+                      : status == 1
+                        ? SizedBox(
+                          height: 30, // Set the button height
+                          child: TextButton(
+                            onPressed: () {}, 
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF749CB9),
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Text(
+                              "Write a Review", 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(), // Return an empty widget when no buttons are required
+                  )
                 ],
               ),
             )
@@ -1533,26 +1590,94 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      height: 30, // Set the button height
-                      child: TextButton(
-                        onPressed: (){}, 
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
-                          backgroundColor: Colors.white,
-                          foregroundColor: Color(0xFF749CB9),
-                          shape: RoundedRectangleBorder(
-                            side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
-                            borderRadius: BorderRadius.circular(8.0),
+                    child: status == 0
+                      ? SizedBox(
+                          height: 30, // Set the button height
+                          child: TextButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context, 
+                                builder: (BuildContext context){
+                                  return AlertDialog(
+                                    title: Text('Confirmation'),
+                                    content: Text(
+                                      "Please noted that a cancellation fee of RM100.00 will be deducted from the total price which means that you will only received RM${NumberFormat('#,##0.00').format((localBuddyBookings.totalPrice - 100))}. Are you sure you still want to cancel this booking?",
+                                      textAlign: TextAlign.justify,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor, // Set the background color
+                                          foregroundColor: Colors.white, // Set the text color
+                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                          ),
+                                        ),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                          // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
+                                          //   bookTour(); // Call bookTour when payment option is selected
+                                          // });
+                                        },
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor, // Set the background color
+                                          foregroundColor: Colors.white, // Set the text color
+                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                          ),
+                                        ),
+                                        child: const Text("Confirm"),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              );
+                            }, 
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF749CB9),
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Text(
+                              "Cancel Booking", 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          "Cancel", 
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
+                        )
+                      : status == 1
+                        ? SizedBox(
+                          height: 30, // Set the button height
+                          child: TextButton(
+                            onPressed: () {}, 
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF749CB9),
+                              shape: RoundedRectangleBorder(
+                                side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Text(
+                              "Write a Review", 
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        )
+                      : SizedBox.shrink(), // Return an empty widget when no buttons are required
+                  )
                 ],
               ),
             ),

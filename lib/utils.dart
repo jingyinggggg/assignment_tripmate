@@ -358,13 +358,15 @@ class carRentalBooking{
   final String bookingDate;
   final double totalPrice;
   final int bookingStatus;
+  final int isRefund;
 
   carRentalBooking({
     required this.carRentalBookingID, 
     required this.carID,
     required this.bookingDate, 
     required this.totalPrice,
-    required this.bookingStatus
+    required this.bookingStatus,
+    required this.isRefund
   });
 
 
@@ -388,6 +390,7 @@ class carRentalBooking{
       totalPrice: data['totalPrice'],
       bookingDate: bookingDateRange, // Use the formatted date range here
       bookingStatus: data['bookingStatus'],
+      isRefund: data['isRefund']
     );
 
     carRentalBookings.carName = data['carModel'] ?? '';
@@ -396,64 +399,6 @@ class carRentalBooking{
     return carRentalBookings;
   }
 }
-
-// class localBuddyBooking{
-//   final String localBuddyBookingID;
-//   final String localBuddyID;
-//   late String localBuddyName;
-//   late String localBuddyImage;
-//   late String locationArea;
-//   final String bookingDate;
-//   final double totalPrice;
-//   final int bookingStatus;
-
-//   localBuddyBooking({
-//     required this.localBuddyBookingID, 
-//     required this.localBuddyID, 
-//     required this.bookingDate, 
-//     required this.totalPrice, 
-//     required this.bookingStatus
-//   });
-
-//   factory localBuddyBooking.fromFirestore(DocumentSnapshot doc, DocumentSnapshot userDoc) {
-//     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-//     Map<String, dynamic> userdata = userDoc.data() as Map<String, dynamic>;
-
-//     // Check if bookingStartDate and bookingEndDate are not null before calling toDate()
-//     DateTime? bookingStartDate = data['bookingStartDate'] != null
-//         ? (data['bookingStartDate'] as Timestamp).toDate()
-//         : null;
-//     DateTime? bookingEndDate = data['bookingEndDate'] != null
-//         ? (data['bookingEndDate'] as Timestamp).toDate()
-//         : null;
-
-//     // Format the dates as dd/MM/yyyy, or set default values if null
-//     String formattedStartDate = bookingStartDate != null
-//         ? DateFormat('dd/MM/yyyy').format(bookingStartDate)
-//         : 'N/A';  // Default to 'N/A' or any placeholder value if null
-//     String formattedEndDate = bookingEndDate != null
-//         ? DateFormat('dd/MM/yyyy').format(bookingEndDate)
-//         : 'N/A';  // Default to 'N/A' or any placeholder value if null
-
-//     // Combine the start and end dates into a single string
-//     String bookingDateRange = "$formattedStartDate - $formattedEndDate";
-
-//     localBuddyBooking localBuddyBookings = localBuddyBooking(
-//       localBuddyBookingID: doc.id,
-//       localBuddyID: data['localBuddyID'],
-//       totalPrice: data['totalPrice'],
-//       bookingDate: bookingDateRange,  // Use the formatted date range here
-//       bookingStatus: data['bookingStatus'],
-//     );
-
-//     localBuddyBookings.localBuddyName = userdata['localBuddyName'] ?? '';
-//     localBuddyBookings.localBuddyImage = userdata['profileImage'] ?? '';
-//     localBuddyBookings.locationArea = data['locationArea'] ?? '';
-
-//     return localBuddyBookings;
-//   }
-
-// }
 
 class localBuddyBooking{
   final String localBuddyBookingID;
@@ -464,13 +409,15 @@ class localBuddyBooking{
   final String bookingDate;
   final double totalPrice;
   final int bookingStatus;
+  final int isRefund;
 
   localBuddyBooking({
     required this.localBuddyBookingID, 
     required this.localBuddyID, 
     required this.bookingDate, 
     required this.totalPrice, 
-    required this.bookingStatus
+    required this.bookingStatus,
+    required this.isRefund
   });
 
   factory localBuddyBooking.fromFirestore(DocumentSnapshot doc) {
@@ -501,6 +448,7 @@ class localBuddyBooking{
       totalPrice: data['totalPrice'],
       bookingDate: bookingDateRange,  // Use the formatted date range here
       bookingStatus: data['bookingStatus'],
+      isRefund: data['isRefund']
     );
 
     localBuddyBookings.localBuddyName = data['localBuddyName'] ?? '';

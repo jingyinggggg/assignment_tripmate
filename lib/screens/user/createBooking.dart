@@ -931,19 +931,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
       // Open the generated PDF file
       await PdfInvoiceApi.openFile(pdfFile);
 
-      // // After viewing the PDF, replace the current route with the homepage
-      // Future.microtask(() {
-      //   Navigator.pushReplacement(
-      //     context,
-      //     MaterialPageRoute(
-      //       builder: (context) => UserHomepageScreen(
-      //         userId: widget.userId, 
-      //         currentPageIndex: 3,
-      //       ),
-      //     ),
-      //   );
-      // });
-
     } catch (e) {
       // Handle errors during invoice generation
       showCustomDialog(
@@ -1628,7 +1615,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                           Expanded( // Allow the Text to expand and wrap text
                                             child: Text(
-                                              'The deposit will be refunded if the booking is canceled but a cancellation fee of RM 100.00 will be charged and deducted from the refund.',
+                                              'The deposit will be refunded if the booking is canceled. Cancellations made less than 24 hours before the bookings may be subject to a RM 100.00 cancellation fee.',
                                               style: TextStyle(
                                                 fontSize: defaultFontSize,
                                                 fontWeight: FontWeight.w500,
