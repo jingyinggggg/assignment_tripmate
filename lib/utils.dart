@@ -509,3 +509,28 @@ class TravelAgentCarRentalBookingList {
     );
   }
 }
+
+// class TourBookingDetails {
+//   final String customerID;
+//   final String customerName;
+//   final String dateRange;
+//   final String pax;
+
+//   TravelAgentCarRentalBookingList({
+//     required this.carRentalID,
+//     required this.carName,
+//     required this.carImage,
+//     this.totalBookingNumber = 0,  // Default to 0 if no bookings
+//   });
+
+//   factory TravelAgentCarRentalBookingList.fromFirestore(DocumentSnapshot doc) {
+//     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+//     return TravelAgentCarRentalBookingList(
+//       carRentalID: doc.id,
+//       carName: data['carModel'],
+//       carImage: data['carImage'],
+//       totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
+//     );
+//   }
+// }

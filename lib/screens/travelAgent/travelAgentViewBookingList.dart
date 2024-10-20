@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewBookingDetails.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -142,7 +143,10 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+              );
             },
           ),
           bottom: PreferredSize(
@@ -210,7 +214,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
       onTap: (){
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (context) => TravelAgentViewBookingDetailsScreen(userId: widget.userId, tourID: tourBooking.tourID,))
+          MaterialPageRoute(builder: (context) => TravelAgentViewBookingDetailsScreen(userId: widget.userId, tourID: tourBooking.tourID, totalBookingNumber: tourBooking.totalBookingNumber,))
         );
       },
       child: Container(
