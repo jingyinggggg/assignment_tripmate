@@ -71,10 +71,6 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     {'no': '', 'description': ''},
   ];
 
-  // final List<Map<String, String>> _itinerary = [
-  //   {'day': '', 'title': '', 'description': '', 'overnight': ''},
-  // ];
-
   final List<Map<String, String>> _itinerary = [
     {'day': '', 'title': '', 'description': ''},
   ];

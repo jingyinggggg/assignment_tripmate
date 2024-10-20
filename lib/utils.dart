@@ -457,5 +457,55 @@ class localBuddyBooking{
 
     return localBuddyBookings;
   }
+}
 
+class TravelAgentTourBookingList {
+  final String tourID;
+  final String tourName;
+  final String tourImage;
+  late int totalBookingNumber;
+
+  TravelAgentTourBookingList({
+    required this.tourID,
+    required this.tourName,
+    required this.tourImage,
+    this.totalBookingNumber = 0,  // Default to 0 if no bookings
+  });
+
+  // Factory constructor to create a TravelAgentTourBookingList object from Firestore
+  factory TravelAgentTourBookingList.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    return TravelAgentTourBookingList(
+      tourID: doc.id,
+      tourName: data['tourName'],
+      tourImage: data['tourCover'],
+      totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
+    );
+  }
+}
+
+class TravelAgentCarRentalBookingList {
+  final String carRentalID;
+  final String carName;
+  final String carImage;
+  late int totalBookingNumber;
+
+  TravelAgentCarRentalBookingList({
+    required this.carRentalID,
+    required this.carName,
+    required this.carImage,
+    this.totalBookingNumber = 0,  // Default to 0 if no bookings
+  });
+
+  factory TravelAgentCarRentalBookingList.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    return TravelAgentCarRentalBookingList(
+      carRentalID: doc.id,
+      carName: data['carModel'],
+      carImage: data['carImage'],
+      totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
+    );
+  }
 }

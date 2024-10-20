@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAccountPage.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewBookingList.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCarInfo.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewCountry.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
@@ -131,7 +132,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                     'icon': currentAccountStatus == 1 ? 'images/countries.png' : 'images/countries_disable.png',
                     'label': 'Tour',
                     'onPressed': () {
-                      if (currentAccountStatus != 0) {
+                      if (currentAccountStatus != 0 && currentAccountStatus != 2) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -145,7 +146,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                     'icon': currentAccountStatus == 1 ?  'images/CarRentalIcon.png' : 'images/car-rental_disable.png',
                     'label': 'Car Rental',
                     'onPressed': () {
-                      if (currentAccountStatus != 0) {
+                      if (currentAccountStatus != 0 && currentAccountStatus != 2) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -159,7 +160,13 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                     'icon': currentAccountStatus == 1 ?  'images/manage_booking.png' : 'images/booking_disable.png',
                     'label': 'Booking',
                     'onPressed': () {
-                      // Placeholder for Booking screen
+                      if (currentAccountStatus != 0 && currentAccountStatus != 2) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => TravelAgentViewBookingListScreen(userId: widget.userId)),
+                        );
+                      }
                     },
                     'enabled': currentAccountStatus != 0 && currentAccountStatus != 2,
                   },
