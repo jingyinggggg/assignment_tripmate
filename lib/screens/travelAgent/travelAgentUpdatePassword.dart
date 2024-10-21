@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/constants.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -168,7 +169,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
       obscureText: obscureText,
       style: const TextStyle(
         fontWeight: FontWeight.w800,
-        fontSize: 17,
+        fontSize: defaultFontSize,
       ),
       decoration: InputDecoration(
         hintText: hintText,
@@ -181,6 +182,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
           onPressed: onVisibilityToggle,
           icon: Icon(
             isVisible ? Icons.visibility_off : Icons.visibility,
+            size: 18,
           ),
         ),
         filled: true,
@@ -208,7 +210,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
         ),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         labelStyle: const TextStyle(
-          fontSize: 20,
+          fontSize: defaultLabelFontSize,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
           shadows: [
@@ -235,7 +237,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
           color: Colors.white,
           fontFamily: 'Inika',
           fontWeight: FontWeight.bold,
-          fontSize: 20,
+          fontSize: defaultAppBarTitleFontSize,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -303,7 +305,7 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
                 backgroundColor: const Color(0xFF467BA1),
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 textStyle: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 18,
                   fontFamily: 'Inika',
                   fontWeight: FontWeight.bold,
                 ),

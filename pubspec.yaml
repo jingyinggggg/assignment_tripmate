@@ -73,6 +73,7 @@ dependencies:
   google_generative_ai: ^0.4.6
   table_calendar: ^3.1.2
   pdf: ^3.11.1
+  url_launcher: ^6.3.1
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20
   # google_ml_vision: ^0.0.7

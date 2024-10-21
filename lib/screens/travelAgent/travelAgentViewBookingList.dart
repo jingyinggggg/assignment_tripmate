@@ -292,7 +292,12 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
 
   Widget CarRentalBookingComponent({required TravelAgentCarRentalBookingList carRentalBooking}){
     return GestureDetector(
-      onTap: (){},
+      onTap: (){
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => TravelAgentViewBookingDetailsScreen(userId: widget.userId, carRentalID: carRentalBooking.carRentalID, totalBookingNumber: carRentalBooking.totalBookingNumber,))
+        );
+      },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),
         decoration: BoxDecoration(
