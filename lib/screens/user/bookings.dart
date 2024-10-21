@@ -426,28 +426,6 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         backgroundColor: Color.fromARGB(255, 241, 246, 249),
         body: Column(
           children: [
-            // Search Field
-            Padding(
-              padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
-              child: Container(
-                height: 50,
-                child: TextField(
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 20),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.blueGrey, width: 2),
-                    ),
-                    hintText: "Search bookings ...",
-                    hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ),
-
             // Outer TabBar (Upcoming, Completed, Canceled)
             TabBar(
               onTap: (index) {

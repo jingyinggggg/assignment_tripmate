@@ -119,7 +119,8 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
 
   void onSearch(String search) {
     setState(() {
-      _foundedMessageList = _MessageList.where((MessageList) => MessageList.receiverName.toUpperCase().contains(search.toUpperCase())).toList();
+      _foundedMessageList = _MessageList.where((MessageList) => 
+        MessageList.receiverName.toUpperCase().contains(search.toUpperCase())).toList();
     });
   }
 
