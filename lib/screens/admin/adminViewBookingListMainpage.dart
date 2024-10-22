@@ -1,4 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingDetails.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingListByAgency.dart';
 import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -363,17 +365,16 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
   Widget AgencyListComponent({required AdminAgencyList agency}) {
     return GestureDetector(
       onTap: () {
-        // Uncomment and implement the navigation logic as needed
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => TravelAgentViewBookingDetailsScreen(
-        //       userId: widget.userId,
-        //       tourID: buddyBooking.tourID,
-        //       totalBookingNumber: buddyBooking.totalBookingNumber,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminViewBookingListByAgentScreen(
+              userId: widget.userId,
+              agentID: agency.agentID,
+              agencyName: agency.agencyName,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),
@@ -481,17 +482,17 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
   Widget BuddyBookingComponent({required AdminLocalBuddyBookingList buddyBooking}) {
     return GestureDetector(
       onTap: () {
-        // Uncomment and implement the navigation logic as needed
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => TravelAgentViewBookingDetailsScreen(
-        //       userId: widget.userId,
-        //       tourID: buddyBooking.tourID,
-        //       totalBookingNumber: buddyBooking.totalBookingNumber,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminViewBookingDetailsScreen(
+              userId: widget.userId,
+              localBuddyID: buddyBooking.localBuddyID,
+              localBuddyUserID: buddyBooking.userID,
+              totalBookingNumber: buddyBooking.totalBookingNumber,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),

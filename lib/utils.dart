@@ -464,12 +464,14 @@ class TravelAgentTourBookingList {
   final String tourName;
   final String tourImage;
   late int totalBookingNumber;
+  late bool haveCancelBooking;
 
   TravelAgentTourBookingList({
     required this.tourID,
     required this.tourName,
     required this.tourImage,
     this.totalBookingNumber = 0,  // Default to 0 if no bookings
+    this.haveCancelBooking = false,
   });
 
   // Factory constructor to create a TravelAgentTourBookingList object from Firestore
@@ -480,7 +482,8 @@ class TravelAgentTourBookingList {
       tourID: doc.id,
       tourName: data['tourName'],
       tourImage: data['tourCover'],
-      totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
+      totalBookingNumber: data['totalBookingNumber'] ?? 0,  
+      haveCancelBooking: data['haveCancelBooking'] ?? false
     );
   }
 }
@@ -490,12 +493,14 @@ class TravelAgentCarRentalBookingList {
   final String carName;
   final String carImage;
   late int totalBookingNumber;
+  late bool haveCancelBooking;
 
   TravelAgentCarRentalBookingList({
     required this.carRentalID,
     required this.carName,
     required this.carImage,
-    this.totalBookingNumber = 0,  // Default to 0 if no bookings
+    this.totalBookingNumber = 0,  
+    this.haveCancelBooking = false
   });
 
   factory TravelAgentCarRentalBookingList.fromFirestore(DocumentSnapshot doc) {
@@ -506,6 +511,7 @@ class TravelAgentCarRentalBookingList {
       carName: data['carModel'],
       carImage: data['carImage'],
       totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
+      haveCancelBooking: data['haveCancelBooking'] ?? false
     );
   }
 }

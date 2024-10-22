@@ -459,7 +459,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelTourBooking(String tourBookingID) async{
+  Future<void>cancelTourBooking(String tourBookingID, String tourID, int slot, String dateRange) async{
     setState(() {
       isCancelTourBooking = true;
     });
@@ -468,6 +468,29 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         .collection('tourBooking')
         .doc(tourBookingID)
         .update({'bookingStatus': 2});
+      
+      final tourPackageDoc = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
+
+      if (tourPackageDoc.exists) {
+        List availability = tourPackageDoc.data()?['availability'] ?? [];
+
+        // Find the availability entry for the selected date range
+        for (int i = 0; i < availability.length; i++) {
+          if (availability[i]['dateRange'] == dateRange) {
+            int updatedSlots = availability[i]['slot'] + slot;
+
+            // Update the slots for the specific date range
+            availability[i]['slot'] = updatedSlots;
+
+            // Save the updated availability back to Firestore
+            await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).update({
+              'availability': availability,
+            });
+
+            break;
+          }
+        }
+      }
 
       showCustomDialog(
         context: context, 
@@ -1009,7 +1032,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                         TextButton(
                                           onPressed: () {
                                             Navigator.pop(context);
-                                            cancelTourBooking(tourbookings.tourBookingID);
+                                            cancelTourBooking(tourbookings.tourBookingID, tourbookings.tourID, tourbookings.pax, tourbookings.travelDate);
                                           },
                                           style: TextButton.styleFrom(
                                             backgroundColor: primaryColor, // Set the background color

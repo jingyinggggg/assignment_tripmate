@@ -1,23 +1,28 @@
 import 'package:assignment_tripmate/constants.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewBookingDetails.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingDetails.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingListMainpage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class TravelAgentViewBookingListScreen extends StatefulWidget {
+class AdminViewBookingListByAgentScreen extends StatefulWidget {
   final String userId;
+  final String agentID;
+  final String agencyName;
 
-  const TravelAgentViewBookingListScreen({
+  const AdminViewBookingListByAgentScreen({
     super.key, 
     required this.userId,
+    required this.agentID,
+    required this.agencyName
   });
 
   @override
-  State<TravelAgentViewBookingListScreen> createState() => _TravelAgentViewBookingListScreenState();
+  State<AdminViewBookingListByAgentScreen> createState() => _AdminViewBookingListByAgentScreenState();
 }
 
-class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookingListScreen> {
+class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingListByAgentScreen> {
+  
   List<TravelAgentTourBookingList> tourBookingList = [];
   List<TravelAgentCarRentalBookingList> carRentalBookingList = [];
   bool isFetchingTour = false;
@@ -38,7 +43,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     try {
       // Fetch all tour packages uploaded by the current user
       CollectionReference tourRef = FirebaseFirestore.instance.collection('tourPackage');
-      QuerySnapshot querySnapshot = await tourRef.where('agentID', isEqualTo: widget.userId).get();
+      QuerySnapshot querySnapshot = await tourRef.where('agentID', isEqualTo: widget.agentID).get();
 
       List<TravelAgentTourBookingList> tourBookingLists = [];
 
@@ -47,15 +52,25 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         // Extract tour details
         TravelAgentTourBookingList tourPackage = TravelAgentTourBookingList.fromFirestore(doc);
 
+        bool haveCancelBooking = false;
+
         // Fetch all bookings related to the current tourID
         CollectionReference tourBookingRef = FirebaseFirestore.instance.collection('tourBooking');
         QuerySnapshot tourBookingSnapshot = await tourBookingRef.where('tourID', isEqualTo: tourPackage.tourID).get();
+
+        for (var doc in tourBookingSnapshot.docs) {
+          if (doc['bookingStatus'] == 2) {
+            haveCancelBooking = true; // Set to true if any status is 2
+            break; // No need to continue checking
+          }
+        }
 
         // Sum the total number of bookings for the current tour package
         int totalBookingCount = tourBookingSnapshot.size;
 
         // Update the totalBookingNumber for the tourPackage
         tourPackage.totalBookingNumber = totalBookingCount;
+        tourPackage.haveCancelBooking = haveCancelBooking;
 
         // Add the tour package with booking info to the list
         tourBookingLists.add(tourPackage);
@@ -84,7 +99,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     try {
       // Fetch all car rental uploaded by the current user
       CollectionReference carRentalRef = FirebaseFirestore.instance.collection('car_rental');
-      QuerySnapshot querySnapshot = await carRentalRef.where('agencyID', isEqualTo: widget.userId).get();
+      QuerySnapshot querySnapshot = await carRentalRef.where('agencyID', isEqualTo: widget.agentID).get();
 
       List<TravelAgentCarRentalBookingList> carRentalBookingLists = [];
 
@@ -93,15 +108,25 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         // Extract car details
         TravelAgentCarRentalBookingList carRental = TravelAgentCarRentalBookingList.fromFirestore(doc);
 
+        bool haveCancelBooking = false;
+
         // Fetch all bookings related to the current carID
         CollectionReference carRentalBookingRef = FirebaseFirestore.instance.collection('carRentalBooking');
         QuerySnapshot carRentalBookingSnapshot = await carRentalBookingRef.where('carID', isEqualTo: carRental.carRentalID).get();
+
+        for (var doc in carRentalBookingSnapshot.docs) {
+          if (doc['bookingStatus'] == 2) {
+            haveCancelBooking = true; // Set to true if any status is 2
+            break; // No need to continue checking
+          }
+        }
 
         // Sum the total number of bookings for the current car rental
         int totalBookingCount = carRentalBookingSnapshot.size;
 
         // Update the totalBookingNumber for the carRental
         carRental.totalBookingNumber = totalBookingCount;
+        carRental.haveCancelBooking = haveCancelBooking;
 
         // Add the tour package with booking info to the list
         carRentalBookingLists.add(carRental);
@@ -121,8 +146,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
       print('Error fetching tour booking list: $e');
     }
   }
-
-
+  
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -145,7 +169,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+                MaterialPageRoute(builder: (context) => AdminViewBookingListMainpageScreen(userId: widget.userId))
               );
             },
           ),
@@ -182,26 +206,110 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
               child: isFetchingTour
               ? Center(child: CircularProgressIndicator(color: primaryColor))
               : tourBookingList.isEmpty
-                ? Center(child: Text('No tour booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-                : ListView.builder(
-                    itemCount: tourBookingList.length,
-                    itemBuilder: (context, index) {
-                      return TourBookingComponent(tourBooking: tourBookingList[index]);
-                    }
-                  ),
+                ? Center(child: Text("No tour booking record found in the system.", style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                :  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.agencyName,
+                        style: TextStyle(
+                          fontSize: defaultLabelFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0), // Adjust the icon's vertical position
+                            child: Icon(Icons.circle, color: Colors.red, size: 8),
+                          ),
+                          SizedBox(width: 5), // Space between icon and text
+                          Expanded(
+                            child: Text(
+                              "means cancellation exist in the tour booking list, you need to issue the refund.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: null,
+                              overflow: TextOverflow.visible,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: tourBookingList.length,
+                          itemBuilder: (context, index) {
+                            return TourBookingComponent(tourBooking: tourBookingList[index]);
+                          }
+                        )
+                      )
+                    ],
+                  )
             ),
             Container(
-              padding: EdgeInsets.all(10.0),
+              padding: EdgeInsets.all(15.0),
               child: isFetchingCarRental
               ? Center(child: CircularProgressIndicator(color: primaryColor))
               : carRentalBookingList.isEmpty
-                ? Center(child: Text('No car rental booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-                : ListView.builder(
-                    itemCount: carRentalBookingList.length,
-                    itemBuilder: (context, index) {
-                      return CarRentalBookingComponent(carRentalBooking: carRentalBookingList[index]);
-                    }
-                  ),
+                ? Center(child: Text("No car rental booking record found in the system.", style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                :  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.agencyName,
+                        style: TextStyle(
+                          fontSize: defaultLabelFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0), // Adjust the icon's vertical position
+                            child: Icon(Icons.circle, color: Colors.red, size: 8),
+                          ),
+                          SizedBox(width: 5), // Space between icon and text
+                          Expanded(
+                            child: Text(
+                              "means cancellation exist in the car rental booking list, you need to issue the refund.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: null,
+                              overflow: TextOverflow.visible,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: carRentalBookingList.length,
+                          itemBuilder: (context, index) {
+                            return CarRentalBookingComponent(carRentalBooking: carRentalBookingList[index]);
+                          }
+                        )
+                      )
+                    ],
+                  )
             ),
           ],
         ),
@@ -215,7 +323,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TravelAgentViewBookingDetailsScreen(
+            builder: (context) => AdminViewBookingDetailsScreen(
               userId: widget.userId,
               tourID: tourBooking.tourID,
               totalBookingNumber: tourBooking.totalBookingNumber,
@@ -247,14 +355,21 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
                   bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
                 ),
               ),
-              child: Text(
-                "Tour Package ID: ${tourBooking.tourID}",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Tour Package ID: ${tourBooking.tourID}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (tourBooking.haveCancelBooking)
+                    Icon(Icons.circle, color: Colors.red, size: 10),
+                ],
+              )
             ),
             Container(
               padding: EdgeInsets.all(10.0), // Added padding for better spacing
@@ -334,7 +449,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TravelAgentViewBookingDetailsScreen(
+            builder: (context) => AdminViewBookingDetailsScreen(
               userId: widget.userId,
               carRentalID: carRentalBooking.carRentalID,
               totalBookingNumber: carRentalBooking.totalBookingNumber,
@@ -366,14 +481,21 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
                   bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
                 ),
               ),
-              child: Text(
-                "Car Rental ID: ${carRentalBooking.carRentalID}",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Car Rental ID: ${carRentalBooking.carRentalID}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (carRentalBooking.haveCancelBooking)
+                    Icon(Icons.circle, color: Colors.red, size: 10),
+                ],
+              )
             ),
             Container(
               padding: EdgeInsets.all(10.0), // Added padding for better spacing
@@ -446,5 +568,4 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
       ),
     );
   }
-
 }
