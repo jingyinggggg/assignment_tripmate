@@ -52,25 +52,15 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
         // Extract tour details
         TravelAgentTourBookingList tourPackage = TravelAgentTourBookingList.fromFirestore(doc);
 
-        bool haveCancelBooking = false;
-
         // Fetch all bookings related to the current tourID
         CollectionReference tourBookingRef = FirebaseFirestore.instance.collection('tourBooking');
         QuerySnapshot tourBookingSnapshot = await tourBookingRef.where('tourID', isEqualTo: tourPackage.tourID).get();
-
-        for (var doc in tourBookingSnapshot.docs) {
-          if (doc['bookingStatus'] == 2) {
-            haveCancelBooking = true; // Set to true if any status is 2
-            break; // No need to continue checking
-          }
-        }
 
         // Sum the total number of bookings for the current tour package
         int totalBookingCount = tourBookingSnapshot.size;
 
         // Update the totalBookingNumber for the tourPackage
         tourPackage.totalBookingNumber = totalBookingCount;
-        tourPackage.haveCancelBooking = haveCancelBooking;
 
         // Add the tour package with booking info to the list
         tourBookingLists.add(tourPackage);
@@ -220,30 +210,30 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                         ),
                       ),
                       SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4.0), // Adjust the icon's vertical position
-                            child: Icon(Icons.circle, color: Colors.red, size: 8),
-                          ),
-                          SizedBox(width: 5), // Space between icon and text
-                          Expanded(
-                            child: Text(
-                              "means cancellation exist in the tour booking list, you need to issue the refund.",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: null,
-                              overflow: TextOverflow.visible,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.start,
+                      //   crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
+                      //   children: [
+                      //     Padding(
+                      //       padding: const EdgeInsets.only(top: 4.0), // Adjust the icon's vertical position
+                      //       child: Icon(Icons.circle, color: Colors.red, size: 8),
+                      //     ),
+                      //     SizedBox(width: 5), // Space between icon and text
+                      //     Expanded(
+                      //       child: Text(
+                      //         "means cancellation exist in the tour booking list, you need to issue the refund.",
+                      //         style: TextStyle(
+                      //           fontSize: 12,
+                      //           color: Colors.black,
+                      //           fontWeight: FontWeight.w600,
+                      //         ),
+                      //         maxLines: null,
+                      //         overflow: TextOverflow.visible,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                      // SizedBox(height: 10),
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -355,21 +345,14 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                   bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Tour Package ID: ${tourBooking.tourID}",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (tourBooking.haveCancelBooking)
-                    Icon(Icons.circle, color: Colors.red, size: 10),
-                ],
-              )
+              child: Text(
+                "Tour Package ID: ${tourBooking.tourID}",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             Container(
               padding: EdgeInsets.all(10.0), // Added padding for better spacing

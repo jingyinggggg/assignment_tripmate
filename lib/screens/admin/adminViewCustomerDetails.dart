@@ -1,6 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/customerModel.dart';
+import 'package:assignment_tripmate/invoiceModel.dart';
+import 'package:assignment_tripmate/pdf_invoice_api.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingDetails.dart';
+import 'package:assignment_tripmate/supplierModel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
@@ -10,42 +16,51 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
 
-class TravelAgentViewCustomerDetailsScreen extends StatefulWidget {
+class AdminViewCustomerDetailsScreen extends StatefulWidget {
   final String userId;
   final String customerId;
   final String? tourID;
   final String? carRentalID;
+  final String? localBuddyID;
   final String? tourBookingID;
   final String? carRentalBookingID;
+  final String? localBuddyBookingID;
 
-  const TravelAgentViewCustomerDetailsScreen({
+  const AdminViewCustomerDetailsScreen({
     super.key, 
     required this.userId,
     required this.customerId,
     this.tourID,
     this.carRentalID,
+    this.localBuddyID,
     this.tourBookingID,
     this.carRentalBookingID,
+    this.localBuddyBookingID
   });
 
   @override
-  State<TravelAgentViewCustomerDetailsScreen> createState() => _TravelAgentViewCustomerDetailsScreenState();
+  State<AdminViewCustomerDetailsScreen> createState() => _AdminViewCustomerDetailsScreenState();
 }
 
-class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCustomerDetailsScreen> {
-
+class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetailsScreen> {
   bool isFetchingCustomerDetails = false;
   bool isFetchingTourBooking = false;
   bool isFetchingCarBooking = false;
+  bool isFetchingLocalBuddyBooking = false;
   bool isFetchingTour = false;
   bool isFetchingCar = false;
+  bool isFetchingLocalBuddy = false;
   bool isOpenFile = false;
   bool isOpenInvoice = false;
+  bool isOpenRefundInvoice = false;
+  bool isRefunding = false;
   Map<String, dynamic>? custData;
   Map<String, dynamic>? tourData;
   Map<String, dynamic>? carData;
+  Map<String, dynamic>? localBuddyData;
   Map<String, dynamic>? tourBookingData;
   Map<String, dynamic>? carBookingData;
+  Map<String, dynamic>? localBuddyBookingData;
 
   @override
   void initState() {
@@ -57,6 +72,9 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     } else if(widget.carRentalBookingID != null){
       _fetchCarBookingDetails();
       _fetchCarDetails();
+    } else if(widget.localBuddyBookingID != null){
+      _fetchLocalBuddyBookingDetails();
+      _fetchLocalBuddyDetails();
     }
   }
 
@@ -119,13 +137,35 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
         setState(() {
           carBookingData = data;
         });
-        print("Car Booking Data: $carBookingData");
       }
     } catch(e){
       print('Error fetch car booking data: $e');
     } finally{
       setState(() {
         isFetchingCarBooking = false;
+      });
+    }
+  }
+
+  Future<void>_fetchLocalBuddyBookingDetails() async {
+    setState(() {
+      isFetchingLocalBuddy = true;
+    });
+    try{
+      DocumentReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddyBooking').doc(widget.localBuddyBookingID);
+      DocumentSnapshot localBuddySnapshot = await localBuddyRef.get();
+
+      if(localBuddySnapshot.exists){
+        Map<String, dynamic>? data = localBuddySnapshot.data() as  Map<String, dynamic>?;
+        setState(() {
+          localBuddyBookingData = data;
+        });
+      }
+    } catch(e){
+      print('Error fetch local buddy booking data: $e');
+    } finally{
+      setState(() {
+        isFetchingLocalBuddy = false;
       });
     }
   }
@@ -176,6 +216,43 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     }
   }
 
+  Future<void>_fetchLocalBuddyDetails() async {
+    setState(() {
+      isFetchingLocalBuddy = true;
+    });
+    try{
+      DocumentReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyID);
+      DocumentSnapshot localBuddySnapshot = await localBuddyRef.get();
+
+      if(localBuddySnapshot.exists){
+        Map<String, dynamic>? data = localBuddySnapshot.data() as  Map<String, dynamic>?;
+
+        if(data != null){
+          DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(data['userID']);
+          DocumentSnapshot userSnapshot = await userRef.get();
+
+           Map<String, dynamic>? userData = userSnapshot.data() as  Map<String, dynamic>?;
+
+           if (userData != null) {
+            // Add user name and profile image to local buddy data
+            data['localBuddyName'] = userData['name'] ?? 'Unknown Name';
+            data['profileImage'] = userData['profileImage'] ?? 'default_image_url';
+          }
+
+        }
+        setState(() {
+          localBuddyData = data;
+        });
+      }
+    } catch(e){
+      print('Error fetch local buddy data: $e');
+    } finally{
+      setState(() {
+        isFetchingLocalBuddy = false;
+      });
+    }
+  }
+
   Future<void> downloadAndOpenPdfFromUrl(String url, String fileName) async {
     try {
       // Get the directory to store the file
@@ -198,7 +275,152 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
       print("Error downloading or opening the file: $e");
     }
   }
-  
+
+  Future<void> refundToCustomer(String type, String bookingID, int price, String collection) async{
+    setState(() {
+      isRefunding = true;
+    });
+    try{
+      if(type == "Car Rental"){
+        await FirebaseFirestore.instance.collection('carRentalBooking').doc(bookingID).update({
+          'isRefund': 1
+        });
+      } else{
+        await FirebaseFirestore.instance.collection('localBuddyBooking').doc(bookingID).update({
+          'isRefund': 1
+        });
+      }
+
+      // Show success dialog
+      showCustomDialog(
+        context: context, 
+        title: "Refund Successful", 
+        content: "The amount is refunded to customer successfully.", 
+        onPressed: () async {
+          // Close the payment successful dialog
+          Navigator.of(context).pop();
+
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          Future.microtask(() {
+            showLoadingDialog(context, "Generating Invoice...");
+          });
+
+          final date = DateTime.now();
+
+          final invoice = Invoice(
+            supplier: Supplier(
+              name: "Admin",
+              address: "admin@tripmate.com",
+            ),
+            customer: Customer(
+              name: custData!['name'],
+              address: custData!['address'],
+            ),
+            info: InvoiceInfo(
+              date: date,
+              description: "Below is the refund invoice summary:",
+              number: '${DateTime.now().year}-Ref${Random().nextInt(9000) + 1000}',
+            ),
+            // Wrap the single InvoiceItem in a list
+            items: [
+              InvoiceItem(
+                description: "Refund (Booking ID: ${bookingID})",
+                quantity: 1,
+                unitPrice: price,
+                total: price.toDouble(),
+              ),
+            ],
+          );
+
+          // Perform some async operation
+          await generateInvoice(bookingID, invoice, type, collection, "refund_invoice", false, true);
+
+          // After the operation is done, hide the loading dialog
+          Navigator.of(context).pop(); // This will close the loading dialog
+
+          // Navigate to the homepage after PDF viewer
+          Future.delayed(Duration(milliseconds: 500), () {
+            Navigator.pop(context);
+          });
+        },
+        textButton: "View Invoice",
+      );
+    } catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: () {
+          Navigator.pop(context);
+        }
+      );
+    } finally {
+      setState(() {
+        isRefunding = false;
+      });
+    }
+  }
+
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund) async {
+    setState(() {
+      bool isGeneratingInvoice = true; // Correctly set the loading state variable
+    });
+
+    try {
+      // Small delay to allow the UI to update
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Generate the PDF file
+      final pdfFile = await PdfInvoiceApi.generate(
+        invoices, 
+        custData!['id'], 
+        id, 
+        servicesType, 
+        collectionName, 
+        pdfFileName, 
+        isDeposit,
+        isRefund
+      );
+
+      // Open the generated PDF file
+      await PdfInvoiceApi.openFile(pdfFile);
+
+    } catch (e) {
+      // Handle errors during invoice generation
+      showCustomDialog(
+        context: context,
+        title: "Invoice Generation Failed",
+        content: "Could not generate invoice. Please try again.",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    } finally {
+      setState(() {
+        bool isGeneratingInvoice = false; // Reset loading state correctly
+      });
+    }
+  }
+
+  void showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Please Wait'),
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: primaryColor,), // Loading indicator
+              SizedBox(width: 20),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -221,7 +443,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
           },
         ),
       ),
-      body: isFetchingCustomerDetails || isFetchingCarBooking || isFetchingTourBooking
+      body: isFetchingCustomerDetails || isFetchingCarBooking || isFetchingTourBooking || isFetchingLocalBuddyBooking
           ? Center(child: CircularProgressIndicator(color: primaryColor))
           : custData == null 
             ? Center(child: Text('No customer details available.'))
@@ -380,10 +602,11 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF749CB9),  
-                                          foregroundColor: Colors.white,  
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
                                           shape: RoundedRectangleBorder(
-                                            side: BorderSide(color: primaryColor)
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
                                           ),
                                         ),
                                       )
@@ -449,10 +672,11 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF749CB9),  
-                                          foregroundColor: Colors.white,  
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
                                           shape: RoundedRectangleBorder(
-                                            side: BorderSide(color: primaryColor)
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
                                           ),
                                         ),
                                       )
@@ -495,7 +719,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                               Row(
                                 children: [
                                   Container(
-                                    width: 90,
+                                    width: 50,
                                     child: Text(
                                       "Invoice",
                                       style: TextStyle(
@@ -541,10 +765,11 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF749CB9),  
-                                          foregroundColor: Colors.white,  
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
                                           shape: RoundedRectangleBorder(
-                                            side: BorderSide(color: primaryColor)
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
                                           ),
                                         ),
                                       )
@@ -559,7 +784,383 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                       ),
                                     ),
                                 ],
-                              )
+                              ),
+                              SizedBox(height: 20),
+                              if(carBookingData!['refundInvoice'] != null)
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 50,
+                                      child: Text(
+                                        "Refund",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      ":",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    if(carBookingData!['refundInvoice'] != null)
+                                      isOpenRefundInvoice
+                                      ? SizedBox(
+                                          width: 20.0,
+                                          height: 20.0,
+                                          child: CircularProgressIndicator(color: primaryColor),
+                                        ) 
+                                      : SizedBox(
+                                        height: 35,
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              isOpenRefundInvoice = true; // Update the loading state
+                                            });
+                                            String url = carBookingData!['refundInvoice']; 
+                                            String fileName = 'invoice'; 
+                                            await downloadAndOpenPdfFromUrl(url, fileName);
+                                            setState(() {
+                                              isOpenRefundInvoice = false; // Update the state when done
+                                            });
+                                          }, 
+                                          child:Text(
+                                            "View Refund Invoice",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.white,  
+                                            foregroundColor: primaryColor,  
+                                            shape: RoundedRectangleBorder(
+                                              side: BorderSide(color: primaryColor, width: 2),
+                                              borderRadius: BorderRadius.circular(10)
+                                            ),
+                                          ),
+                                        )
+                                      )
+                                    else
+                                      Text(
+                                        "N/A",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              SizedBox(height: 20),
+                              carBookingData!['bookingStatus'] == 2
+                              ? Container(
+                                width: double.infinity,
+                                height: 50,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Confirmation"),
+                                            content: Text(
+                                              "Due to the cancellation fee is RM100.00. Therefore, only amount of RM${NumberFormat('#,##0.00').format((carBookingData!['totalPrice'] - 100) ?? 0)} will be refunded to customer.",
+                                              textAlign: TextAlign.justify,
+                                            ),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                  refundToCustomer('Car Rental', carBookingData!['bookingID'], (carBookingData!['totalPrice'] - 100).toInt(), 'carRentalBooking');
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Refund"),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }, 
+                                    child: isRefunding
+                                      ? CircularProgressIndicator(color: Colors.white)
+                                      : Text(
+                                          "Issue Refund",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10), // Set the button radius to 0
+                                      ),
+                                    ),
+                                  )
+                                )
+                              : Container()
+                              
+                            ],
+
+                            if(localBuddyBookingData != null && localBuddyData != null) ...[
+                              localBuddyComponent(data: localBuddyBookingData!, localBuddyData: localBuddyData!),
+                              SizedBox(height: 20),
+                              Container(
+                                alignment: Alignment.topCenter,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Colors.black, width: 1.5),
+                                    bottom: BorderSide(color: Colors.black, width: 1.5),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Payment Info',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    child: Text(
+                                      "Invoice",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    ":",
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  if(localBuddyBookingData!['invoice'] != null)
+                                    isOpenInvoice
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenInvoice = true; // Update the loading state
+                                          });
+                                          String url = localBuddyBookingData!['invoice']; 
+                                          String fileName = 'invoice'; 
+                                          await downloadAndOpenPdfFromUrl(url, fileName);
+                                          setState(() {
+                                            isOpenInvoice = false; // Update the state when done
+                                          });
+                                        }, 
+                                        child:Text(
+                                          "View Deposit Invoice",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
+                                          shape: RoundedRectangleBorder(
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                        ),
+                                      )
+                                    )
+                                  else
+                                    Text(
+                                      "N/A",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              if(localBuddyBookingData!['refundInvoice'] != null)
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 50,
+                                      child: Text(
+                                        "Refund",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      ":",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    if(localBuddyBookingData!['refundInvoice'] != null)
+                                      isOpenRefundInvoice
+                                      ? SizedBox(
+                                          width: 20.0,
+                                          height: 20.0,
+                                          child: CircularProgressIndicator(color: primaryColor),
+                                        ) 
+                                      : SizedBox(
+                                        height: 35,
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              isOpenRefundInvoice = true; // Update the loading state
+                                            });
+                                            String url = localBuddyBookingData!['refundInvoice']; 
+                                            String fileName = 'invoice'; 
+                                            await downloadAndOpenPdfFromUrl(url, fileName);
+                                            setState(() {
+                                              isOpenRefundInvoice = false; // Update the state when done
+                                            });
+                                          }, 
+                                          child:Text(
+                                            "View Refund Invoice",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.white,  
+                                            foregroundColor: primaryColor,  
+                                            shape: RoundedRectangleBorder(
+                                              side: BorderSide(color: primaryColor, width: 2),
+                                              borderRadius: BorderRadius.circular(10)
+                                            ),
+                                          ),
+                                        )
+                                      )
+                                    else
+                                      Text(
+                                        "N/A",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              SizedBox(height: 20),
+                              localBuddyBookingData!['bookingStatus'] == 2
+                              ? Container(
+                                width: double.infinity,
+                                height: 50,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Confirmation"),
+                                            content: Text(
+                                              "Due to the cancellation fee is RM100.00. Therefore, only amount of RM${NumberFormat('#,##0.00').format((localBuddyBookingData!['totalPrice'] - 100) ?? 0)} will be refunded to customer.",
+                                              textAlign: TextAlign.justify,
+                                            ),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Cancel"),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop(); // Close the dialog
+                                                  refundToCustomer('Local Buddy', localBuddyBookingData!['bookingID'], (localBuddyBookingData!['totalPrice'] - 100).toInt(), 'localBuddyBooking');
+                                                },
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor: primaryColor, // Set the background color
+                                                  foregroundColor: Colors.white, // Set the text color
+                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                  ),
+                                                ),
+                                                child: const Text("Refund"),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    }, 
+                                    child: isRefunding
+                                      ? CircularProgressIndicator(color: Colors.white)
+                                      : Text(
+                                          "Issue Refund",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10), // Set the button radius to 0
+                                      ),
+                                    ),
+                                  )
+                                )
+                              : Container()
                             ]
                           ]
                         )
@@ -975,5 +1576,151 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     );
   }
 
+  Widget localBuddyComponent({required Map<String, dynamic> data, required Map<String, dynamic> localBuddyData}) {
+    // Declare formattedDateRange with a default value
+    String formattedDateRange = "Date unavailable";
 
+    if (data['bookingStartDate'] != null && data['bookingEndDate'] != null) {
+      DateTime startDate = data['bookingStartDate'].toDate(); // Converts Firestore Timestamp to DateTime
+      DateTime endDate = data['bookingEndDate'].toDate();
+
+      // Format the dates and assign to formattedDateRange
+      formattedDateRange = '${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}';
+    } else {
+      print("Booking start date or end date is missing.");
+    }
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade400, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade400, width: 1.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "ID: ${data['bookingID'] ?? "N/A"}",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(5.0),
+                  decoration: BoxDecoration(
+                    color: data['bookingStatus'] == 0
+                        ? Colors.orange.shade100
+                        : data['bookingStatus'] == 1
+                            ? Colors.green.shade100
+                            : data['bookingStatus'] == 2
+                                ? Colors.red.shade100
+                                : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    data['bookingStatus'] == 0
+                        ? "Upcoming"
+                        : data['bookingStatus'] == 1
+                            ? "Completed"
+                            : data['bookingStatus'] == 2
+                                ? "Canceled"
+                                : "Unknown",
+                    style: TextStyle(
+                      color: data['bookingStatus'] == 0
+                          ? Colors.orange
+                          : data['bookingStatus'] == 1
+                              ? Colors.green
+                              : data['bookingStatus'] == 2
+                                  ? Colors.red
+                                  : Colors.grey.shade900,
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade400, width: 1.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10.0),
+                  width: getScreenWidth(context) * 0.25,
+                  height: getScreenHeight(context) * 0.15,
+                  margin: EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(localBuddyData['profileImage'] ?? ''),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 5),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localBuddyData['localBuddyName'] ?? "N/A",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "Date: $formattedDateRange", // Use the formattedDateRange here
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 5),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            alignment: Alignment.centerRight,
+            padding: EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "Total Price: RM ${NumberFormat('#,##0.00').format(data['totalPrice'] ?? 0)}",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

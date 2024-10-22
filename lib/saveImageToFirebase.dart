@@ -491,6 +491,7 @@ class StoreData {
     required String pdfName,
     required File pdf, 
     bool isDeposit = false,
+    bool isRefund = false
   }) async {
     String resp = "Some Error Occurred";
 
@@ -506,12 +507,18 @@ class StoreData {
         'depositInvoice': pdfURL,
       });
       print('Deposit invoice updated.'); // Debugging line
+    } else if(isRefund){
+        await _firestore.collection(collectionName).doc(bookingID).update({
+          'refundInvoice': pdfURL,
+        });
+      print('Refund invoice updated.'); // Debugging line
     } else {
       await _firestore.collection(collectionName).doc(bookingID).update({
         'invoice': pdfURL,
       });
       print('Standard invoice updated.'); // Debugging line
     }
+
 
       resp = 'Success';
     } catch (e) {

@@ -435,7 +435,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Tour Package", "tourBooking", "deposit", true);
+          await generateInvoice(id, invoice, "Tour Package", "tourBooking", "deposit", true, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -545,7 +545,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Car Rental", "carRentalBooking", "invoice", false);
+          await generateInvoice(id, invoice, "Car Rental", "carRentalBooking", "invoice", false, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -649,7 +649,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Local Buddy", "localBuddyBooking", "invoice", false);
+          await generateInvoice(id, invoice, "Local Buddy", "localBuddyBooking", "invoice", false, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -902,7 +902,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
     );
   }
 
-  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit) async {
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund) async {
     setState(() {
       bool isGeneratingInvoice = true; // Correctly set the loading state variable
     });
@@ -919,7 +919,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
         servicesType, 
         collectionName, 
         pdfFileName, 
-        isDeposit
+        isDeposit,
+        isRefund
       );
 
       // Open the generated PDF file

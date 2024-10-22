@@ -70,13 +70,6 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
           // Count the total bookings for these tours
           totalTourBookingNumber = tourBookingsSnapshot.docs.length;
 
-          // Check for any booking status of 2
-          for (var bookingDoc in tourBookingsSnapshot.docs) {
-            if (bookingDoc['bookingStatus'] == 2) {
-              haveCancelBooking = true; // Set to true if any status is 2
-              break; // No need to continue checking
-            }
-          }
         }
 
         // Set the total tour booking number
@@ -96,7 +89,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
         int totalCarBookingNumber = 0;
         if (carIDs.isNotEmpty) {
           QuerySnapshot carBookingsSnapshot = await FirebaseFirestore.instance
-              .collection('carBooking')
+              .collection('carRentalBooking')
               .where('carID', whereIn: carIDs)
               .get();
 
@@ -104,7 +97,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
 
           // Check for any booking status of 2
           for (var bookingDoc in carBookingsSnapshot.docs) {
-            if (bookingDoc['bookingStatus'] == 2) {
+            if (bookingDoc['bookingStatus'] == 2 && bookingDoc['isRefund'] == 0) {
               haveCancelBooking = true; // Set to true if any status is 2
               break; // No need to continue checking
             }
@@ -154,7 +147,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
         QuerySnapshot localBuddyBookingSnapshot = await localBuddyBookingRef.where('localBuddyID', isEqualTo: localBuddy.localBuddyID).get();
 
         for(var doc in localBuddyBookingSnapshot.docs){
-          if(doc['bookingStatus'] == 2){
+          if(doc['bookingStatus'] == 2 && doc['isRefund'] == 0){
             haveCancelBooking = true;
             break;
           }
@@ -278,7 +271,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                           SizedBox(width: 5), // Space between icon and text
                           Expanded(
                             child: Text(
-                              "means cancellation exist in the agency booking list, you need to issue the refund.",
+                              "means cancellation exist in the agency booking list, you need to issue the refund. Only car rental bookings require handling the cancellation.",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.black,

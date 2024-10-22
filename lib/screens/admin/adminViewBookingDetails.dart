@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewCustomerDetails.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -185,6 +186,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
           String userId = booking['userID'];
           String carRentalBookingID = booking.id;
           int bookingStatus = booking['bookingStatus'];
+          int refundStatus = booking['isRefund'];
 
           // Step 2: Fetch customer details for each userID from the users collection
           DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -199,6 +201,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 'userID': userId,
                 'carRentalBookingID': carRentalBookingID,
                 'bookingStatus': bookingStatus,
+                'isRefund': refundStatus,
                 'customerInfo': userDoc.data() as Map<String, dynamic>,
               });
             });
@@ -216,6 +219,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
           String userId = booking['userID'];
           String localBuddyBookingID = booking.id;
           int bookingStatus = booking['bookingStatus'];
+          int refundStatus = booking['isRefund'];
 
           // Step 2: Fetch customer details for each userID from the users collection
           DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -230,6 +234,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 'userID': userId,
                 'localBuddyBookingID': localBuddyBookingID,
                 'bookingStatus': bookingStatus,
+                'isRefund': refundStatus,
                 'customerInfo': userDoc.data() as Map<String, dynamic>,
               });
             });
@@ -245,17 +250,43 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
     }
   }
 
-  // Sorting function
-  List<Map<String, dynamic>> sortedCustomerList(List<Map<String, dynamic>> customerList) {
+  List<Map<String, dynamic>> sortedCustomerList(List<Map<String, dynamic>> customerList, String type) {
     customerList.sort((a, b) {
       int statusA = a['bookingStatus'];
       int statusB = b['bookingStatus'];
 
-      if (statusA == 2 && statusB != 2) return -1; // a comes before b
-      if (statusA != 2 && statusB == 2) return 1;  // b comes before a
-      if (statusA == 0 && statusB == 1) return -1; // a comes before b
-      if (statusA == 1 && statusB == 0) return 1;  // b comes before a
-      return 0; // No change in order
+      if (type == "Car Rental" || type == "Local Buddy") {
+        // Check if status is 2 (Canceled) and whether the refund is processed
+        bool isRefundA = a['isRefund'] == 1;
+        bool isRefundB = b['isRefund'] == 1;
+
+        // If both have bookingStatus = 2, compare by isRefund to push refunded ones to the end
+        if (statusA == 2 && statusB == 2) {
+          if (isRefundA && !isRefundB) return 1;  // a comes after b if a is refunded and b is not
+          if (!isRefundA && isRefundB) return -1; // a comes before b if a is not refunded and b is
+          return 0; // Both are canceled with the same refund status, no change in order
+        }
+
+        // Handle canceled but non-refunded bookings before others
+        if (statusA == 2 && !isRefundA && statusB != 2) return -1; // a comes before b
+        if (statusA != 2 && statusB == 2 && !isRefundB) return 1;  // b comes before a
+
+        // Compare for other statuses
+        if (statusA == 0 && statusB == 1) return -1; // Upcoming comes before Completed
+        if (statusA == 1 && statusB == 0) return 1;  // Completed comes after Upcoming
+      } else {
+        // Fallback logic for other types (Upcoming = 0, Completed = 1, Canceled = 2)
+        if (statusA == 0 && statusB != 0) return -1; // Upcoming comes before all others
+        if (statusA != 0 && statusB == 0) return 1;  // Others come after Upcoming
+
+        if (statusA == 1 && statusB != 1) return -1; // Completed comes before Canceled
+        if (statusA != 1 && statusB == 1) return 1;  // Canceled comes after Completed
+
+        if (statusA == 2 && statusB != 2) return 1;  // Canceled comes last
+        if (statusA != 2 && statusB == 2) return -1; // All come before Canceled
+      }
+
+      return 0; // No change in order for the same statuses
     });
 
     return customerList;
@@ -453,7 +484,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                         Row(
                           children: [
                             Text(
-                              "(",
+                              "(Status: ",
                               style: TextStyle(
                                 fontSize: 12, 
                                 color: Colors.black, 
@@ -490,10 +521,34 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                           ],
                         ),
                         SizedBox(height: 10),
+                        widget.tourID != null
+                        ? Container()
+                        : Row(
+                            children: [
+                              Text(
+                                "(Refund: ",
+                                style: TextStyle(
+                                  fontSize: 12, 
+                                  color: Colors.black, 
+                                  fontWeight: FontWeight.w600
+                                ),
+                              ),
+                              Icon(Icons.check_circle, color: Colors.green, size: 15),
+                              Text(
+                                " = refunded, empty = not refund yet/ no refeund)",
+                                style: TextStyle(
+                                  fontSize: 12, 
+                                  color: Colors.black, 
+                                  fontWeight: FontWeight.w600
+                                ),
+                              ),
+                            ],
+                          ),
+                        SizedBox(height: 10),
                         isFetchingCustomerList
                         ? Center(child: CircularProgressIndicator(color: primaryColor))
                         : customerList.isNotEmpty
-                          ? customerListComponent(data: sortedCustomerList(customerList), type: widget.tourID != null ? "Tour" : "Car")
+                          ? customerListComponent(data: sortedCustomerList(customerList, widget.tourID != null ? "Tour" : widget.carRentalID != null ? "Car Rental" : "Local Buddy"), type: widget.tourID != null ? "Tour" : widget.carRentalID != null ? "Car" : "Local Buddy")
                           : Container(
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(15.0),
@@ -678,21 +733,30 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
   }
 
   Widget customerListComponent({required List<Map<String, dynamic>> data, required String type}) {
+    // Determine if the refund column should be shown
+    bool showRefundColumn = type == "Car" || type == "Local Buddy";
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white
-          ),
+          decoration: BoxDecoration(color: Colors.white),
           child: Table(
-            columnWidths: {
-              0: FixedColumnWidth(40),  // Width for "No" column
-              1: FixedColumnWidth(150), // Width for "Customer Name" column
-              2: FixedColumnWidth(70), // Status column (takes remaining space)
-              3: FixedColumnWidth(70), // Actions column (takes remaining space)
-            },
+            columnWidths: showRefundColumn
+                ? {
+                    0: FixedColumnWidth(30),
+                    1: FixedColumnWidth(130),
+                    2: FixedColumnWidth(50),
+                    3: FixedColumnWidth(55),
+                    4: FixedColumnWidth(60),
+                  }
+                : {
+                    0: FixedColumnWidth(40),
+                    1: FixedColumnWidth(150),
+                    2: FixedColumnWidth(60),
+                    3: FixedColumnWidth(60),
+                  },
             border: TableBorder.all(color: primaryColor, width: 1.5),
             children: [
               // Header Row
@@ -701,6 +765,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                   _buildTextFieldCell('No', isBold: true),
                   _buildTextFieldCell('Customer Name', isBold: true),
                   _buildTextFieldCell('Status', isBold: true),
+                  if (showRefundColumn) _buildTextFieldCell('Refund', isBold: true),
                   _buildTextFieldCell('Actions', isBold: true),
                 ],
               ),
@@ -720,6 +785,19 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                         ],
                       ),
                     ),
+                    if (showRefundColumn)
+                      Container(
+                        height: 40, // Set a specific height for centering
+                        alignment: Alignment.center, // Center the row vertically
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center, // Center horizontally
+                          children: [
+                            data[index]['isRefund'] == 1
+                                ? Icon(Icons.check_circle, color: Colors.green, size: 18)
+                                : Container()
+                          ],
+                        ),
+                      ),
                     Container(
                       height: 40, // Set a specific height for centering
                       alignment: Alignment.center, // Center the row vertically
@@ -730,19 +808,21 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                             icon: Icon(Icons.remove_red_eye, color: Colors.grey, size: 20),
                             onPressed: () {
                               // Handle view action
-                              // Navigator.push(
-                              //   context, 
-                              //   MaterialPageRoute(builder: (context) => 
-                              //     TravelAgentViewCustomerDetailsScreen(
-                              //       userId: widget.userId, 
-                              //       customerId: data[index]['userID'], 
-                              //       tourID: widget.tourID != null ? widget.tourID : null,
-                              //       tourBookingID: type == "Tour" ? data[index]['tourBookingID'] : null,
-                              //       carRentalID: widget.carRentalID != null ? widget.carRentalID : null,
-                              //       carRentalBookingID: type == "Car" ? data[index]['carRentalBookingID'] : null
-                              //     )
-                              //   )
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AdminViewCustomerDetailsScreen(
+                                    userId: widget.userId,
+                                    customerId: data[index]['userID'],
+                                    tourID: widget.tourID != null ? widget.tourID : null,
+                                    tourBookingID: type == "Tour" ? data[index]['tourBookingID'] : null,
+                                    carRentalID: widget.carRentalID != null ? widget.carRentalID : null,
+                                    carRentalBookingID: type == "Car" ? data[index]['carRentalBookingID'] : null,
+                                    localBuddyID: widget.localBuddyID != null ? widget.localBuddyID : null,
+                                    localBuddyBookingID: type == "Local Buddy" ? data[index]['localBuddyBookingID'] : null,
+                                  ),
+                                ),
+                              );
                             },
                           ),
                         ],
@@ -751,11 +831,12 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                   ],
                 ),
             ],
-          )
-        )
+          ),
+        ),
       ],
     );
   }
+
 
 
   // Method to display the appropriate status icon based on bookingStatus
