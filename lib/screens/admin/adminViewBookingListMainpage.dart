@@ -39,10 +39,12 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
       QuerySnapshot agencySnapshot = await agencyRef.where('accountApproved', isEqualTo: 1).get();
 
       List<AdminAgencyList> agencyLists = [];
-      bool haveCancelBooking = false;
 
       for (var doc in agencySnapshot.docs) {
         AdminAgencyList agency = AdminAgencyList.fromFirestore(doc);
+
+        // Reset the haveCancelBooking flag for each agency
+        bool haveCancelBooking = false;
 
         // Fetch tour packages for the current agent
         QuerySnapshot tourPackagesSnapshot = await FirebaseFirestore.instance
@@ -64,7 +66,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
               .get();
 
           // Count the total bookings for these tours
-          totalTourBookingNumber = tourBookingsSnapshot.docs.length; // Get the size of the snapshot
+          totalTourBookingNumber = tourBookingsSnapshot.docs.length;
 
           // Check for any booking status of 2
           for (var bookingDoc in tourBookingsSnapshot.docs) {
@@ -75,11 +77,10 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
           }
         }
 
-        // Set the total tour booking number and cancel booking status
+        // Set the total tour booking number
         agency.totalTourBookingNumber = totalTourBookingNumber;
-        agency.haveCancelBooking = haveCancelBooking; 
 
-        // Fetch tour packages for the current agent
+        // Fetch car rentals for the current agent
         QuerySnapshot carSnapshot = await FirebaseFirestore.instance
             .collection('car_rental')
             .where('agencyID', isEqualTo: agency.agentID)
@@ -87,7 +88,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
 
         List<String> carIDs = [];
         for (var carDoc in carSnapshot.docs) {
-          carIDs.add(carDoc.id); // Collecting tour IDs
+          carIDs.add(carDoc.id); // Collecting car IDs
         }
 
         int totalCarBookingNumber = 0;
@@ -97,7 +98,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
               .where('carID', whereIn: carIDs)
               .get();
 
-          totalCarBookingNumber = carBookingsSnapshot.docs.length; 
+          totalCarBookingNumber = carBookingsSnapshot.docs.length;
 
           // Check for any booking status of 2
           for (var bookingDoc in carBookingsSnapshot.docs) {
@@ -108,15 +109,19 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
           }
         }
 
+        // Set the total car booking number
         agency.totalCarBookingNumber = totalCarBookingNumber;
-        agency.haveCancelBooking = haveCancelBooking; 
 
-        agencyLists.add(agency); // Add the agency to the list
+        // Set the final haveCancelBooking flag for the agency
+        agency.haveCancelBooking = haveCancelBooking;
+
+        // Add the agency to the list
+        agencyLists.add(agency);
       }
 
-      // Now you can do something with agencyLists, like updating the UI or state
+      // Update your state with the agency list
       setState(() {
-        agencyList = agencyLists; // Update your state with the agency list
+        agencyList = agencyLists;
       });
 
     } catch (e) {
@@ -141,23 +146,24 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
       for (var doc in querySnapshot.docs) {
         AdminLocalBuddyBookingList localBuddy = AdminLocalBuddyBookingList.fromFirestore(doc);
 
+        bool haveCancelBooking = false;
+
         CollectionReference localBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
         QuerySnapshot localBuddyBookingSnapshot = await localBuddyBookingRef.where('localBuddyID', isEqualTo: localBuddy.localBuddyID).get();
+
+        for(var doc in localBuddyBookingSnapshot.docs){
+          if(doc['bookingStatus'] == 2){
+            haveCancelBooking = true;
+            break;
+          }
+        }
 
         DocumentReference buddyRef = FirebaseFirestore.instance.collection('users').doc(localBuddy.userID);
         DocumentSnapshot buddyDoc = await buddyRef.get();
 
         int totalBookingCount = localBuddyBookingSnapshot.size;
         localBuddy.totalBookingNumber = totalBookingCount;
-
-        // Check if any booking status is 2
-        // localBuddy.haveCancelBooking = localBuddyBookingSnapshot.docs.any((bookingDoc) {
-        //   Map<String, dynamic>? bookingData = bookingDoc.data() as Map<String, dynamic>?;
-
-        //   // Check if bookingData and bookingStatus are not null before checking the status
-        //   return bookingData != null && bookingData['bookingStatus'] == 2;
-        // });
-
+        localBuddy.haveCancelBooking = haveCancelBooking;
 
         if (buddyDoc.exists) {
           Map<String, dynamic>? data = buddyDoc.data() as Map<String, dynamic>?;
@@ -391,14 +397,21 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1.5)),
               ),
-              child: Text(
-                "Agency ID: ${agency.agencyID}",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Agency ID: ${agency.agencyID}",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (agency.haveCancelBooking)
+                    Icon(Icons.circle, color: Colors.red, size: 10), // Circle aligned to rightmost
+                ],
+              )
             ),
             Container(
               padding: EdgeInsets.all(10.0),
@@ -418,41 +431,42 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                   SizedBox(height: 10),
                   Row(
                     children: [
-                      Column(
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.book, color: primaryColor, size: 18), // Icon for tour bookings
-                              SizedBox(width: 5),
-                              Text(
-                                "Total Tour Bookings: ${agency.totalTourBookingNumber}",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.book, color: primaryColor, size: 18), // Icon for tour bookings
+                                SizedBox(width: 5),
+                                Text(
+                                  "Total Tour Bookings: ${agency.totalTourBookingNumber}",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 5),
-                          Row(
-                            children: [
-                              Icon(Icons.directions_car, color: Colors.green, size: 18), // Icon for car bookings
-                              SizedBox(width: 5),
-                              Text(
-                                "Total Car Bookings: ${agency.totalCarBookingNumber}",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
+                              ],
+                            ),
+                            SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Icon(Icons.directions_car, color: Colors.green, size: 18), // Icon for car bookings
+                                SizedBox(width: 5),
+                                Text(
+                                  "Total Car Bookings: ${agency.totalCarBookingNumber}",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      if (agency.haveCancelBooking)
-                        Icon(Icons.circle, color: Colors.red, size: 15),
                     ],
                   )
                 ],
@@ -503,14 +517,21 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                   bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
                 ),
               ),
-              child: Text(
-                "Local Buddy ID: ${buddyBooking.localBuddyID}",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Local Buddy ID: ${buddyBooking.localBuddyID}",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if(buddyBooking.haveCancelBooking)
+                    Icon(Icons.circle, color: Colors.red, size: 10),
+                ],
+              )
             ),
             Container(
               padding: EdgeInsets.all(10.0), // Added padding for better spacing
@@ -581,8 +602,6 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                       ],
                     ),
                   ),
-                  if(buddyBooking.haveCancelBooking)
-                    Icon(Icons.circle, color: Colors.red, size: 15),
                 ],
               ),
             ),
@@ -591,111 +610,5 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
       ),
     );
   }
-
-
-
-  // Widget BuddyBookingComponent({required AdminLocalBuddyBookingList buddyBooking}) {
-  //   return GestureDetector(
-  //     onTap: () {
-  //       // Uncomment and implement the navigation logic as needed
-  //       // Navigator.push(
-  //       //   context,
-  //       //   MaterialPageRoute(
-  //       //     builder: (context) => TravelAgentViewBookingDetailsScreen(
-  //       //       userId: widget.userId,
-  //       //       tourID: buddyBooking.tourID,
-  //       //       totalBookingNumber: buddyBooking.totalBookingNumber,
-  //       //     ),
-  //       //   ),
-  //       // );
-  //     },
-  //     child: Container(
-  //       margin: EdgeInsets.only(bottom: 20.0),
-  //       decoration: BoxDecoration(
-  //         color: Colors.white,
-  //         border: Border.all(color: Colors.grey.shade300, width: 1.5),
-  //       ),
-  //       child: Column(
-  //         children: [
-  //           Container(
-  //             padding: EdgeInsets.all(10.0),
-  //             alignment: Alignment.centerLeft,
-  //             decoration: BoxDecoration(
-  //               border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1.5)),
-  //             ),
-  //             child: Text(
-  //               "Local Buddy ID: ${buddyBooking.localBuddyID}",
-  //               style: TextStyle(
-  //                 fontSize: 12,
-  //                 color: Colors.black,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //           ),
-  //           Container(
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.start,
-  //               children: [
-  //                 // Check if the image URL is null or empty
-  //                 buddyBooking.localBuddyImage.isNotEmpty
-  //                     ? Container(
-  //                         width: getScreenWidth(context) * 0.18,
-  //                         height: getScreenHeight(context) * 0.13,
-  //                         margin: EdgeInsets.only(right: 10),
-  //                         decoration: BoxDecoration(
-  //                           image: DecorationImage(
-  //                             image: NetworkImage(buddyBooking.localBuddyImage),
-  //                             fit: BoxFit.cover,
-  //                           ),
-  //                         ),
-  //                       )
-  //                     : Container(
-  //                         width: getScreenWidth(context) * 0.18,
-  //                         height: getScreenHeight(context) * 0.13,
-  //                         margin: EdgeInsets.only(right: 10),
-  //                         color: Colors.grey, // Grey background
-  //                         alignment: Alignment.center, // Center the text
-  //                         child: Text(
-  //                           "N/A",
-  //                           style: TextStyle(
-  //                             color: Colors.white, // Text color
-  //                             fontWeight: FontWeight.bold,
-  //                           ),
-  //                         ),
-  //                       ),
-  //                 SizedBox(width: 10),
-  //                 Column(
-  //                   mainAxisAlignment: MainAxisAlignment.start,
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(
-  //                       buddyBooking.localBuddyName,
-  //                       style: TextStyle(
-  //                         color: Colors.black,
-  //                         fontWeight: FontWeight.w800,
-  //                         fontSize: defaultFontSize,
-  //                       ),
-  //                       overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-  //                     ),
-  //                     SizedBox(height: 5),
-  //                     Text(
-  //                       "Total Bookings: ${buddyBooking.totalBookingNumber}",
-  //                       style: TextStyle(
-  //                         color: Colors.black,
-  //                         fontWeight: FontWeight.w500,
-  //                         fontSize: 12,
-  //                       ),
-  //                       overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
 }

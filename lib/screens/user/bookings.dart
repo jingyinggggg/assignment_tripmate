@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -25,7 +26,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   List<localBuddyBooking> _localBuddyBookingCompleted = [];
   List<localBuddyBooking> _localBuddyBookingUpcoming = [];
   List<localBuddyBooking> _localBuddyBookingCanceled = [];
-  bool isFetching = false;
+  bool isFetchingTourPackage = false;
+  bool isFetchingCarRental = false;
+  bool isFetchingLocalBuddy = false;
+  bool isCancelTourBooking = false;
+  bool isCancelCarRentalBooking = false;
+  bool isCancelLocalBuddyBooking = false;
   int _outerTabIndex = 0;  // For the outer Upcoming, Completed, Canceled
   int _innerTabIndex = 0;  // For the inner Tour Package, Car Rental, Local Buddy
 
@@ -45,7 +51,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   // Fetch tour bookings
   Future<void> _fetchTourBooking() async {
     setState(() {
-      isFetching = true;
+      isFetchingTourPackage = true;
     });
 
     try {
@@ -166,12 +172,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       }
 
       setState(() {
-        isFetching = false;
+        isFetchingTourPackage = false;
       });
     } catch (e) {
       print('Error fetching booking: $e');
       setState(() {
-        isFetching = false;
+        isFetchingTourPackage = false;
       });
     }
   }
@@ -179,7 +185,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   // Fetch car rental bookings
   Future<void> _fetchCarRentalBooking() async {
     setState(() {
-      isFetching = true;
+      isFetchingCarRental = true;
     });
 
     try {
@@ -299,12 +305,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       }
 
       setState(() {
-        isFetching = false;
+        isFetchingCarRental = false;
       });
     } catch (e) {
       print('Error fetching booking: $e');
       setState(() {
-        isFetching = false;
+        isFetchingCarRental = false;
       });
     }
   }
@@ -312,7 +318,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   // Fetch local buddy bookings
   Future<void> _fetchLocalBuddyBooking() async {
     setState(() {
-      isFetching = true;
+      isFetchingLocalBuddy = true;
     });
 
     try {
@@ -358,51 +364,214 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         });
       }
 
+      CollectionReference comLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      QuerySnapshot comLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
+          .where('userID', isEqualTo: widget.userID)
+          .where('bookingStatus', isEqualTo: 1)
+          .get();
+
+      List<String> comlocalBuddyIDs = [];
+      List<localBuddyBooking> comLocalBuddyBookings = [];
+
+      if (comLocalBuddyBookingSnapshot.docs.isNotEmpty) {
+        // Inside the loop for the localBuddyBooking collection
+        for (var comLBDoc in comLocalBuddyBookingSnapshot.docs) {
+          localBuddyBooking comlocalBuddyBooks = localBuddyBooking.fromFirestore(comLBDoc); // Use the booking doc here
+          
+          String comlocalBuddyID = comLBDoc['localBuddyID'] as String;
+
+          // Fetch the local buddy details
+          DocumentSnapshot comlocalBuddyDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(comlocalBuddyID).get();
+          String userId = comlocalBuddyDoc['userID'] as String;
+          String locationArea = comlocalBuddyDoc['locationArea'] as String;
+
+          // Fetch user details including profile image from 'users' collection
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+          String profileImage = userDoc['profileImage'] as String;
+          String localBuddyName = userDoc['name'] as String;
+
+          // Assign the user details to the localBuddyBooking object
+          comlocalBuddyBooks.localBuddyName = localBuddyName;
+          comlocalBuddyBooks.localBuddyImage = profileImage;
+          comlocalBuddyBooks.locationArea = locationArea;
+
+          comLocalBuddyBookings.add(comlocalBuddyBooks);
+        }
+        setState(() {
+          _localBuddyBookingCompleted = comLocalBuddyBookings;
+        });
+      } else {
+        setState(() {
+          _localBuddyBookingCompleted = [];
+        });
+      }
+
+      CollectionReference canLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      QuerySnapshot canLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
+          .where('userID', isEqualTo: widget.userID)
+          .where('bookingStatus', isEqualTo: 2)
+          .get();
+
+      List<String> canlocalBuddyIDs = [];
+      List<localBuddyBooking> canLocalBuddyBookings = [];
+
+      if (canLocalBuddyBookingSnapshot.docs.isNotEmpty) {
+        // Inside the loop for the localBuddyBooking collection
+        for (var canLBDoc in canLocalBuddyBookingSnapshot.docs) {
+          localBuddyBooking canlocalBuddyBooks = localBuddyBooking.fromFirestore(canLBDoc); // Use the booking doc here
+          
+          String canlocalBuddyID = canLBDoc['localBuddyID'] as String;
+
+          // Fetch the local buddy details
+          DocumentSnapshot canlocalBuddyDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(canlocalBuddyID).get();
+          String userId = canlocalBuddyDoc['userID'] as String;
+          String locationArea = canlocalBuddyDoc['locationArea'] as String;
+
+          // Fetch user details including profile image from 'users' collection
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+          String profileImage = userDoc['profileImage'] as String;
+          String localBuddyName = userDoc['name'] as String;
+
+          // Assign the user details to the localBuddyBooking object
+          canlocalBuddyBooks.localBuddyName = localBuddyName;
+          canlocalBuddyBooks.localBuddyImage = profileImage;
+          canlocalBuddyBooks.locationArea = locationArea;
+
+          canLocalBuddyBookings.add(canlocalBuddyBooks);
+        }
+        setState(() {
+          _localBuddyBookingCanceled = canLocalBuddyBookings;
+        });
+      } else {
+        setState(() {
+          _localBuddyBookingCanceled = [];
+        });
+      }
+
       setState(() {
-        isFetching = false;
+        isFetchingLocalBuddy = false;
       });
     } catch (e) {
       print('Error fetching local buddy booking: $e');
       setState(() {
-        isFetching = false;
+        isFetchingLocalBuddy = false;
       });
     }
   }
 
-  // Function to get area and country from the full address using the Google Geocoding API
-  // Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-  //   final String apiKeys = apiKey; // Replace with your API key
-  //   final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+  Future<void>cancelTourBooking(String tourBookingID) async{
+    setState(() {
+      isCancelTourBooking = true;
+    });
+    try{
+      await FirebaseFirestore.instance
+        .collection('tourBooking')
+        .doc(tourBookingID)
+        .update({'bookingStatus': 2});
 
-  //   final response = await http.get(Uri.parse(url));
+      showCustomDialog(
+        context: context, 
+        title: "Successful", 
+        content: "You have cancel the tour booking successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
 
-  //   if (response.statusCode == 200) {
-  //     final data = json.decode(response.body);
+    }catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+    }finally{
+      setState(() {
+        isCancelTourBooking = false;
+      });
+    }
+  }
 
-  //     if (data['results'].isNotEmpty) {
-  //       final addressComponents = data['results'][0]['address_components'];
+  Future<void>cancelCarBooking(String carBookingID) async{
+    setState(() {
+      isCancelCarRentalBooking = true;
+    });
+    try{
+      await FirebaseFirestore.instance
+        .collection('carRentalBooking')
+        .doc(carBookingID)
+        .update({'bookingStatus': 2});
 
-  //       String country = '';
-  //       String area = '';
+      showCustomDialog(
+        context: context, 
+        title: "Successful", 
+        content: "You have cancel the car rental booking successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
 
-  //       for (var component in addressComponents) {
-  //         List<String> types = List<String>.from(component['types']);
-  //         if (types.contains('country')) {
-  //           country = component['long_name'];
-  //         } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
-  //           area = component['long_name'];
-  //         }
-  //       }
+    }catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+    }finally{
+      setState(() {
+        isCancelCarRentalBooking = false;
+      });
+    }
+  }
 
-  //       return {'country': country, 'area': area};
-  //     } else {
-  //       return {'country': '', 'area': ''};
-  //     }
-  //   } else {
-  //     print('Error fetching location data: ${response.statusCode}');
-  //     return {'country': '', 'area': ''};
-  //   }
-  // }
+  Future<void>cancelLocalBuddyBooking(String localBuddyBookingID) async{
+    setState(() {
+      isCancelLocalBuddyBooking = true;
+    });
+    try{
+      await FirebaseFirestore.instance
+        .collection('localBuddyBooking')
+        .doc(localBuddyBookingID)
+        .update({'bookingStatus': 2});
+
+      showCustomDialog(
+        context: context, 
+        title: "Successful", 
+        content: "You have cancel the local buddy booking successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
+
+    }catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+    }finally{
+      setState(() {
+        isCancelCarRentalBooking = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +617,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
             // TabBarView for the outer tabs
             Expanded(
-              child: isFetching 
+              child: isFetchingTourPackage || isFetchingCarRental || isFetchingLocalBuddy 
                 ? Center(
                     child: CircularProgressIndicator(color: primaryColor,),  // Show loading indicator when isFetching is true
                   )
@@ -643,7 +812,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     child: Text(
                       status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
                       style: TextStyle(
-                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 2 ? Colors.red : Colors.grey.shade900,
                         fontSize: 10,
                         fontWeight: FontWeight.normal
                       ),
@@ -839,10 +1008,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                         ),
                                         TextButton(
                                           onPressed: () {
-                                            Navigator.of(context).pop(); // Close the dialog
-                                            // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
-                                            //   bookTour(); // Call bookTour when payment option is selected
-                                            // });
+                                            Navigator.pop(context);
+                                            cancelTourBooking(tourbookings.tourBookingID);
                                           },
                                           style: TextButton.styleFrom(
                                             backgroundColor: primaryColor, // Set the background color
@@ -852,7 +1019,16 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                               borderRadius: BorderRadius.circular(8), // Optional: rounded corners
                                             ),
                                           ),
-                                          child: const Text("Confirm"),
+                                          child: isCancelTourBooking
+                                          ? SizedBox(
+                                              width: 20, 
+                                              height: 20, 
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 3, 
+                                              ),
+                                            )
+                                          : Text("Confirm"),
                                         ),
                                       ],
                                     );
@@ -950,7 +1126,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     child: Text(
                       status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
                       style: TextStyle(
-                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 2 ? Colors.red : Colors.grey.shade900,
                         fontSize: 10,
                         fontWeight: FontWeight.normal
                       ),
@@ -1057,9 +1233,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                       TextButton(
                                         onPressed: () {
                                           Navigator.of(context).pop(); // Close the dialog
-                                          // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
-                                          //   bookTour(); // Call bookTour when payment option is selected
-                                          // });
+                                          cancelCarBooking(carRentalbookings.carRentalBookingID);
                                         },
                                         style: TextButton.styleFrom(
                                           backgroundColor: primaryColor, // Set the background color
@@ -1069,7 +1243,16 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
                                           ),
                                         ),
-                                        child: const Text("Confirm"),
+                                        child: isCancelCarRentalBooking
+                                        ? SizedBox(
+                                            width: 20, 
+                                            height: 20, 
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3, 
+                                            ),
+                                          )
+                                        : Text("Confirm"),
                                       ),
                                     ],
                                   );
@@ -1164,7 +1347,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     child: Text(
                       status == 0 ? "Upcoming" : status == 1 ? "Completed" : status == 2 ? "Canceled" : "Unknown",
                       style: TextStyle(
-                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 3 ? Colors.red : Colors.grey.shade900,
+                        color: status == 0 ? Colors.orange : status == 1 ? Colors.green : status == 2 ? Colors.red : Colors.grey.shade900,
                         fontSize: 10,
                         fontWeight: FontWeight.normal
                       ),
@@ -1280,9 +1463,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                       TextButton(
                                         onPressed: () {
                                           Navigator.of(context).pop(); // Close the dialog
-                                          // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
-                                          //   bookTour(); // Call bookTour when payment option is selected
-                                          // });
+                                          cancelLocalBuddyBooking(localBuddyBookings.localBuddyBookingID);
                                         },
                                         style: TextButton.styleFrom(
                                           backgroundColor: primaryColor, // Set the background color
@@ -1292,7 +1473,16 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
                                           ),
                                         ),
-                                        child: const Text("Confirm"),
+                                        child: isCancelLocalBuddyBooking
+                                        ? SizedBox(
+                                            width: 20, 
+                                            height: 20, 
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3, 
+                                            ),
+                                          )
+                                        : Text("Confirm"),
                                       ),
                                     ],
                                   );

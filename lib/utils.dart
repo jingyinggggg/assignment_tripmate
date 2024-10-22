@@ -516,7 +516,7 @@ class AdminLocalBuddyBookingList {
   String localBuddyName; 
   String localBuddyImage; 
   int totalBookingNumber;
-  bool haveCancelBooking;
+  late bool haveCancelBooking;
 
   AdminLocalBuddyBookingList({
     required this.localBuddyID,
