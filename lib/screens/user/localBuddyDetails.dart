@@ -27,7 +27,7 @@ class LocalBuddyDetailsScreen extends StatefulWidget {
 class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
   Map<String, dynamic>? localBuddyData;
   Map<String, dynamic>? userData;
-  String? locationArea;
+  // String? locationArea;
   bool isLoading = false;
   bool isFavorited = false;
 
@@ -75,21 +75,21 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
 
         // Ensure userData is not null and contains the 'location' key
         if (data.containsKey('location')) {
-          String fullAddress = data['location'] ?? '';
+          // String fullAddress = data['location'] ?? '';
 
-          String? country = '';
-          String? area = '';
+          // String? country = '';
+          // String? area = '';
 
-          if (fullAddress.isNotEmpty) {
-            var locationData = await _getLocationAreaAndCountry(fullAddress);
-            country = locationData['country'];
-            area = locationData['area'];
-          } else {
-            country = 'Unknown Country';
-            area = 'Unknown Area';
-          }
+          // if (fullAddress.isNotEmpty) {
+          //   var locationData = await _getLocationAreaAndCountry(fullAddress);
+          //   country = locationData['country'];
+          //   area = locationData['area'];
+          // } else {
+          //   country = 'Unknown Country';
+          //   area = 'Unknown Area';
+          // }
 
-          locationArea = '$area, $country';
+          // locationArea = '$area, $country';
 
           setState(() {
             localBuddyData = data;
@@ -122,39 +122,39 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
     }
   }
 
-  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-    final String apiKeys = apiKey; // Replace with your API key
-    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+  // Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+  //   final String apiKeys = apiKey; // Replace with your API key
+  //   final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
 
-    final response = await http.get(Uri.parse(url));
+  //   final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
 
-      if (data['results'].isNotEmpty) {
-        final addressComponents = data['results'][0]['address_components'];
+  //     if (data['results'].isNotEmpty) {
+  //       final addressComponents = data['results'][0]['address_components'];
 
-        String country = '';
-        String area = '';
+  //       String country = '';
+  //       String area = '';
 
-        for (var component in addressComponents) {
-          List<String> types = List<String>.from(component['types']);
-          if (types.contains('country')) {
-            country = component['long_name'];
-          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
-            area = component['long_name'];
-          }
-        }
+  //       for (var component in addressComponents) {
+  //         List<String> types = List<String>.from(component['types']);
+  //         if (types.contains('country')) {
+  //           country = component['long_name'];
+  //         } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+  //           area = component['long_name'];
+  //         }
+  //       }
 
-        return {'country': country, 'area': area};
-      } else {
-        return {'country': '', 'area': ''};
-      }
-    } else {
-      print('Error fetching location data: ${response.statusCode}');
-      return {'country': '', 'area': ''};
-    }
-  }
+  //       return {'country': country, 'area': area};
+  //     } else {
+  //       return {'country': '', 'area': ''};
+  //     }
+  //   } else {
+  //     print('Error fetching location data: ${response.statusCode}');
+  //     return {'country': '', 'area': ''};
+  //   }
+  // }
 
   // Method to build a row with an icon and text
   Widget _buildInfoRow(IconData? icon, Image? image, String text, Color? color) {
@@ -397,7 +397,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildInfoRow(Icons.location_on, null, 'I live in $locationArea', Colors.red),
+                                  _buildInfoRow(Icons.location_on, null, 'I live in  ${localBuddyData?['locationArea']}', Colors.red),
                                   SizedBox(height: 5),
                                   _buildInfoRow(Icons.language, null, 'I speak ${localBuddyData?['languageSpoken']}', Colors.blue),
                                   SizedBox(height: 5),

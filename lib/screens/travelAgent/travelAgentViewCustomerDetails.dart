@@ -40,6 +40,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
   bool isFetchingTour = false;
   bool isFetchingCar = false;
   bool isOpenFile = false;
+  bool isOpenInvoide = false;
   Map<String, dynamic>? custData;
   Map<String, dynamic>? tourData;
   Map<String, dynamic>? carData;
@@ -118,6 +119,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
         setState(() {
           carBookingData = data;
         });
+        print("Car Booking Data: $carBookingData");
       }
     } catch(e){
       print('Error fetch car booking data: $e');
@@ -181,16 +183,13 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
       final file = File('${dir.path}/$fileName.pdf');
       
       // Download the file from the URL using Dio
-      print("Downloading file from URL: $url");
       final response = await Dio().download(url, file.path);
       
       // Check if the download was successful
       if (response.statusCode == 200) {
-        print("File downloaded to: ${file.path}");
         
         // Open the file
         final result = await OpenFile.open(file.path);
-        print('OpenFile Result: ${result.message}, Type: ${result.type}');
       } else {
         print("Failed to download file: ${response.statusCode}");
       }
@@ -356,33 +355,30 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                   ),
                                   SizedBox(width: 5),
                                   if(tourBookingData!['depositInvoice'] != null)
-                                    SizedBox(
+                                    isOpenFile
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
                                       height: 35,
-                                      // width: 170,
                                       child: ElevatedButton(
                                         onPressed: () async {
-                                          // setState(() {
-                                          //   isOpenFile = true; // Update the loading state
-                                          // });
-                                          print("Button Pressed: Starting file download.");
+                                          setState(() {
+                                            isOpenFile = true; // Update the loading state
+                                          });
                                           String url = tourBookingData!['depositInvoice']; 
                                           String fileName = 'deposit_invoice'; 
-                                          print("Deposit URL: $url");
                                           await downloadAndOpenPdfFromUrl(url, fileName);
-                                          // setState(() {
-                                          //   isOpenFile = false; // Update the state when done
-                                          // });
+                                          setState(() {
+                                            isOpenFile = false; // Update the state when done
+                                          });
                                         }, 
-                                        child: isOpenFile
-                                          ? SizedBox(
-                                              width: 20.0,
-                                              height: 20.0,
-                                              child: CircularProgressIndicator(color: Colors.white),
-                                            ) 
-                                          : Text(
-                                              "View Deposit Invoice",
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                            ),
+                                        child:Text(
+                                          "View Deposit Invoice",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Color(0xFF749CB9),  
                                           foregroundColor: Colors.white,  
@@ -391,7 +387,6 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                           ),
                                         ),
                                       )
-
                                     )
                                   else
                                     Text(
@@ -429,22 +424,33 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                   ),
                                   SizedBox(width: 5),
                                   if(tourBookingData!['invoice'] != null)
-                                    SizedBox(
-                                      height: 30,
+                                    isOpenInvoide
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
                                       child: ElevatedButton(
-                                        onPressed: (){
-
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenInvoide = true; // Update the loading state
+                                          });
+                                          String url = tourBookingData!['invoice']; 
+                                          String fileName = 'invoice'; 
+                                          await downloadAndOpenPdfFromUrl(url, fileName);
+                                          setState(() {
+                                            isOpenInvoide = false; // Update the state when done
+                                          });
                                         }, 
-                                        child: Text(
-                                          "View Full Payment Invoice",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold
-                                          ),
+                                        child:Text(
+                                          "View Deposit Invoice",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF749CB9),  // Active color
-                                          foregroundColor: Colors.white,  // Text color
+                                          backgroundColor: Color(0xFF749CB9),  
+                                          foregroundColor: Colors.white,  
                                           shape: RoundedRectangleBorder(
                                             side: BorderSide(color: primaryColor)
                                           ),
@@ -460,6 +466,9 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                         fontWeight: FontWeight.w600
                                       ),
                                     ),
+                                ]
+                              )
+                            ],
 
                             if(carBookingData != null && carData != null) ...[
                               carComponent(data: carBookingData!, carData: carData!),
@@ -507,22 +516,33 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                   ),
                                   SizedBox(width: 5),
                                   if(carBookingData!['invoice'] != null)
-                                    SizedBox(
-                                      height: 30,
+                                    isOpenInvoide
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
                                       child: ElevatedButton(
-                                        onPressed: (){
-
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenInvoide = true; // Update the loading state
+                                          });
+                                          String url = carBookingData!['invoice']; 
+                                          String fileName = 'invoice'; 
+                                          await downloadAndOpenPdfFromUrl(url, fileName);
+                                          setState(() {
+                                            isOpenInvoide = false; // Update the state when done
+                                          });
                                         }, 
-                                        child: Text(
-                                          "View Invoice",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold
-                                          ),
+                                        child:Text(
+                                          "View Deposit Invoice",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color(0xFF749CB9),  // Active color
-                                          foregroundColor: Colors.white,  // Text color
+                                          backgroundColor: Color(0xFF749CB9),  
+                                          foregroundColor: Colors.white,  
                                           shape: RoundedRectangleBorder(
                                             side: BorderSide(color: primaryColor)
                                           ),
@@ -540,9 +560,6 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                     ),
                                 ],
                               )
-                            ]
-                          ],
-                        ),
                             ]
                           ]
                         )
@@ -811,12 +828,24 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
   }
 
   Widget carComponent({required Map<String, dynamic> data, required Map<String, dynamic> carData}) {
+    // Declare formattedDateRange with a default value
+    String formattedDateRange = "Date unavailable";
+
+    if (data['bookingStartDate'] != null && data['bookingEndDate'] != null) {
+      DateTime startDate = data['bookingStartDate'].toDate(); // Converts Firestore Timestamp to DateTime
+      DateTime endDate = data['bookingEndDate'].toDate();
+
+      // Format the dates and assign to formattedDateRange
+      formattedDateRange = '${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}';
+    } else {
+      print("Booking start date or end date is missing.");
+    }
+
     return Container(
       margin: EdgeInsets.only(bottom: 10.0),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: Colors.grey.shade400, width: 1.5),
-        // borderRadius: BorderRadius.circular(10.0),
       ),
       child: Column(
         children: [
@@ -874,26 +903,27 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
           ),
           Container(
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade400, width: 1.5))
+              border: Border(bottom: BorderSide(color: Colors.grey.shade400, width: 1.5)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Container(
-                  width: getScreenWidth(context) * 0.2,
-                  height: getScreenHeight(context) * 0.12,
+                  padding: EdgeInsets.all(10.0),
+                  width: getScreenWidth(context) * 0.25,
+                  height: getScreenHeight(context) * 0.15,
                   margin: EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: NetworkImage(carData['carImage'] ?? ''),
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
                 SizedBox(width: 5),
-                Expanded( // Use Expanded to allow the column to take remaining space
+                Expanded(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align contents vertically
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -903,33 +933,19 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "Date: ${DateFormat('dd/MM/yyyy').format(carData['bookingStartDate'].toDate())} - ${DateFormat('dd/MM/yyyy').format(carData['bookingEndDate'].toDate())}",
+                        "Date: $formattedDateRange", // Use the formattedDateRange here
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
-                      // Padding( // Add Padding here
-                      //   padding: EdgeInsets.only(right: 10.0), // Right padding of 10
-                      //   child: Align(
-                      //     alignment: Alignment.centerRight,
-                      //     child: Text(
-                      //       'Qty: ${(data['numberOfPeople'] ?? "N/A").toString()}',
-                      //       style: TextStyle(
-                      //         fontSize: 12,
-                      //         fontWeight: FontWeight.bold,
-                      //         color: Colors.black,
-                      //       ),
-                      //     ),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -943,20 +959,21 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  "Total Price: RM ${NumberFormat('#,##0.00').format(data['totalPrice'] ?? 0)}", 
+                  "Total Price: RM ${NumberFormat('#,##0.00').format(data['totalPrice'] ?? 0)}",
                   style: TextStyle(
-                    color: Colors.black, 
-                    fontWeight: FontWeight.bold, 
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
                   textAlign: TextAlign.right,
                 ),
-              ]
-            )
-          )
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+
 
 }

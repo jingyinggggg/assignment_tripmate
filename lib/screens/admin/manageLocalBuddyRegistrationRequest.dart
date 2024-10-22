@@ -126,9 +126,12 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
         return AlertDialog(
           title: Text('Reject Request'),
           content: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Please provide a reason for rejection:'),
+              SizedBox(height: 10),
               TextField(
                 controller: _rejectReasonController,
                 maxLines: 3,
@@ -144,14 +147,30 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor, // Set the background color
+                foregroundColor: Colors.white, // Set the text color
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                ),
+              ),
               child: Text('Cancel'),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
                 _rejectRequest(_rejectReasonController.text); // Perform reject request
               },
-              child: Text('Submit'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor, // Set the background color
+                foregroundColor: Colors.white, // Set the text color
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                ),
+              ),
+              child: const Text("Submit"),
             ),
           ],
         );
@@ -169,9 +188,10 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
         'registrationStatus': 2,
       });
 
-      _showDialog(
-        title: 'Success',
-        content: 'You have approved the registration request successfully.',
+      showCustomDialog(
+        context: context, 
+        title: 'Success', 
+        content: 'You have approved the registration request successfully.', 
         onPressed: () {
           Navigator.of(context).pop();
           Navigator.push(
@@ -210,9 +230,10 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
         'declineInterviewReason': reason,
       });
 
-      _showDialog(
-        title: 'Rejected',
-        content: 'You have reject the registration request after interview session.',
+      showCustomDialog(
+        context: context, 
+        title: 'Rejected', 
+        content: 'You have reject the registration request after interview session.', 
         onPressed: () {
           Navigator.of(context).pop();
           Navigator.push(
@@ -244,8 +265,11 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
           title: Text('Reject Request'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Please provide a reason for rejection:'),
+              SizedBox(height: 10),
               TextField(
                 controller: _rejectReasonController,
                 maxLines: 3,
@@ -261,20 +285,37 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor, // Set the background color
+                foregroundColor: Colors.white, // Set the text color
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                ),
+              ),
               child: Text('Cancel'),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                _declineInterview(_declineInterviewReasonController.text); // Perform reject request
+                _declineInterview(_rejectReasonController.text); // Perform reject request
               },
-              child: Text('Submit'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor, // Set the background color
+                foregroundColor: Colors.white, // Set the text color
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                ),
+              ),
+              child: const Text("Submit"),
             ),
           ],
         );
       },
     );
   }
+
 
   void _createGoogleCalendarEvent(String email) async {
     // Constructing the calendar URL
@@ -296,16 +337,26 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
     if (state == AppLifecycleState.resumed) {
       // User has returned to the app
       _updateRegistrationStatus(1); // Update registration status
+      // Update local state
       setState(() {
-        
+        // Directly update the value in localBuddyData
+        if (localBuddyData != null) {
+          localBuddyData!['registrationStatus'] = 1; // Ensure you use '!' to access the map
+        }
       });
     }
   }
 
   Future<void> _updateRegistrationStatus(int status) async {
-    await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyId).update({'registrationStatus': status});
+    // Update Firestore
+    await FirebaseFirestore.instance
+        .collection('localBuddy')
+        .doc(widget.localBuddyId)
+        .update({'registrationStatus': status});
+
     print("Registration status updated to: $status");
-  }  
+  }
+ 
 
   void _showDialog({
     required String title,

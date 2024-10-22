@@ -209,19 +209,33 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     );
   }
 
-  Widget TourBookingComponent({required TravelAgentTourBookingList tourBooking}){
+  Widget TourBookingComponent({required TravelAgentTourBookingList tourBooking}) {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         Navigator.push(
-          context, 
-          MaterialPageRoute(builder: (context) => TravelAgentViewBookingDetailsScreen(userId: widget.userId, tourID: tourBooking.tourID, totalBookingNumber: tourBooking.totalBookingNumber,))
+          context,
+          MaterialPageRoute(
+            builder: (context) => TravelAgentViewBookingDetailsScreen(
+              userId: widget.userId,
+              tourID: tourBooking.tourID,
+              totalBookingNumber: tourBooking.totalBookingNumber,
+            ),
+          ),
         );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          border:Border.all(color: Colors.grey.shade300, width: 1.5),
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 6,
+              spreadRadius: 1,
+              offset: Offset(0, 3), // Changes position of shadow
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -229,80 +243,118 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
               padding: EdgeInsets.all(10.0),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1.5))
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                ),
               ),
               child: Text(
                 "Tour Package ID: ${tourBooking.tourID}",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.black,
-                  fontWeight: FontWeight.bold
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             Container(
+              padding: EdgeInsets.all(10.0), // Added padding for better spacing
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Container(
-                    width: getScreenWidth(context) * 0.18,
-                    height: getScreenHeight(context) * 0.13,
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(tourBooking.tourImage),
-                        fit: BoxFit.cover,
-                      ),
+                  // Ensure the image displays correctly with a fallback
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners for the image
+                    child: Image.network(
+                      tourBooking.tourImage,
+                      width: getScreenWidth(context) * 0.18,
+                      height: getScreenHeight(context) * 0.13,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: getScreenWidth(context) * 0.18,
+                          height: getScreenHeight(context) * 0.13,
+                          color: Colors.grey, // Grey background
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Image N/A",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tourBooking.tourName, 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w800, 
-                          fontSize: defaultFontSize,
+                  Expanded( // Use Expanded to take the remaining space
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tourBooking.tourName,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w800,
+                            fontSize: defaultFontSize,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Total Bookings: ${tourBooking.totalBookingNumber}", 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w500, 
-                          fontSize: 12,
+                        SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Icon(Icons.book, color: primaryColor, size: 18), // Icon for tour bookings
+                            SizedBox(width: 5),
+                            Text(
+                              "Total Bookings: ${tourBooking.totalBookingNumber}",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                      ),
-                    ],
-                  )
+                      ],
+                    ),
+                  ),
                 ],
-              )
+              ),
             ),
           ],
-        )
-      )
+        ),
+      ),
     );
   }
 
-  Widget CarRentalBookingComponent({required TravelAgentCarRentalBookingList carRentalBooking}){
+  Widget CarRentalBookingComponent({required TravelAgentCarRentalBookingList carRentalBooking}) {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         Navigator.push(
-          context, 
-          MaterialPageRoute(builder: (context) => TravelAgentViewBookingDetailsScreen(userId: widget.userId, carRentalID: carRentalBooking.carRentalID, totalBookingNumber: carRentalBooking.totalBookingNumber,))
+          context,
+          MaterialPageRoute(
+            builder: (context) => TravelAgentViewBookingDetailsScreen(
+              userId: widget.userId,
+              carRentalID: carRentalBooking.carRentalID,
+              totalBookingNumber: carRentalBooking.totalBookingNumber,
+            ),
+          ),
         );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          border:Border.all(color: Colors.grey.shade300, width: 1.5),
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 6,
+              spreadRadius: 1,
+              offset: Offset(0, 3), // Changes position of shadow
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -310,65 +362,89 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
               padding: EdgeInsets.all(10.0),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1.5))
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                ),
               ),
               child: Text(
                 "Car Rental ID: ${carRentalBooking.carRentalID}",
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.black,
-                  fontWeight: FontWeight.bold
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             Container(
+              padding: EdgeInsets.all(10.0), // Added padding for better spacing
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Container(
-                    width: getScreenWidth(context) * 0.3,
-                    height: getScreenHeight(context) * 0.15,
-                    padding: EdgeInsets.all(10.0),
-                    margin: EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(carRentalBooking.carImage),
-                        fit: BoxFit.contain,
-                      ),
+                  // Ensure the image displays correctly with a fallback
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners for the image
+                    child: Image.network(
+                      carRentalBooking.carImage,
+                      width: getScreenWidth(context) * 0.3,
+                      height: getScreenHeight(context) * 0.15,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: getScreenWidth(context) * 0.3,
+                          height: getScreenHeight(context) * 0.15,
+                          color: Colors.grey, // Grey background
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Image N/A",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   SizedBox(width: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        carRentalBooking.carName, 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w800, 
-                          fontSize: defaultFontSize,
+                  Expanded( // Use Expanded to take the remaining space
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          carRentalBooking.carName,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w800,
+                            fontSize: defaultFontSize,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "Total Bookings: ${carRentalBooking.totalBookingNumber}", 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w500, 
-                          fontSize: 12,
+                        SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Icon(Icons.directions_car, color: Colors.green, size: 18), // Icon for car bookings
+                            SizedBox(width: 5),
+                            Text(
+                              "Total Bookings: ${carRentalBooking.totalBookingNumber}",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
-                      ),
-                    ],
-                  )
+                      ],
+                    ),
+                  ),
                 ],
-              )
+              ),
             ),
           ],
-        )
-      )
+        ),
+      ),
     );
   }
+
 }

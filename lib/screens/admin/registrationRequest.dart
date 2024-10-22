@@ -18,6 +18,8 @@ class RegistrationRequestScreen extends StatefulWidget {
 class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
   List<TravelAgent> _TAList = [];
   List<LocalBuddy> _LocalBuddyList = [];
+  bool isFetchTravelAgentList = false;
+  bool isFetchingLocalBuddyList = false;
 
   @override
   void initState() {
@@ -27,6 +29,9 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
   }
 
   Future<void> fetchTAList() async {
+    setState(() {
+      isFetchTravelAgentList = true;
+    });
     try {
       // Get the reference to the 'travelAgent' collection
       CollectionReference taRef = FirebaseFirestore.instance.collection('travelAgent');
@@ -49,10 +54,17 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
 
     } catch (e) {
       print("Error fetching travel agents list: $e");
+    } finally{
+      setState(() {
+        isFetchTravelAgentList = false;
+      });
     }
   }
 
   Future<void> fetchLocalBuddyList() async {
+    setState(() {
+      isFetchingLocalBuddyList = true;
+    });
     try {
       CollectionReference localBuddyRef = FirebaseFirestore.instance.collection('localBuddy');
       CollectionReference userRef = FirebaseFirestore.instance.collection('users');
@@ -88,6 +100,10 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
 
     } catch (e) {
       print("Error fetching local buddies and user info: $e");
+    } finally{
+      setState(() {
+        isFetchingLocalBuddyList = false;
+      });
     }
   }
 
@@ -117,9 +133,9 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
             },
           ),
           bottom: PreferredSize(
-            preferredSize: Size.fromHeight(70.0), // Adjust the height as needed
+            preferredSize: Size.fromHeight(50.0), // Adjust the height as needed
             child: Container(
-              height: 60,
+              height: 50,
               color: Colors.white, // Set the background color of the TabBar
               child: TabBar(
                 tabs: [
@@ -177,25 +193,29 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
           children: [ 
             Container(
               padding: EdgeInsets.only(right: 10, left: 10, top: 10), // Adjust the top padding as needed
-              child: _TAList.isEmpty
-              ? Center(child: Text('No pending review registration for travel agent.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-              : ListView.builder(
-                  itemCount: _TAList.length,
-                  itemBuilder: (context, index) {
-                    return TAComponent(travelAgent: _TAList[index]);
-                  }
-                ),
+              child: isFetchTravelAgentList
+              ? Center(child: CircularProgressIndicator(color: primaryColor))
+              : _TAList.isEmpty
+                ? Center(child: Text('No pending review registration for travel agent.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                : ListView.builder(
+                    itemCount: _TAList.length,
+                    itemBuilder: (context, index) {
+                      return TAComponent(travelAgent: _TAList[index]);
+                    }
+                  ),
             ),
             Container(
               padding: EdgeInsets.only(right: 10, left: 10, top: 10),
-              child: _LocalBuddyList.isEmpty
-              ? Center(child: Text('No pending review registration for local buddy.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-              : ListView.builder(
-                  itemCount: _LocalBuddyList.length,
-                  itemBuilder: (context, index) {
-                    return LocalBuddyComponent(localBuddy: _LocalBuddyList[index]);
-                  }
-                ),
+              child: isFetchingLocalBuddyList
+              ? Center(child: CircularProgressIndicator(color: primaryColor))
+              : _LocalBuddyList.isEmpty
+                ? Center(child: Text('No pending review registration for local buddy.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                : ListView.builder(
+                    itemCount: _LocalBuddyList.length,
+                    itemBuilder: (context, index) {
+                      return LocalBuddyComponent(localBuddy: _LocalBuddyList[index]);
+                    }
+                  ),
             )
           ], 
         ),

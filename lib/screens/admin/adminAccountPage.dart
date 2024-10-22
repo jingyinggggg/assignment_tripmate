@@ -169,8 +169,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: screenHeight * 0.37,
-                    left: screenWidth * 0.26,
+                    top: screenHeight * 0.36,
+                    left: screenWidth * 0.4,
                     child: Column(
                       children: [
                         const Text(
@@ -230,38 +230,8 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: 365,
-                    left: 20,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Help Center",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 16),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      HelpCenterScreen(userId: widget.userId, isAdmin: true,)),
-                            );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: screenHeight * 0.58,
-                    left: screenWidth * 0.12,
+                    top: screenHeight * 0.4,
+                    left: screenWidth * 0.07,
                     child: Column(
                       children: [
                         const Text(
@@ -289,6 +259,37 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ],
                     ),
                   ),
+                  Positioned(
+                    top: screenHeight * 0.6,
+                    left: screenWidth * 0.25,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Help Center",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              fontSize: 14),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (context) =>
+                            //           const SettingScreen()),
+                            // );
+                          },
+                          child: Image.asset(
+                            'images/location-pin.png',
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
                   // Positioned(
                   //   top: 505,
                   //   left: 170,

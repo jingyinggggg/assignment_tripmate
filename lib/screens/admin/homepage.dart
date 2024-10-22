@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewBookingListMainpage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/admin/manageCarList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
@@ -33,88 +34,94 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _screens = [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-        child: GridView.builder(
-          padding: const EdgeInsets.all(10.0),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // Two buttons per row
-            crossAxisSpacing: 20, // Horizontal spacing between buttons
-            mainAxisSpacing: 25,  // Vertical spacing between buttons
-            childAspectRatio: 1, // Buttons will be square
-          ),
-          itemCount: 5, // Total number of menu buttons
-          itemBuilder: (context, index) {
-            final menuItems = [
-              {
-                'icon': 'images/countries.png',
-                'label': 'Tour',
-                'onPressed': () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AdminManageCountryListScreen(userId: widget.userId),
-                    ),
-                  );
-                },
-              },
-              {
-                'icon': 'images/CarRentalIcon.png',
-                'label': 'Car Listing',
-                'onPressed': () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AdminManageCarListScreen(userId: widget.userId),
-                    ),
-                  );
-                },
-              },
-              {
-                'icon': 'images/registration_request.png',
-                'label': 'Registration',
-                'onPressed': () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RegistrationRequestScreen(userId: widget.userId),
-                    ),
-                  );
-                },
-              },
-              {
-                'icon': 'images/manage_booking.png',
-                'label': 'Booking',
-                'onPressed': () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AdminManageCountryListScreen(userId: widget.userId),
-                    ),
-                  );
-                },
-              },
-              {
-                'icon': 'images/posting.png',
-                'label': 'Posting',
-                'onPressed': () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AdminManageCountryListScreen(userId: widget.userId),
-                    ),
-                  );
-                },
-              },
-            ];
+      Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(20.0),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Two buttons per row
+                crossAxisSpacing: 20, // Horizontal spacing between buttons
+                mainAxisSpacing: 25,  // Vertical spacing between buttons
+                childAspectRatio: 1, // Buttons will be square
+              ),
+              itemCount: 4, // Total number of menu buttons
+              itemBuilder: (context, index) {
+                final menuItems = [
+                  {
+                    'icon': 'images/countries.png',
+                    'label': 'Tour',
+                    'onPressed': () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AdminManageCountryListScreen(userId: widget.userId),
+                        ),
+                      );
+                    },
+                  },
+                  {
+                    'icon': 'images/CarRentalIcon.png',
+                    'label': 'Car Listing',
+                    'onPressed': () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AdminManageCarListScreen(userId: widget.userId),
+                        ),
+                      );
+                    },
+                  },
+                  {
+                    'icon': 'images/registration_request.png',
+                    'label': 'Registration',
+                    'onPressed': () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegistrationRequestScreen(userId: widget.userId),
+                        ),
+                      );
+                    },
+                  },
+                  {
+                    'icon': 'images/manage_booking.png',
+                    'label': 'Booking',
+                    'onPressed': () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AdminViewBookingListMainpageScreen(userId: widget.userId),
+                        ),
+                      );
+                    },
+                  },
+                  // {
+                  //   'icon': 'images/posting.png',
+                  //   'label': 'Posting',
+                  //   'onPressed': () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (context) => AdminManageCountryListScreen(userId: widget.userId),
+                  //       ),
+                  //     );
+                  //   },
+                  // },
+                ];
 
-            return _buildMenuButton(
-              context,
-              icon: menuItems[index]['icon'] as String,
-              label: menuItems[index]['label'] as String,
-              onPressed: menuItems[index]['onPressed'] as VoidCallback,
-            );
-          },
+                return _buildMenuButton(
+                  context,
+                  icon: menuItems[index]['icon'] as String,
+                  label: menuItems[index]['label'] as String,
+                  onPressed: menuItems[index]['onPressed'] as VoidCallback,
+                );
+              },
+            ),
+          ],
         ),
       ),
       ChatScreen(userId: widget.userId),

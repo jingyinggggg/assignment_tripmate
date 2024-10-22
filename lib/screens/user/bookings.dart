@@ -335,26 +335,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           // Fetch the local buddy details
           DocumentSnapshot localBuddyDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(localBuddyID).get();
           String userId = localBuddyDoc['userID'] as String;
+          String locationArea = localBuddyDoc['locationArea'] as String;
 
           // Fetch user details including profile image from 'users' collection
           DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
           String profileImage = userDoc['profileImage'] as String;
           String localBuddyName = userDoc['name'] as String;
-
-          // Get full address from the document
-          String fullAddress = localBuddyDoc['location'];
-
-          // Call the Geocoding API to extract country and area
-          String? country = '';
-          String? area = '';
-
-          if (fullAddress.isNotEmpty) {
-            var locationData = await _getLocationAreaAndCountry(fullAddress);
-            country = locationData['country'];
-            area = locationData['area'];
-          }
-
-          String locationArea = '$area, $country';
 
           // Assign the user details to the localBuddyBooking object
           localBuddyBooks.localBuddyName = localBuddyName;
@@ -384,39 +370,39 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   }
 
   // Function to get area and country from the full address using the Google Geocoding API
-  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-    final String apiKeys = apiKey; // Replace with your API key
-    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+  // Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+  //   final String apiKeys = apiKey; // Replace with your API key
+  //   final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
 
-    final response = await http.get(Uri.parse(url));
+  //   final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
 
-      if (data['results'].isNotEmpty) {
-        final addressComponents = data['results'][0]['address_components'];
+  //     if (data['results'].isNotEmpty) {
+  //       final addressComponents = data['results'][0]['address_components'];
 
-        String country = '';
-        String area = '';
+  //       String country = '';
+  //       String area = '';
 
-        for (var component in addressComponents) {
-          List<String> types = List<String>.from(component['types']);
-          if (types.contains('country')) {
-            country = component['long_name'];
-          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
-            area = component['long_name'];
-          }
-        }
+  //       for (var component in addressComponents) {
+  //         List<String> types = List<String>.from(component['types']);
+  //         if (types.contains('country')) {
+  //           country = component['long_name'];
+  //         } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+  //           area = component['long_name'];
+  //         }
+  //       }
 
-        return {'country': country, 'area': area};
-      } else {
-        return {'country': '', 'area': ''};
-      }
-    } else {
-      print('Error fetching location data: ${response.statusCode}');
-      return {'country': '', 'area': ''};
-    }
-  }
+  //       return {'country': country, 'area': area};
+  //     } else {
+  //       return {'country': '', 'area': ''};
+  //     }
+  //   } else {
+  //     print('Error fetching location data: ${response.statusCode}');
+  //     return {'country': '', 'area': ''};
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

@@ -178,6 +178,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
       // Retrieve the current number of users
       final usersSnapshot = await firestore.collection('travelAgent').get();
       final id = 'TA${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
+      final companyID = 'CP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
       // Convert date to a date-only format (without time)
       DateTime dobDateOnly = DateTime(dob!.year, dob.month, dob.day);
@@ -187,6 +188,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
 
       String resp = await StoreData().saveTAData(
         TAid: id,
+        companyID: companyID,
         name: _nameController.text,
         email: _emailController.text,
         dob: dobDateOnly,

@@ -53,25 +53,25 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
         DocumentSnapshot userSnapshot = await userRef.doc(doc['userID']).get();
 
         if (userSnapshot.exists) {
-          String fullAddress = doc['location'];
+          // String fullAddress = doc['location'];
 
-          String? country = '';
-          String? area = '';
+          // String? country = '';
+          // String? area = '';
 
-          if (fullAddress.isNotEmpty) {
-            var locationData = await _getLocationAreaAndCountry(fullAddress);
-            country = locationData['country'];
-            area = locationData['area'];
-          }
+          // if (fullAddress.isNotEmpty) {
+          //   var locationData = await _getLocationAreaAndCountry(fullAddress);
+          //   country = locationData['country'];
+          //   area = locationData['area'];
+          // }
 
-          String locationArea = '$area, $country';
+          // String locationArea = '$area, $country';
 
           _localBuddyList.add(LocalBuddy(
             localBuddyID: doc['localBuddyID'],
             localBuddyName: userSnapshot['name'],
             localBuddyImage: userSnapshot['profileImage'],
             languageSpoken: doc['languageSpoken'],
-            locationArea: locationArea,
+            locationArea: doc['locationArea'],
             locationAddress: doc['location'],
           ));
         }
@@ -87,40 +87,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       setState(() {
         isLoading = false;
       });
-    }
-  }
-
-  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-    final String apiKeys = apiKey;
-    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      if (data['results'].isNotEmpty) {
-        final addressComponents = data['results'][0]['address_components'];
-
-        String country = '';
-        String area = '';
-
-        for (var component in addressComponents) {
-          List<String> types = List<String>.from(component['types']);
-          if (types.contains('country')) {
-            country = component['long_name'];
-          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
-            area = component['long_name'];
-          }
-        }
-
-        return {'country': country, 'area': area};
-      } else {
-        return {'country': '', 'area': ''};
-      }
-    } else {
-      print('Error fetching location data: ${response.statusCode}');
-      return {'country': '', 'area': ''};
     }
   }
 

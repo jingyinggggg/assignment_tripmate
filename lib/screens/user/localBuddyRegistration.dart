@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyHomepage.dart';
@@ -138,6 +140,15 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
         referenceImage = _referenceImage!;
       }
 
+      String? country = '';
+      String? area = '';
+
+      var locationData = await _getLocationAreaAndCountry(_locationController.text);
+      country = locationData['country'];
+      area = locationData['area'];
+
+      String locationArea = '$area, $country';
+
       // Call the saveLocalBuddyData function with the optional parameters
       String resp = await StoreData().saveLocalBuddyData(
         localBuddyID: localBuddyID,
@@ -145,6 +156,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
         location: _locationController.text,
         userID: widget.userId,
         languageSpoken: _languageSpokenController.text,
+        locationArea: locationArea,
         availability: availability,
         price: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
         idCard: _image!,  // Required field, already checked
@@ -183,6 +195,40 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey;
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
     }
   }
 
@@ -453,7 +499,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
             child: ElevatedButton(
               onPressed: () {_saveBuddyData();},
               child: isLoading
-                  ? CircularProgressIndicator()
+                  ? CircularProgressIndicator(color: Colors.white,)
                   : Text(
                       'Submit',
                       style: TextStyle(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
@@ -143,11 +145,21 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         referenceImage = _referenceImage!;
       }
 
+      String? country = '';
+      String? area = '';
+
+      var locationData = await _getLocationAreaAndCountry(_locationController.text);
+      country = locationData['country'];
+      area = locationData['area'];
+
+      String locationArea = '$area, $country';
+
       // Call the saveLocalBuddyData function with the optional parameters
       String resp = await StoreData().saveLocalBuddyData(
         occupation: _occupationController.text,
         location: _locationController.text,
         languageSpoken: _languageSpokenController.text,
+        locationArea: locationArea,
         availability: availability,
         price: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
         referenceImage: referenceImage,  // Optional field
@@ -184,6 +196,40 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
+    final String apiKeys = apiKey;
+    final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'].isNotEmpty) {
+        final addressComponents = data['results'][0]['address_components'];
+
+        String country = '';
+        String area = '';
+
+        for (var component in addressComponents) {
+          List<String> types = List<String>.from(component['types']);
+          if (types.contains('country')) {
+            country = component['long_name'];
+          } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
+            area = component['long_name'];
+          }
+        }
+
+        return {'country': country, 'area': area};
+      } else {
+        return {'country': '', 'area': ''};
+      }
+    } else {
+      print('Error fetching location data: ${response.statusCode}');
+      return {'country': '', 'area': ''};
     }
   }
 

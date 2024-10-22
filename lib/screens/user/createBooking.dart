@@ -639,12 +639,6 @@ class _createBookingScreenState extends State<createBookingScreen> {
             ),
             // Wrap the single InvoiceItem in a list
             items: [
-              // InvoiceItem(
-              //   description: "Deposit (Refundable)",
-              //   quantity: 1,
-              //   unitPrice: carRentalDeposit.toInt(),
-              //   total: carRentalDeposit,
-              // ),
               InvoiceItem(
                 description: "Local Buddy: ${_localBuddy!.localBuddyName} (${dateFormat.format(_selectedLbStartDate!)} - ${dateFormat.format(_selectedLbEndDate!)})",
                 quantity: LBDifferenceInDays!,

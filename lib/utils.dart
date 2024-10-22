@@ -510,27 +510,65 @@ class TravelAgentCarRentalBookingList {
   }
 }
 
-// class TourBookingDetails {
-//   final String customerID;
-//   final String customerName;
-//   final String dateRange;
-//   final String pax;
+class AdminLocalBuddyBookingList {
+  final String localBuddyID;
+  final String userID;
+  String localBuddyName; 
+  String localBuddyImage; 
+  int totalBookingNumber;
+  bool haveCancelBooking;
 
-//   TravelAgentCarRentalBookingList({
-//     required this.carRentalID,
-//     required this.carName,
-//     required this.carImage,
-//     this.totalBookingNumber = 0,  // Default to 0 if no bookings
-//   });
+  AdminLocalBuddyBookingList({
+    required this.localBuddyID,
+    required this.userID,
+    this.localBuddyName = '',
+    this.localBuddyImage = '',
+    this.totalBookingNumber = 0, // Default to 0 if no bookings
+    this.haveCancelBooking = false
+  });
 
-//   factory TravelAgentCarRentalBookingList.fromFirestore(DocumentSnapshot doc) {
-//     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+  factory AdminLocalBuddyBookingList.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-//     return TravelAgentCarRentalBookingList(
-//       carRentalID: doc.id,
-//       carName: data['carModel'],
-//       carImage: data['carImage'],
-//       totalBookingNumber: data['totalBookingNumber'] ?? 0,  // Default to 0 if missing
-//     );
-//   }
-// }
+    return AdminLocalBuddyBookingList(
+      localBuddyID: doc.id,
+      userID: data['userID'] ?? '', // Default to empty string if null
+      localBuddyName: data['name'] ?? '', // Default to empty string if null
+      localBuddyImage: data['profileImage'] ?? '', // Default to empty string if null
+      totalBookingNumber: data['totalBookingNumber'] ?? 0, // Default to 0 if missing
+      haveCancelBooking: data['haveCancelBooking'] ?? false
+    );
+  }
+}
+
+class AdminAgencyList {
+  final String agencyID;
+  final String agentID;
+  final String agencyName; 
+  late int totalTourBookingNumber;
+  late int totalCarBookingNumber;
+  late bool haveCancelBooking;
+
+  AdminAgencyList({
+    required this.agencyID,
+    required this.agentID,
+    required this.agencyName,
+    this.totalTourBookingNumber = 0, 
+    this.totalCarBookingNumber = 0,
+    this.haveCancelBooking = false,
+  });
+
+  factory AdminAgencyList.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    return AdminAgencyList(
+      agencyID: data['companyID'] ?? '',
+      agentID: doc.id, 
+      agencyName: data['companyName'] ?? '', 
+      totalTourBookingNumber: data['totalTourBookingNumber'] ?? 0, 
+      totalCarBookingNumber: data['totalCarBookingNumber'] ?? 0, 
+      haveCancelBooking: data['haveCancelBooking'] ?? false,
+    );
+  }
+}
+
