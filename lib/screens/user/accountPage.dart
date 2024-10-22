@@ -171,7 +171,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   Positioned(
                     top: screenHeight * 0.35,
-                    left: screenWidth * 0.5,
+                    left: screenWidth * 0.42,
                     child: Column(
                       children: [
                         const Text(
@@ -260,8 +260,8 @@ class _AccountScreenState extends State<AccountScreen> {
                   //   ),
                   // ),
                   Positioned(
-                    top: screenHeight * 0.55,
-                    left: screenWidth * 0.12,
+                    top: screenHeight * 0.4,
+                    left: screenWidth * 0.06,
                     child: Column(
                       children: [
                         const Text(
@@ -291,7 +291,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   Positioned(
                     top: screenHeight * 0.6,
-                    left: screenWidth * 0.35,
+                    left: screenWidth * 0.25,
                     child: Column(
                       children: [
                         const Text(
