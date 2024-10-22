@@ -35,9 +35,11 @@ import 'package:assignment_tripmate/screens/tarvel_agent_sign_up.dart';
 import 'package:assignment_tripmate/screens/user/carRentalDetails.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
+import 'package:assignment_tripmate/screens/user/viewAIItinerary.dart';
 import 'package:assignment_tripmate/screens/user/viewTourDetails.dart';
 import 'package:assignment_tripmate/screens/user_sign_up.dart';
 import 'package:assignment_tripmate/screens/welcome.dart';
+import 'package:assignment_tripmate/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -136,6 +138,20 @@ class _MainAppState extends State<MainApp> {
             );
           },
         ),
+        GoRoute(
+          path: '/viewAIItinerary/:userId/:itineraryID/:fromAppLink',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            final itineraryID = state.pathParameters['itineraryID']!;
+            final fromAppLink = state.pathParameters['fromAppLink']!;
+
+            return ViewAIItineraryScreen(
+              userId: userId,
+              itineraryID: itineraryID,
+              fromAppLink: fromAppLink, // Pass the parsed value
+            );
+          },
+        ),
       ],
       errorBuilder: (context, state) {
         return Scaffold(
@@ -152,7 +168,7 @@ class _MainAppState extends State<MainApp> {
     });
   }
 
-void _handleDeepLink(Uri uri) {
+  void _handleDeepLink(Uri uri) {
     print('Url: ${uri.toString()}');
     
     if (uri.pathSegments.isNotEmpty && uri.host == 'tripmate.com') {
@@ -195,7 +211,17 @@ void _handleDeepLink(Uri uri) {
 
         context.go('/localBuddyDetails/$userId/$localBuddyId/$fromAppLink');
 
-      } else {
+      } else if (path == 'viewAIItinerary') {
+        print('Navigating to viewAIItinerary');
+        
+        final userId = uri.pathSegments[1];
+        final itineraryID = uri.pathSegments[2];
+        final fromAppLink = uri.pathSegments[3];
+
+
+        context.go('/viewAIItinerary/$userId/$itineraryID/$fromAppLink');
+
+      }else {
         print('No matching path found: $path');
       }
     } else {
