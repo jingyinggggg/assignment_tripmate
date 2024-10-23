@@ -701,7 +701,7 @@ void _removeItineraryRow(int index) {
                     child: ElevatedButton(
                       onPressed: (){_addTour();},
                       child: isLoading
-                          ? const CircularProgressIndicator()
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                               'Add Tour',
                               style: TextStyle(

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
+import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +58,10 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country))
+            );
           },
         ),
       ),
@@ -89,7 +93,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
                 else
                   ElevatedButton(
                     onPressed: () {
-                      _addCountry();
+                      _addCity();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF467BA1),
@@ -126,7 +130,11 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
       ),
       onChanged: (value) {
         setState(() {
-          previewCityName = value;
+          _cityNameController.text = value.toUpperCase(); // Convert input to uppercase
+          _cityNameController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _cityNameController.text.length), // Keep the cursor at the end
+          );
+          previewCityName = _cityNameController.text;
         });
       },
       decoration: InputDecoration(
@@ -305,7 +313,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
     }
   }
 
-  Future<void> _addCountry() async {
+  Future<void> _addCity() async {
     if (_cityNameController.text.isEmpty || _image == null) {
       _showDialog(
         title: 'Failed',
@@ -322,17 +330,24 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
     });
 
     try {
-      // Get the count of existing countries
-      final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').doc(widget.country).collection('cities').get();
-      final countryCount = countriesSnapshot.size;
+      // Get the list of existing city IDs
+      final citiesSnapshot = await FirebaseFirestore.instance
+          .collection('countries')
+          .doc(widget.country)
+          .collection('cities')
+          .get();
 
-      // Generate new country ID
-      final newCityID = 'CT${(countryCount + 1).toString().padLeft(4, '0')}';
+      List<String> existingCityIDs = citiesSnapshot.docs
+          .map((doc) => doc.id) // Extract city IDs
+          .toList();
 
-      // Save the country data
+      // Generate new city ID using the existing IDs
+      final newCityID = _generateNewCityID(existingCityIDs);
+
+      // Save the city data
       String resp = await StoreData().saveCityData(
         country: widget.country,
-        city: _cityNameController.text, 
+        city: _cityNameController.text,
         cityID: newCityID, // Use the generated ID
         file: _image!,
       );
@@ -343,7 +358,10 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         content: 'The city has been added successfully.',
         onPressed: () {
           Navigator.of(context).pop(); // Close the success dialog
-          Navigator.of(context).pop(); // Close the screen
+          Navigator.push(
+            context, 
+            MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country))
+          );
         },
       );
     } catch (e) {
@@ -361,6 +379,20 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
       });
     }
   }
+
+  String _generateNewCityID(List<String> existingIDs) {
+    // Extract numeric parts from existing IDs and convert to integers
+    List<int> numericIDs = existingIDs
+        .map((id) => int.tryParse(id.substring(2)) ?? 0) // Convert "CTxxxx" to xxxx
+        .toList();
+
+    // Find the highest ID
+    int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+    // Generate new ID
+    return 'CT${widget.country}${(maxID + 1).toString().padLeft(4, '0')}';
+  }
+
 
   void _showDialog({
     required String title,

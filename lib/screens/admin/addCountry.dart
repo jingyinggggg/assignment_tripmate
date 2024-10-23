@@ -126,7 +126,11 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
       ),
       onChanged: (value) {
         setState(() {
-          previewCountryName = value;
+          _countryNameController.text = value.toUpperCase(); // Convert input to uppercase
+          _countryNameController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _countryNameController.text.length), // Keep the cursor at the end
+          );
+          previewCountryName = _countryNameController.text;
         });
       },
       decoration: InputDecoration(
@@ -305,7 +309,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     }
   }
 
-  Future<void> _addCountry() async {
+    Future<void> _addCountry() async {
     if (_countryNameController.text.isEmpty || _image == null) {
       _showDialog(
         title: 'Failed',
@@ -322,16 +326,23 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     });
 
     try {
-      // Get the count of existing countries
+      // Get all existing countries
       final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').get();
-      final countryCount = countriesSnapshot.size;
+
+      // List to hold country IDs
+      List<String> countryIDs = [];
+
+      // Iterate through the documents to extract country IDs
+      for (var doc in countriesSnapshot.docs) {
+        countryIDs.add(doc['countryID']); // Assuming the document ID is the country ID
+      }
 
       // Generate new country ID
-      final newCountryID = 'C${(countryCount + 1).toString().padLeft(4, '0')}';
+      String newCountryID = _generateNewCountryID(countryIDs);
 
       // Save the country data
       String resp = await StoreData().saveCountryData(
-        country: _countryNameController.text, 
+        country: _countryNameController.text,
         countryID: newCountryID, // Use the generated ID
         file: _image!,
       );
@@ -344,8 +355,7 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    AdminManageCountryListScreen(userId: widget.userId)),
+                builder: (context) => AdminManageCountryListScreen(userId: widget.userId)),
           );
         },
       );
@@ -363,6 +373,20 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
         _isLoading = false; // Stop loading
       });
     }
+  }
+
+  // Function to generate a new country ID
+  String _generateNewCountryID(List<String> existingIDs) {
+    // Extract numeric parts from existing IDs and convert to integers
+    List<int> numericIDs = existingIDs
+        .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+        .toList();
+
+    // Find the highest ID
+    int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+    // Generate new ID
+    return 'C${(maxID + 1).toString().padLeft(4, '0')}';
   }
 
   void _showDialog({

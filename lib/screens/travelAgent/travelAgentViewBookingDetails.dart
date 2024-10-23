@@ -139,6 +139,7 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
           String userId = booking['userID'];
           String carRentalBookingID = booking.id;
           int bookingStatus = booking['bookingStatus'];
+          int isCheckCarCondition = booking['isCheckCarCondition'];
 
           // Step 2: Fetch customer details for each userID from the users collection
           DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -153,6 +154,7 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                 'userID': userId,
                 'carRentalBookingID': carRentalBookingID,
                 'bookingStatus': bookingStatus,
+                'isCheckCarCondition': isCheckCarCondition,
                 'customerInfo': userDoc.data() as Map<String, dynamic>,
               });
             });
@@ -169,17 +171,44 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
   }
 
   // Sorting function
-  List<Map<String, dynamic>> sortedCustomerList(List<Map<String, dynamic>> customerList) {
-    customerList.sort((a, b) {
-      int statusA = a['bookingStatus'];
-      int statusB = b['bookingStatus'];
+  List<Map<String, dynamic>> sortedCustomerList(List<Map<String, dynamic>> customerList, String type) {
+    if(type == "Car"){
+      customerList.sort((a, b) {
+        int statusA = a['bookingStatus'];
+        int statusB = b['bookingStatus'];
+        int checkCarConditionA = a['isCheckCarCondition'];
+        int checkCarConditionB = b['isCheckCarCondition'];
 
-      if (statusA == 2 && statusB != 2) return -1; // a comes before b
-      if (statusA != 2 && statusB == 2) return 1;  // b comes before a
-      if (statusA == 0 && statusB == 1) return -1; // a comes before b
-      if (statusA == 1 && statusB == 0) return 1;  // b comes before a
-      return 0; // No change in order
-    });
+        // Completed with isCheckCarCondition == 0 has the highest priority
+        if (statusA == 2 && checkCarConditionA == 0 && !(statusB == 2 && checkCarConditionB == 0)) return -1;
+        if (!(statusA == 2 && checkCarConditionA == 0) && statusB == 2 && checkCarConditionB == 0) return 1;
+
+        // Upcoming (status = 1) comes next
+        if (statusA == 1 && statusB != 1) return -1;
+        if (statusA != 1 && statusB == 1) return 1;
+
+        // Canceled (status = 3) comes after upcoming
+        if (statusA == 3 && statusB != 3) return -1;
+        if (statusA != 3 && statusB == 3) return 1;
+
+        // Completed with isCheckCarCondition == 1 has the lowest priority
+        if (statusA == 2 && checkCarConditionA == 1 && !(statusB == 2 && checkCarConditionB == 1)) return 1;
+        if (!(statusA == 2 && checkCarConditionA == 1) && statusB == 2 && checkCarConditionB == 1) return -1;
+
+        return 0; // No change in order if all criteria are equal
+      });
+    } else{
+      customerList.sort((a, b) {
+        int statusA = a['bookingStatus'];
+        int statusB = b['bookingStatus'];
+
+        if (statusA == 2 && statusB != 2) return -1; // a comes before b
+        if (statusA != 2 && statusB == 2) return 1;  // b comes before a
+        if (statusA == 0 && statusB == 1) return -1; // a comes before b
+        if (statusA == 1 && statusB == 0) return 1;  // b comes before a
+        return 0; // No change in order
+      });
+    }
 
     return customerList;
   }
@@ -337,7 +366,7 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                         Row(
                           children: [
                             Text(
-                              "(",
+                              "(Status: ",
                               style: TextStyle(
                                 fontSize: 12, 
                                 color: Colors.black, 
@@ -374,10 +403,61 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                           ],
                         ),
                         SizedBox(height: 10),
+                        widget.carRentalID == null
+                        ? Container()
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "(Refund: ",
+                                  style: TextStyle(
+                                    fontSize: 12, 
+                                    color: Colors.black, 
+                                    fontWeight: FontWeight.w600
+                                  ),
+                                ),
+                                Icon(Icons.check_circle, color: Colors.green, size: 15),
+                                Expanded(
+                                  child: Text(
+                                    " = submitted deposit refund request, empty = no",
+                                    style: TextStyle(
+                                      fontSize: 12, 
+                                      color: Colors.black, 
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                    textAlign: TextAlign.justify,
+                                  ),
+                                )
+                              ],
+                            ),
+                            Text(
+                              "request submitted)",
+                              style: TextStyle(
+                                fontSize: 12, 
+                                color: Colors.black, 
+                                fontWeight: FontWeight.w600
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              "***Note: Refund status is only for completed booking.***",
+                              style: TextStyle(
+                                fontSize: 12, 
+                                color: Colors.red, 
+                                fontWeight: FontWeight.w600
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10),
                         isFetchingCustomerList
                         ? Center(child: CircularProgressIndicator(color: primaryColor))
                         : customerList.isNotEmpty
-                          ? customerListComponent(data: sortedCustomerList(customerList), type: widget.tourID != null ? "Tour" : "Car")
+                          ? customerListComponent(data: sortedCustomerList(customerList, widget.tourID != null ? "Tour" : "Car"), type: widget.tourID != null ? "Tour" : "Car")
                           : Container(
                             alignment: Alignment.center,
                             padding: EdgeInsets.all(15.0),
@@ -528,12 +608,20 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
             color: Colors.white
           ),
           child: Table(
-            columnWidths: {
-              0: FixedColumnWidth(40),  // Width for "No" column
-              1: FixedColumnWidth(150), // Width for "Customer Name" column
-              2: FixedColumnWidth(70), // Status column (takes remaining space)
-              3: FixedColumnWidth(70), // Actions column (takes remaining space)
-            },
+            columnWidths: type == "Car"
+            ? {
+                0: FixedColumnWidth(30),
+                1: FixedColumnWidth(130),
+                2: FixedColumnWidth(50),
+                3: FixedColumnWidth(55),
+                4: FixedColumnWidth(60),
+            }
+            : {
+                0: FixedColumnWidth(40),  // Width for "No" column
+                1: FixedColumnWidth(150), // Width for "Customer Name" column
+                2: FixedColumnWidth(70), // Status column (takes remaining space)
+                3: FixedColumnWidth(70), // Actions column (takes remaining space)
+              },
             border: TableBorder.all(color: primaryColor, width: 1.5),
             children: [
               // Header Row
@@ -542,6 +630,7 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                   _buildTextFieldCell('No', isBold: true),
                   _buildTextFieldCell('Customer Name', isBold: true),
                   _buildTextFieldCell('Status', isBold: true),
+                  if (type == "Car") _buildTextFieldCell('Refund', isBold: true),
                   _buildTextFieldCell('Actions', isBold: true),
                 ],
               ),
@@ -561,6 +650,19 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                         ],
                       ),
                     ),
+                    if (type == "Car")
+                      Container(
+                        height: 40, // Set a specific height for centering
+                        alignment: Alignment.center, // Center the row vertically
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center, // Center horizontally
+                          children: [
+                            data[index]['isCheckCarCondition'] == 1
+                              ? Icon(Icons.check_circle, color: Colors.green, size: 18)
+                              : Container()
+                          ],
+                        ),
+                      ),
                     Container(
                       height: 40, // Set a specific height for centering
                       alignment: Alignment.center, // Center the row vertically

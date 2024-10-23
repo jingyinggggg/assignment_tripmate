@@ -1,11 +1,9 @@
 import 'dart:io';
 import 'dart:math';
-
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/customerModel.dart';
 import 'package:assignment_tripmate/invoiceModel.dart';
 import 'package:assignment_tripmate/pdf_invoice_api.dart';
-import 'package:assignment_tripmate/screens/admin/adminViewBookingDetails.dart';
 import 'package:assignment_tripmate/supplierModel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -53,6 +51,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
   bool isOpenFile = false;
   bool isOpenInvoice = false;
   bool isOpenRefundInvoice = false;
+  bool isOpenDepositRefundInvoice = false;
   bool isRefunding = false;
   Map<String, dynamic>? custData;
   Map<String, dynamic>? tourData;
@@ -276,15 +275,19 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     }
   }
 
-  Future<void> refundToCustomer(String type, String bookingID, int price, String collection) async{
+  Future<void> refundToCustomer(String type, String bookingID, int price, String collection, {bool isDepositRefund = false}) async{
     setState(() {
       isRefunding = true;
     });
     try{
       if(type == "Car Rental"){
         await FirebaseFirestore.instance.collection('carRentalBooking').doc(bookingID).update({
-          'isRefund': 1
+          'isRefund': isDepositRefund ? 0 : 1,
+          'isRefundDeposit': isDepositRefund ? 1 : 0
         });
+        setState(() {
+            carBookingData!['isRefundDeposit'] = isDepositRefund;
+          });
       } else{
         await FirebaseFirestore.instance.collection('localBuddyBooking').doc(bookingID).update({
           'isRefund': 1
@@ -324,7 +327,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
             // Wrap the single InvoiceItem in a list
             items: [
               InvoiceItem(
-                description: "Refund (Booking ID: ${bookingID})",
+                description: isDepositRefund ? "Deposit refund (Booking ID: ${bookingID})" : "Refund (Booking ID: ${bookingID})",
                 quantity: 1,
                 unitPrice: price,
                 total: price.toDouble(),
@@ -333,7 +336,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
           );
 
           // Perform some async operation
-          await generateInvoice(bookingID, invoice, type, collection, "refund_invoice", false, true);
+          await generateInvoice(bookingID, invoice, type, collection, "refund_invoice", false, false, isDepositRefund ? true : false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -361,7 +364,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     }
   }
 
-  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund) async {
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund, bool isDepositRefund) async {
     setState(() {
       bool isGeneratingInvoice = true; // Correctly set the loading state variable
     });
@@ -379,7 +382,8 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
         collectionName, 
         pdfFileName, 
         isDeposit,
-        isRefund
+        isRefund,
+        isDepositRefund,
       );
 
       // Open the generated PDF file
@@ -719,7 +723,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                               Row(
                                 children: [
                                   Container(
-                                    width: 50,
+                                    width: 100,
                                     child: Text(
                                       "Invoice",
                                       style: TextStyle(
@@ -786,17 +790,17 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 ],
                               ),
                               SizedBox(height: 20),
-                              if(carBookingData!['refundInvoice'] != null)
+                              if (carBookingData!['refundInvoice'] != null)
                                 Row(
                                   children: [
                                     Container(
-                                      width: 50,
+                                      width: 100,
                                       child: Text(
                                         "Refund",
                                         style: TextStyle(
                                           fontSize: defaultFontSize,
                                           color: Colors.black,
-                                          fontWeight: FontWeight.w600
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
@@ -806,57 +810,142 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                       style: TextStyle(
                                         fontSize: defaultFontSize,
                                         color: Colors.black,
-                                        fontWeight: FontWeight.w600
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     SizedBox(width: 5),
-                                    if(carBookingData!['refundInvoice'] != null)
+                                    if (carBookingData!['refundInvoice'] != null)
                                       isOpenRefundInvoice
-                                      ? SizedBox(
-                                          width: 20.0,
-                                          height: 20.0,
-                                          child: CircularProgressIndicator(color: primaryColor),
-                                        ) 
-                                      : SizedBox(
-                                        height: 35,
-                                        child: ElevatedButton(
-                                          onPressed: () async {
-                                            setState(() {
-                                              isOpenRefundInvoice = true; // Update the loading state
-                                            });
-                                            String url = carBookingData!['refundInvoice']; 
-                                            String fileName = 'invoice'; 
-                                            await downloadAndOpenPdfFromUrl(url, fileName);
-                                            setState(() {
-                                              isOpenRefundInvoice = false; // Update the state when done
-                                            });
-                                          }, 
-                                          child:Text(
-                                            "View Refund Invoice",
-                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.white,  
-                                            foregroundColor: primaryColor,  
-                                            shape: RoundedRectangleBorder(
-                                              side: BorderSide(color: primaryColor, width: 2),
-                                              borderRadius: BorderRadius.circular(10)
-                                            ),
-                                          ),
-                                        )
-                                      )
+                                          ? SizedBox(
+                                              width: 20.0,
+                                              height: 20.0,
+                                              child: CircularProgressIndicator(color: primaryColor),
+                                            )
+                                          : SizedBox(
+                                              height: 35,
+                                              child: ElevatedButton(
+                                                onPressed: () async {
+                                                  setState(() {
+                                                    isOpenRefundInvoice = true; // Update the loading state
+                                                  });
+                                                  String url = carBookingData!['refundInvoice'];
+                                                  String fileName = 'invoice';
+                                                  await downloadAndOpenPdfFromUrl(url, fileName);
+                                                  setState(() {
+                                                    isOpenRefundInvoice = false; // Update the state when done
+                                                  });
+                                                },
+                                                child: Text(
+                                                  "View Refund Invoice",
+                                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.white,
+                                                  foregroundColor: primaryColor,
+                                                  shape: RoundedRectangleBorder(
+                                                    side: BorderSide(color: primaryColor, width: 2),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
                                     else
                                       Text(
                                         "N/A",
                                         style: TextStyle(
                                           fontSize: defaultFontSize,
                                           color: Colors.black,
-                                          fontWeight: FontWeight.w600
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                   ],
                                 ),
-                              SizedBox(height: 20),
+                              if (carBookingData!['depositRefundInvoice'] != null || carBookingData!['isRefundDeposit'] == 1)
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      child: Text(
+                                        "Deposit Refund",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      ":",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
+                                    if (carBookingData!['depositRefundInvoice'] != null)
+                                      isOpenDepositRefundInvoice
+                                          ? SizedBox(
+                                              width: 20.0,
+                                              height: 20.0,
+                                              child: CircularProgressIndicator(color: primaryColor),
+                                            )
+                                          : SizedBox(
+                                              height: 35,
+                                              child: ElevatedButton(
+                                                onPressed: () async {
+                                                  setState(() {
+                                                    isOpenDepositRefundInvoice = true; // Update the loading state
+                                                  });
+                                                  String url = carBookingData!['depositRefundInvoice'];
+                                                  String fileName = 'deposit_refund_invoice';
+                                                  await downloadAndOpenPdfFromUrl(url, fileName);
+                                                  setState(() {
+                                                    isOpenDepositRefundInvoice = false; // Update the state when done
+                                                  });
+                                                },
+                                                child: Text(
+                                                  "View Deposit Refund Invoice",
+                                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.white,
+                                                  foregroundColor: primaryColor,
+                                                  shape: RoundedRectangleBorder(
+                                                    side: BorderSide(color: primaryColor, width: 2),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                    else
+                                      Text(
+                                        "N/A",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              if (carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 0)
+                                Container(
+                                  constraints: BoxConstraints(maxHeight: 60), // or any appropriate height
+                                  child: Text(
+                                    '*** Remarks: Travel agent has checked the car condition and submitted a request for deposit refund to customer. You can click on the "Issue Deposit Refund" button to refund the deposit to the customer. ***',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.justify,
+                                  ),
+                                )
+                              else
+                                Container(),
+
+                              SizedBox(height: 10),
                               carBookingData!['bookingStatus'] == 2
                               ? Container(
                                 width: double.infinity,
@@ -925,7 +1014,75 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                     ),
                                   )
                                 )
-                              : Container()
+                              : carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 0
+                                ? Container(
+                                    width: double.infinity,
+                                    height: 50,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: const Text("Confirmation"),
+                                                content: Text(
+                                                  'This booking is completed and the car has been check by travel agent. So, the deposit with amount of RM300.00 can be refunded to customer. Click on the "Confirm" button to proceed the refund.',
+                                                  textAlign: TextAlign.justify,
+                                                ),
+                                                actions: <Widget>[
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                    },
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor, // Set the background color
+                                                      foregroundColor: Colors.white, // Set the text color
+                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                      ),
+                                                    ),
+                                                    child: const Text("Cancel"),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                      refundToCustomer('Car Rental', carBookingData!['bookingID'], 300, 'carRentalBooking', isDepositRefund: true);
+                                                    },
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor, // Set the background color
+                                                      foregroundColor: Colors.white, // Set the text color
+                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                      ),
+                                                    ),
+                                                    child: const Text("Refund"),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        }, 
+                                        child: isRefunding
+                                          ? CircularProgressIndicator(color: Colors.white)
+                                          : Text(
+                                              "Issue Deposit Refund",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10), // Set the button radius to 0
+                                          ),
+                                        ),
+                                      )
+                                    )
+                                : Container()
                               
                             ],
 

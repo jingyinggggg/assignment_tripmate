@@ -97,7 +97,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
 
           // Check for any booking status of 2
           for (var bookingDoc in carBookingsSnapshot.docs) {
-            if (bookingDoc['bookingStatus'] == 2 && bookingDoc['isRefund'] == 0) {
+            if ((bookingDoc['bookingStatus'] == 2 && bookingDoc['isRefund'] == 0) || bookingDoc['isCheckCarCondition'] == 1 && bookingDoc['isRefundDeposit'] == 0) {
               haveCancelBooking = true; // Set to true if any status is 2
               break; // No need to continue checking
             }

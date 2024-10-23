@@ -41,6 +41,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
   bool isFetchingCar = false;
   bool isOpenFile = false;
   bool isOpenInvoice = false;
+  bool isSubmittingRefundRequest = false;
   Map<String, dynamic>? custData;
   Map<String, dynamic>? tourData;
   Map<String, dynamic>? carData;
@@ -196,6 +197,43 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     } catch (e) {
       // Handle errors
       print("Error downloading or opening the file: $e");
+    }
+  }
+
+  Future<void> requestRefund(String id) async{
+    setState(() {
+      isSubmittingRefundRequest = true;
+    });
+    try{
+      await FirebaseFirestore.instance.collection('carRentalBooking').doc(id).update({
+        'isCheckCarCondition' : 1
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: 'Submit Successful', 
+        content: 'You have submit the refund request successful. Admin will proceed the request by refunding the deposit to user.',
+        onPressed: (){
+          setState(() {
+            carBookingData!['isCheckCarCondition'] = 1;
+          });
+          print("Check: ${carBookingData!['isCheckCarCondition']}");
+          Navigator.pop(context);
+        }
+      );
+    } catch(e){
+      showCustomDialog(
+        context: context, 
+        title: 'Failed', 
+        content: 'Something went wrong. Please try again later...',
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+    } finally{
+      setState(() {
+        isSubmittingRefundRequest = false;
+      });
     }
   }
   
@@ -493,9 +531,11 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                               ),
                               SizedBox(height: 20),
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Container(
-                                    width: 90,
+                                    width: 100,
                                     child: Text(
                                       "Invoice",
                                       style: TextStyle(
@@ -514,7 +554,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                       fontWeight: FontWeight.w600
                                     ),
                                   ),
-                                  SizedBox(width: 5),
+                                  SizedBox(width: 10),
                                   if(carBookingData!['invoice'] != null)
                                     isOpenInvoice
                                     ? SizedBox(
@@ -550,16 +590,157 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                       )
                                     )
                                   else
+                                    Expanded(
+                                      child: Text(
+                                        "N/A",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                    )
+                                    
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              if(carBookingData!['bookingStatus'] == 1)...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      child: Text(
+                                        "Request Refund",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 5),
                                     Text(
-                                      "N/A",
+                                      ":",
                                       style: TextStyle(
                                         fontSize: defaultFontSize,
                                         color: Colors.black,
                                         fontWeight: FontWeight.w600
                                       ),
                                     ),
-                                ],
-                              )
+                                    SizedBox(width: 10),
+                                    if(carBookingData!['isCheckCarCondition'] == 0)
+                                      Expanded(
+                                        child: Text(
+                                          'Click on the "Submit Refund Request" button to refund the deposit to customer after checking the car condition. Admin will proceed your request.',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+                                      
+                                    else if(carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 1)
+                                      Expanded(
+                                        child: Text(
+                                          "Deposit has been refunded to customer",
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Color.fromARGB(255, 163, 240, 166),
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+                                      
+                                    else if (carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 0)
+                                      Expanded(
+                                        child: Text(
+                                          "Request is pending proceed by admin",
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+                                      
+                                  ],
+                                ),
+                                SizedBox(height: 20),
+                                if(carBookingData!['isCheckCarCondition'] == 0)
+                                  Container(
+                                    width: double.infinity,
+                                    height: 50,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: const Text("Confirmation"),
+                                                content: Text(
+                                                  "Please ensure that the car's condition has been thoroughly checked before submitting the request to the admin for refunding the deposit to the user.",
+                                                  textAlign: TextAlign.justify,
+                                                ),
+                                                actions: <Widget>[
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                    },
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor, // Set the background color
+                                                      foregroundColor: Colors.white, // Set the text color
+                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                      ),
+                                                    ),
+                                                    child: const Text("Cancel"),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                      requestRefund(carBookingData!['bookingID']);
+                                                    },
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor, // Set the background color
+                                                      foregroundColor: Colors.white, // Set the text color
+                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                      ),
+                                                    ),
+                                                    child: const Text("Submit"),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        }, 
+                                        child: isSubmittingRefundRequest
+                                          ? CircularProgressIndicator(color: Colors.white)
+                                          : Text(
+                                              "Submit Refund Request",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: primaryColor,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10), // Set the button radius to 0
+                                          ),
+                                        ),
+                                      )
+                                    )
+                              ]
                             ]
                           ]
                         )

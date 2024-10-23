@@ -24,6 +24,7 @@ class PdfInvoiceApi {
     String pdfName,
     bool isDeposit,
     bool isRefund,
+    bool isDepositRefund
   ) async {
     final pdf = Document();
 
@@ -61,7 +62,8 @@ class PdfInvoiceApi {
       pdfName: pdfName,
       pdf: tempPdfFile,
       isDeposit: isDeposit,
-      isRefund: isRefund
+      isRefund: isRefund,
+      isDepositRefund: isDepositRefund
     );
 
     return tempPdfFile;

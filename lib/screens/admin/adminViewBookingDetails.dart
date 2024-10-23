@@ -176,17 +176,18 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
         }
       } else if(widget.carRentalID != null){
         // Step 1: Query the car rental booking collection to get userIDs and carRentalBookingIDs for the given tourID
-        QuerySnapshot tourBookings = await FirebaseFirestore.instance
+        QuerySnapshot carBookings = await FirebaseFirestore.instance
           .collection('carRentalBooking')
           .where('carID', isEqualTo:  widget.carRentalID)
           .get();
         
         // Loop thorugh each booking to get userID and carRentalBookingID
-        for (var booking in tourBookings.docs){
+        for (var booking in carBookings.docs){
           String userId = booking['userID'];
           String carRentalBookingID = booking.id;
           int bookingStatus = booking['bookingStatus'];
-          int refundStatus = booking['isRefund'];
+          int refundStatus = booking['isRefundDeposit'];
+          int isCheckCarCondition = booking['isCheckCarCondition'];
 
           // Step 2: Fetch customer details for each userID from the users collection
           DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -202,6 +203,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 'carRentalBookingID': carRentalBookingID,
                 'bookingStatus': bookingStatus,
                 'isRefund': refundStatus,
+                'isCheckCarCondition': isCheckCarCondition,
                 'customerInfo': userDoc.data() as Map<String, dynamic>,
               });
             });
@@ -535,7 +537,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                               ),
                               Icon(Icons.check_circle, color: Colors.green, size: 15),
                               Text(
-                                " = refunded, empty = not refund yet/ no refeund)",
+                                " = refunded, empty = not refund yet/ no refund)",
                                 style: TextStyle(
                                   fontSize: 12, 
                                   color: Colors.black, 
@@ -774,7 +776,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 TableRow(
                   children: [
                     _buildTextFieldCell('${index + 1}'),
-                    _buildTextFieldCell(data[index]['customerInfo']['name'] ?? 'No Name'),
+                    _buildTextFieldCell(data[index]['customerInfo']['name'] ?? 'No Name', isRequestRefund: type == "Car" ? data[index]['isCheckCarCondition'] == 1 && data[index]['isRefund'] == 0 : false),
                     Container(
                       height: 40, // Set a specific height for centering
                       alignment: Alignment.center, // Center the row vertically
@@ -853,7 +855,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
     }
   }
 
-  Widget _buildTextFieldCell(String text, {bool isBold = false}) {
+  Widget _buildTextFieldCell(String text, {bool isBold = false, bool isRequestRefund = false}) {
     return Container(
       padding: const EdgeInsets.only(left: 5, right: 5),
       decoration: BoxDecoration(
@@ -865,8 +867,8 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
           text,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.black,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500
+            color: isRequestRefund ? Colors.orangeAccent : Colors.black,
+            fontWeight: isBold || isRequestRefund ? FontWeight.bold : FontWeight.w500
           ),
           maxLines: null, // Allows multiline input
           textAlign: TextAlign.center,

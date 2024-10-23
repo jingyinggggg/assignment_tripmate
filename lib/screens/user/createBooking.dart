@@ -358,7 +358,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'totalPrice': calculatedTotalTourPrice,
         'fullyPaid': 0,
         'remainingPrice': remainingPrice,
-        'isCancel': 0,
+        // 'isCancel': 0,
         'bookingStatus': 0,
         'bookingCreateTime': DateTime.now()
       });
@@ -435,7 +435,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Tour Package", "tourBooking", "deposit", true, false);
+          await generateInvoice(id, invoice, "Tour Package", "tourBooking", "deposit", true, false, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -490,8 +490,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'bookingStartDate': _selectedStartDate,
         'bookingEndDate': _selectedEndDate,
         'totalPrice': carRentalTotalPrice,
-        'isCancel': 0,
+        'isCheckCarCondition': 0,
         'isRefund': 0,
+        'isRefundDeposit': 0,
         'bookingStatus': 0,
         'bookingCreateTime': DateTime.now()
       });
@@ -545,7 +546,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Car Rental", "carRentalBooking", "invoice", false, false);
+          await generateInvoice(id, invoice, "Car Rental", "carRentalBooking", "invoice", false, false, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -600,7 +601,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'bookingStartDate': _selectedLbStartDate,
         'bookingEndDate': _selectedLbEndDate,
         'totalPrice': LBTotalPrice,
-        'isCancel': 0,
+        // 'isCancel': 0,
         'bookingStatus': 0,
         'isRefund': 0,
         'bookingCreateTime': DateTime.now()
@@ -649,7 +650,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           );
 
           // Perform some async operation
-          await generateInvoice(id, invoice, "Local Buddy", "localBuddyBooking", "invoice", false, false);
+          await generateInvoice(id, invoice, "Local Buddy", "localBuddyBooking", "invoice", false, false, false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -902,7 +903,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
     );
   }
 
-  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund) async {
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund, bool isDepositRefund) async {
     setState(() {
       bool isGeneratingInvoice = true; // Correctly set the loading state variable
     });
@@ -920,7 +921,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
         collectionName, 
         pdfFileName, 
         isDeposit,
-        isRefund
+        isRefund,
+        isDepositRefund
       );
 
       // Open the generated PDF file

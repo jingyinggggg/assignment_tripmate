@@ -105,7 +105,7 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
         QuerySnapshot carRentalBookingSnapshot = await carRentalBookingRef.where('carID', isEqualTo: carRental.carRentalID).get();
 
         for (var doc in carRentalBookingSnapshot.docs) {
-          if (doc['bookingStatus'] == 2) {
+          if ((doc['bookingStatus'] == 2 && doc['isRefund'] == 0) || (doc['isCheckCarCondition'] == 1 && doc['isRefundDeposit'] == 0)) {
             haveCancelBooking = true; // Set to true if any status is 2
             break; // No need to continue checking
           }
@@ -210,30 +210,6 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                         ),
                       ),
                       SizedBox(height: 10),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.start,
-                      //   crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
-                      //   children: [
-                      //     Padding(
-                      //       padding: const EdgeInsets.only(top: 4.0), // Adjust the icon's vertical position
-                      //       child: Icon(Icons.circle, color: Colors.red, size: 8),
-                      //     ),
-                      //     SizedBox(width: 5), // Space between icon and text
-                      //     Expanded(
-                      //       child: Text(
-                      //         "means cancellation exist in the tour booking list, you need to issue the refund.",
-                      //         style: TextStyle(
-                      //           fontSize: 12,
-                      //           color: Colors.black,
-                      //           fontWeight: FontWeight.w600,
-                      //         ),
-                      //         maxLines: null,
-                      //         overflow: TextOverflow.visible,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                      // SizedBox(height: 10),
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -276,7 +252,7 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                           SizedBox(width: 5), // Space between icon and text
                           Expanded(
                             child: Text(
-                              "means cancellation exist in the car rental booking list, you need to issue the refund.",
+                              "means cancellation/ deposit refund request exist in the car rental booking list, you need to issue the refund.",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.black,
