@@ -557,7 +557,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                 ),
                                 SizedBox(width: 10),
                                 if(carBookingData!['depositRefundInvoice'] != null)
-                                  isOpenFile
+                                  isOpenDepositRefund
                                   ? SizedBox(
                                       width: 20.0,
                                       height: 20.0,
@@ -627,7 +627,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                 ),
                                 SizedBox(width: 10),
                                 if(carBookingData!['refundInvoice'] != null)
-                                  isOpenFile
+                                  isOpenRefundInvoice
                                   ? SizedBox(
                                       width: 20.0,
                                       height: 20.0,
@@ -674,7 +674,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                             )
                         ],
                       )
-                    : widget.localBuddyID != null
+                    : widget.localBuddyID != null && localBuddyBookingData != null && localBuddyData != null
                       ? Column(
                           children: [
                             localBuddyComponent(data: localBuddyBookingData!, localBuddyData: localBuddyData!),
@@ -768,7 +768,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                               ],
                             ),
                             SizedBox(height: 20),
-                            if(localBuddyBookingData!['bookingSatus'] == 2)
+                            if(localBuddyBookingData!['bookingStatus'] == 2)
                               Row(
                                 children: [
                                   Container(
@@ -793,7 +793,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                   ),
                                   SizedBox(width: 10),
                                   if(localBuddyBookingData!['refundInvoice'] != null)
-                                    isOpenFile
+                                    isOpenRefundInvoice
                                     ? SizedBox(
                                         width: 20.0,
                                         height: 20.0,
@@ -1270,7 +1270,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
               children: [
                 Container(
                   padding: EdgeInsets.all(10.0),
-                  width: getScreenWidth(context) * 0.25,
+                  width: getScreenWidth(context) * 0.22,
                   height: getScreenHeight(context) * 0.13,
                   margin: EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
