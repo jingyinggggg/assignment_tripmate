@@ -314,6 +314,8 @@ class tourBooking{
   final String tourID;
   late String tourName;
   late String tourImage;
+  late String agencyName;
+  late String agencyAddress;
   final int fullyPaid;
   final String travelDate;
   final double totalPrice;
@@ -345,6 +347,8 @@ class tourBooking{
 
     tourbooking.tourName = data['tourName'] ?? '';
     tourbooking.tourImage = data['tourCover'] ?? '';
+    tourbooking.agencyName = data['agencyName'] ?? '';
+    tourbooking.agencyAddress = data['agencyAddress'] ?? '';
 
     return tourbooking;
   }
@@ -359,6 +363,7 @@ class carRentalBooking{
   final double totalPrice;
   final int bookingStatus;
   final int isRefund;
+  final int? isDepositRefund;
 
   carRentalBooking({
     required this.carRentalBookingID, 
@@ -366,7 +371,8 @@ class carRentalBooking{
     required this.bookingDate, 
     required this.totalPrice,
     required this.bookingStatus,
-    required this.isRefund
+    required this.isRefund,
+    required this.isDepositRefund,
   });
 
 
@@ -390,7 +396,8 @@ class carRentalBooking{
       totalPrice: data['totalPrice'],
       bookingDate: bookingDateRange, // Use the formatted date range here
       bookingStatus: data['bookingStatus'],
-      isRefund: data['isRefund']
+      isRefund: data['isRefund'],
+      isDepositRefund: data['isRefundDeposit']
     );
 
     carRentalBookings.carName = data['carModel'] ?? '';

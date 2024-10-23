@@ -265,6 +265,7 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(width: 1.5, color: const Color(0xFF467BA1)),
         ),
+        margin: EdgeInsets.only(bottom: 30),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children to the same height

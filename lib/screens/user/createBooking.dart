@@ -408,6 +408,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
           });
 
           final date = DateTime.now();
+          // final date = DateTime(2024, 10, 19);
 
           final invoice = Invoice(
             supplier: Supplier(
@@ -426,10 +427,10 @@ class _createBookingScreenState extends State<createBookingScreen> {
             // Wrap the single InvoiceItem in a list
             items: [
               InvoiceItem(
-                description: "${_tour!.tourName} - (${selectedDateRange!})",
-                quantity: int.parse(_paxController.text),
-                unitPrice: price ?? 0,
-                total: calculatedTotalTourPrice ?? 0.0,
+                description: "Deposit for ${_tour!.tourName} - (${selectedDateRange!})",
+                quantity: 1,
+                unitPrice: 1000,
+                total: 1000 ,
               ),
             ],
           );

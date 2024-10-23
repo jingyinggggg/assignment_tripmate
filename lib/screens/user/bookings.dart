@@ -1,5 +1,10 @@
 import 'dart:convert';
+import 'package:assignment_tripmate/customerModel.dart';
+import 'package:assignment_tripmate/invoiceModel.dart';
+import 'package:assignment_tripmate/pdf_invoice_api.dart';
+import 'package:assignment_tripmate/screens/user/bookingDetails.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
+import 'package:assignment_tripmate/supplierModel.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -26,18 +31,21 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   List<localBuddyBooking> _localBuddyBookingCompleted = [];
   List<localBuddyBooking> _localBuddyBookingUpcoming = [];
   List<localBuddyBooking> _localBuddyBookingCanceled = [];
+  Map<String, dynamic>? userData;
   bool isFetchingTourPackage = false;
   bool isFetchingCarRental = false;
   bool isFetchingLocalBuddy = false;
   bool isCancelTourBooking = false;
   bool isCancelCarRentalBooking = false;
   bool isCancelLocalBuddyBooking = false;
+  bool isPayingBalance = false;
   int _outerTabIndex = 0;  // For the outer Upcoming, Completed, Canceled
   int _innerTabIndex = 0;  // For the inner Tour Package, Car Rental, Local Buddy
 
   @override
   void initState(){
     super.initState();
+    _fetchUserData();
     _fetchTourBooking();
     _fetchCarRentalBooking();
     _fetchLocalBuddyBooking();
@@ -46,6 +54,23 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Future<void>_fetchUserData() async{
+    try{
+      DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(widget.userID);
+      DocumentSnapshot userSnap = await userRef.get();
+
+      if(userSnap.exists){
+        Map<String, dynamic>? data = userSnap.data() as Map<String, dynamic>?;
+
+        setState(() {
+          userData = data;
+        });
+      }
+    } catch(e){
+      print("Error fetching user data: $e");
+    }
   }
 
   // Fetch tour bookings
@@ -69,29 +94,37 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           String tourID = tourDoc['tourID'] as String;
 
           // Fetch tour details
-          DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
+          DocumentSnapshot tourSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
 
-          if (documentSnapshot.exists) {
-            String tourName = documentSnapshot['tourName'] as String;
-            String tourImage = documentSnapshot['tourCover'] as String;
+          if (tourSnapshot.exists) {
+            String tourName = tourSnapshot['tourName'] as String;
+            String tourImage = tourSnapshot['tourCover'] as String;
+            String agentID = tourSnapshot['agentID'] as String;  // Get the agentID
 
-            // Create a tourBooking object and add tour details
-            tourBooking tourBook = tourBooking.fromFirestore(tourDoc);
-            tourBook.tourName = tourName;
-            tourBook.tourImage = tourImage;
+            // Fetch travel agent details using agentID
+            DocumentSnapshot agentSnapshot = await FirebaseFirestore.instance.collection('travelAgent').doc(agentID).get();
 
-            tourBookings.add(tourBook);
+            if (agentSnapshot.exists) {
+              String agencyName = agentSnapshot['companyName'] as String;
+              String agencyAddress = agentSnapshot['companyAddress'] as String;
+
+              // Create a tourBooking object and add tour and agent details
+              tourBooking tourBook = tourBooking.fromFirestore(tourDoc);
+              tourBook.tourName = tourName;
+              tourBook.tourImage = tourImage;
+              tourBook.agencyName = agencyName;    // Add agency name
+              tourBook.agencyAddress = agencyAddress;  // Add agency address
+
+              tourBookings.add(tourBook);
+            }
           }
         }
-
-        // Update state with the list of upcoming bookings
         setState(() {
           _tourBookingUpcoming = tourBookings;
         });
       } else {
-        // If no results found, set _tourBookingUpcoming to an empty list
         setState(() {
-          _tourBookingUpcoming = [];
+          _tourBookingCompleted = [];
         });
       }
 
@@ -109,18 +142,29 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           String comTourID = comTourDoc['tourID'] as String;
 
           // Fetch tour details
-          DocumentSnapshot comDocumentSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(comTourID).get();
+          DocumentSnapshot tourSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(comTourID).get();
 
-          if (comDocumentSnapshot.exists) {
-            String comTourName = comDocumentSnapshot['tourName'] as String;
-            String comTourImage = comDocumentSnapshot['tourCover'] as String;
+          if (tourSnapshot.exists) {
+            String tourName = tourSnapshot['tourName'] as String;
+            String tourImage = tourSnapshot['tourCover'] as String;
+            String agentID = tourSnapshot['agentID'] as String;  // Get the agentID
 
-            // Create a tourBooking object and add tour details
-            tourBooking comTourBook = tourBooking.fromFirestore(comTourDoc);
-            comTourBook.tourName = comTourName;
-            comTourBook.tourImage = comTourImage;
+            // Fetch travel agent details using agentID
+            DocumentSnapshot agentSnapshot = await FirebaseFirestore.instance.collection('travelAgent').doc(agentID).get();
 
-            comTourBookings.add(comTourBook);
+            if (agentSnapshot.exists) {
+              String agencyName = agentSnapshot['companyName'] as String;
+              String agencyAddress = agentSnapshot['companyAddress'] as String;
+
+              // Create a tourBooking object and add tour and agent details
+              tourBooking tourBook = tourBooking.fromFirestore(comTourDoc);
+              tourBook.tourName = tourName;
+              tourBook.tourImage = tourImage;
+              tourBook.agencyName = agencyName;    // Add agency name
+              tourBook.agencyAddress = agencyAddress;  // Add agency address
+
+              comTourBookings.add(tourBook);
+            }
           }
         }
 
@@ -147,18 +191,29 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           String canTourID = canTourDoc['tourID'] as String;
 
           // Fetch tour details
-          DocumentSnapshot canDocumentSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(canTourID).get();
+          DocumentSnapshot tourSnapshot = await FirebaseFirestore.instance.collection('tourPackage').doc(canTourID).get();
 
-          if (canDocumentSnapshot.exists) {
-            String canTourName = canDocumentSnapshot['tourName'] as String;
-            String canTourImage = canDocumentSnapshot['tourCover'] as String;
+          if (tourSnapshot.exists) {
+            String tourName = tourSnapshot['tourName'] as String;
+            String tourImage = tourSnapshot['tourCover'] as String;
+            String agentID = tourSnapshot['agentID'] as String;  // Get the agentID
 
-            // Create a tourBooking object and add tour details
-            tourBooking canTourBook = tourBooking.fromFirestore(canTourDoc);
-            canTourBook.tourName = canTourName;
-            canTourBook.tourImage = canTourImage;
+            // Fetch travel agent details using agentID
+            DocumentSnapshot agentSnapshot = await FirebaseFirestore.instance.collection('travelAgent').doc(agentID).get();
 
-            canTourBookings.add(canTourBook);
+            if (agentSnapshot.exists) {
+              String agencyName = agentSnapshot['companyName'] as String;
+              String agencyAddress = agentSnapshot['companyAddress'] as String;
+
+              // Create a tourBooking object and add tour and agent details
+              tourBooking tourBook = tourBooking.fromFirestore(canTourDoc);
+              tourBook.tourName = tourName;
+              tourBook.tourImage = tourImage;
+              tourBook.agencyName = agencyName;    // Add agency name
+              tourBook.agencyAddress = agencyAddress;  // Add agency address
+
+              canTourBookings.add(tourBook);
+            }
           }
         }
 
@@ -596,6 +651,371 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
+  Future<void> payBalanceTour(String tourBookingID, String companyName, String companyAddress, double totalPrice) async{
+    setState(() {
+      isPayingBalance = true;
+    });
+    try{
+      await FirebaseFirestore.instance
+        .collection('tourBooking')
+        .doc(tourBookingID)
+        .update({
+          'fullyPaid' : 1
+        });
+      
+      showCustomDialog(
+        context: context, 
+        title: "Payment Successful", 
+        content: "You have pay the balance for this booking successfully.", 
+        onPressed: () async {
+          // Close the payment successful dialog
+          Navigator.of(context).pop();
+
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          Future.microtask(() {
+            showLoadingDialog(context, "Generating Invoice...");
+          });
+
+          final date = DateTime.now();
+          // final date = DateTime(2024, 10, 19);
+
+          final invoice = Invoice(
+            supplier: Supplier(
+              name: companyName,
+              address: companyAddress,
+            ),
+            customer: Customer(
+              name: userData!['name'],
+              address: userData!['address'],
+            ),
+            info: InvoiceInfo(
+              date: date,
+              description: "You have paid the balance tour fee. Below is the invoice summary:",
+              number: '${DateTime.now().year}-${tourBookingID}B',
+            ),
+            // Wrap the single InvoiceItem in a list
+            items: [
+              InvoiceItem(
+                description: "Balance Tour Fee (Booking ID: ${tourBookingID})",
+                quantity: 1,
+                unitPrice: totalPrice.toInt(),
+                total: totalPrice,
+              ),
+            ],
+          );
+
+          // Perform some async operation
+          await generateInvoice(tourBookingID, invoice, "Tour Package", "tourBooking", "balance_payment", false, false, false);
+
+          // After the operation is done, hide the loading dialog
+          Navigator.of(context).pop(); // This will close the loading dialog
+
+          // Navigate to the homepage after PDF viewer
+          Future.delayed(Duration(milliseconds: 500), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserHomepageScreen(
+                  userId: widget.userID,
+                  currentPageIndex: 3,
+                ),
+              ),
+            );
+          });
+        },
+        textButton: "View Invoice",
+      );
+    } catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong! Please try again...", 
+        onPressed: () {
+          Navigator.pop(context);
+        }
+      );
+    } finally{
+      isPayingBalance = false;
+    }
+  }
+
+  void showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing the dialog by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Please Wait'),
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: primaryColor,), // Loading indicator
+              SizedBox(width: 20),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> showPaymentOption(BuildContext context, String deposit, Function onOptionSelected) async {
+    String? selectedPaymentOption; // To store the selected payment option
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Select Payment Option', 
+            style: TextStyle(
+              fontSize: defaultLabelFontSize,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // To adjust based on content
+                  children: <Widget>[
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: "Touch'n Go",
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            "Touch'n Go",
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/TNG-eWallet.png'),
+                            width: 40,
+                            alignment: Alignment.centerRight,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'Credit Card',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'Credit Card',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/credit_card.png'),
+                            width: 40,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'PayPal',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'PayPal',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Image(
+                            image: AssetImage('images/paypal.png'),
+                            width: 50,
+                            height: 40,
+                          ), 
+                        ],
+                      ),
+                    ),
+
+                    ListTile(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+                      leading: Transform.scale(
+                        scale: 0.6, // Scale the radio size
+                        child: Radio<String>(
+                          value: 'Online Banking',
+                          groupValue: selectedPaymentOption,
+                          activeColor: primaryColor, // Set the selected radio color to blue
+                          onChanged: (String? value) {
+                            setState(() {
+                              selectedPaymentOption = value; // Update selected payment option
+                            });
+                          },
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+                        children: [
+                          Text(
+                            'Online Banking',
+                            style: TextStyle(
+                              fontSize: defaultFontSize,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black
+                            ),
+                          ),
+                          Icon(Icons.account_balance, color: primaryColor, size: 20), // Icon for Bank Transfer
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: 20),
+                    Text(
+                      'Total Price: $deposit',
+                      style: TextStyle(
+                        fontSize: defaultLabelFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    SizedBox(height: 10),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          child: Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: primaryColor, // Set the background color
+                            foregroundColor: Colors.white, // Set the text color
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+
+                        TextButton(
+                          child: Text('Pay'),
+                          style: TextButton.styleFrom(
+                            backgroundColor: selectedPaymentOption != null ? primaryColor : Colors.grey.shade300, // Set the background color
+                            foregroundColor: Colors.white, // Set the text color
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                            ),
+                          ),
+                          onPressed: selectedPaymentOption != null
+                            ? () {
+                                onOptionSelected(selectedPaymentOption!); // Pass the selected payment option to the callback
+                                Navigator.of(context).pop(); // Close the dialog
+                              }
+                            : null,
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund, bool isDepositRefund) async {
+    setState(() {
+      bool isGeneratingInvoice = true; // Correctly set the loading state variable
+    });
+
+    try {
+      // Small delay to allow the UI to update
+      await Future.delayed(Duration(milliseconds: 100));
+
+      // Generate the PDF file
+      final pdfFile = await PdfInvoiceApi.generate(
+        invoices, 
+        widget.userID, 
+        id, 
+        servicesType, 
+        collectionName, 
+        pdfFileName, 
+        isDeposit,
+        isRefund,
+        isDepositRefund
+      );
+
+      // Open the generated PDF file
+      await PdfInvoiceApi.openFile(pdfFile);
+
+    } catch (e) {
+      // Handle errors during invoice generation
+      showCustomDialog(
+        context: context,
+        title: "Invoice Generation Failed",
+        content: "Could not generate invoice. Please try again.",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    } finally {
+      setState(() {
+        bool isGeneratingInvoice = false; // Reset loading state correctly
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -796,10 +1216,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   Widget tourComponent({required tourBooking tourbookings, required int status}){
     return GestureDetector(
       onTap: (){
-        // Navigator.push(
-        //   context, 
-        //   MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID, fromAppLink: 'false',))
-        // );
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => BookingDetailsScreen(userID: widget.userID, tourBookingID: tourbookings.tourBookingID, tourID: tourbookings.tourID,))
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 10.0),
@@ -867,14 +1287,18 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        tourbookings.tourName, 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 12,
+                      Container(
+                        width: 250, // Set a desired width
+                        child: Text(
+                          tourbookings.tourName,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                          maxLines: 1, // Optional: Limits to a single line
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
                       SizedBox(height: 5),
                       Text(
@@ -934,7 +1358,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (status == 0) ...[
-                          if (tourbookings.fullyPaid == 0)
+                          if (tourbookings.fullyPaid == 0) ...[
                             SizedBox(
                               height: 30, // Set the button height
                               child: TextButton(
@@ -966,9 +1390,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                           TextButton(
                                             onPressed: () {
                                               Navigator.of(context).pop(); // Close the dialog
-                                              // showPaymentOption(context, 'RM 1000.00', (selectedOption) {
-                                              //   bookTour(); // Call bookTour when payment option is selected
-                                              // });
+                                              showPaymentOption(context, 'RM${NumberFormat('#,##0.00').format(tourbookings.totalPrice - 1000)}', (selectedOption) {
+                                                payBalanceTour(tourbookings.tourBookingID, tourbookings.agencyName, tourbookings.agencyAddress, tourbookings.totalPrice - 1000); // Call bookTour when payment option is selected
+                                              });
                                             },
                                             style: TextButton.styleFrom(
                                               backgroundColor: primaryColor, // Set the background color
@@ -1000,79 +1424,81 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                 ),
                               ),
                             ),
-                          SizedBox(width: 5), // Space between buttons
-                          SizedBox(
-                            height: 30, // Set the button height
-                            child: TextButton(
-                              onPressed: (){
-                                showDialog(
-                                  context: context, 
-                                  builder: (BuildContext context){
-                                    return AlertDialog(
-                                      title: Text('Confirmation'),
-                                      content: Text(
-                                        "Please noted that the deposit of RM1000.00 will not be refunded once you can this booking. Are you sure you still want to cancel this booking?",
-                                        textAlign: TextAlign.justify,
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop(); // Close the dialog
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: primaryColor, // Set the background color
-                                            foregroundColor: Colors.white, // Set the text color
-                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                                            ),
-                                          ),
-                                          child: const Text("Cancel"),
+                            SizedBox(width: 5), // Space between buttons
+                            SizedBox(
+                              height: 30, // Set the button height
+                              child: TextButton(
+                                onPressed: (){
+                                  showDialog(
+                                    context: context, 
+                                    builder: (BuildContext context){
+                                      return AlertDialog(
+                                        title: Text('Confirmation'),
+                                        content: Text(
+                                          "Please noted that the deposit of RM1000.00 will not be refunded once you can this booking. Are you sure you still want to cancel this booking?",
+                                          textAlign: TextAlign.justify,
                                         ),
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            cancelTourBooking(tourbookings.tourBookingID, tourbookings.tourID, tourbookings.pax, tourbookings.travelDate);
-                                          },
-                                          style: TextButton.styleFrom(
-                                            backgroundColor: primaryColor, // Set the background color
-                                            foregroundColor: Colors.white, // Set the text color
-                                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                                            ),
-                                          ),
-                                          child: isCancelTourBooking
-                                          ? SizedBox(
-                                              width: 20, 
-                                              height: 20, 
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 3, 
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop(); // Close the dialog
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: primaryColor, // Set the background color
+                                              foregroundColor: Colors.white, // Set the text color
+                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
                                               ),
-                                            )
-                                          : Text("Confirm"),
-                                        ),
-                                      ],
-                                    );
-                                  }
-                                );
-                              }, 
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                                backgroundColor: Colors.white,
-                                foregroundColor: Color(0xFF749CB9),
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
-                                  borderRadius: BorderRadius.circular(8.0),
+                                            ),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              cancelTourBooking(tourbookings.tourBookingID, tourbookings.tourID, tourbookings.pax, tourbookings.travelDate);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: primaryColor, // Set the background color
+                                              foregroundColor: Colors.white, // Set the text color
+                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                              ),
+                                            ),
+                                            child: isCancelTourBooking
+                                            ? SizedBox(
+                                                width: 20, 
+                                                height: 20, 
+                                                child: CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 3, 
+                                                ),
+                                              )
+                                            : Text("Confirm"),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                  );
+                                }, 
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Color(0xFF749CB9),
+                                  shape: RoundedRectangleBorder(
+                                    side: BorderSide(color: Color(0xFF749CB9), width: 1.0),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                                child: Text(
+                                  "Cancel Booking", 
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              child: Text(
-                                "Cancel Booking", 
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
                             ),
-                          ),
+                          ],
+                          
                         ] else if (status == 1) 
                           SizedBox(
                             height: 30, // Set the button height
@@ -1110,10 +1536,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   Widget carComponent({required carRentalBooking carRentalbookings, required int status}){
     return GestureDetector(
       onTap: (){
-        // Navigator.push(
-        //   context, 
-        //   MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID, fromAppLink: 'false',))
-        // );
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => BookingDetailsScreen(userID: widget.userID, carRentalBookingID: carRentalbookings.carRentalBookingID, carRentalID: carRentalbookings.carID,))
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 10.0),
@@ -1200,7 +1626,65 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         ),
                         overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
-                      SizedBox(height: 5),
+                      status == 1
+                      ? Column(
+                          children: [
+                            SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  "Deposit Refund: ", 
+                                  style: TextStyle(
+                                    color: Colors.black, 
+                                    fontWeight: FontWeight.w500, 
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                ),
+                                Text(
+                                  "${(carRentalbookings.isDepositRefund == 0) ? "Progressing..." : "Done"}", 
+                                  style: TextStyle(
+                                    color: carRentalbookings.isDepositRefund == 0 ? Colors.orange : Colors.green, 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                ),
+                              ],
+                            )
+                            
+                          ],
+                        )
+                      : status == 2
+                        ? Column(
+                            children: [
+                              SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Text(
+                                    "Refund: ", 
+                                    style: TextStyle(
+                                      color: Colors.black, 
+                                      fontWeight: FontWeight.w500, 
+                                      fontSize: 10,
+                                    ),
+                                    overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                  ),
+                                  Text(
+                                    "${(carRentalbookings.isRefund == 0) ? "Progressing..." : "Done"}", 
+                                    style: TextStyle(
+                                      color: carRentalbookings.isRefund == 0 ? Colors.orange : Colors.green, 
+                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 10,
+                                    ),
+                                    overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                  ),
+                                ],
+                              )
+                              
+                            ],
+                          )
+                        : Container()
                     ],
                   )
                 ],
@@ -1331,10 +1815,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   Widget localBuddyComponent({required localBuddyBooking localBuddyBookings, required int status}){
     return GestureDetector(
       onTap: (){
-        // Navigator.push(
-        //   context, 
-        //   MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userID, countryName: tourPackage.countryName, cityName: tourPackage.cityName, tourID: tourPackage.tourID, fromAppLink: 'false',))
-        // );
+        Navigator.push(
+          context, 
+          MaterialPageRoute(builder: (context) => BookingDetailsScreen(userID: widget.userID, localBuddyBookingID: localBuddyBookings.localBuddyBookingID, localBuddyID: localBuddyBookings.localBuddyID,))
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 10.0),
@@ -1387,8 +1871,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Container(
-                    width: getScreenWidth(context) * 0.15,
-                    height: getScreenHeight(context) * 0.1,
+                    width: getScreenWidth(context) * 0.16,
+                    height: getScreenHeight(context) * 0.12,
                     margin: EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       image: DecorationImage(
@@ -1431,6 +1915,36 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         ),
                         overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
+                      status == 2
+                      ? Column(
+                          children: [
+                            SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Text(
+                                  "Refund: ", 
+                                  style: TextStyle(
+                                    color: Colors.black, 
+                                    fontWeight: FontWeight.w500, 
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                ),
+                                Text(
+                                  "${(localBuddyBookings.isRefund == 0) ? "Progressing..." : "Done"}", 
+                                  style: TextStyle(
+                                    color: localBuddyBookings.isRefund == 0 ? Colors.orange : Colors.green, 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 10,
+                                  ),
+                                  overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                                ),
+                              ],
+                            )
+                            
+                          ],
+                        )
+                      : Container()
                     ],
                   )
                 ],

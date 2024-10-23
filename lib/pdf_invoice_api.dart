@@ -86,15 +86,22 @@ class PdfInvoiceApi {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(flex: 6, child: buildSupplierAddress(invoice.supplier)),
-          // Remove Expanded and use Container with alignment
-          Container(
-            alignment: Alignment.centerRight,
-            child: BarcodeWidget(
-              barcode: Barcode.qrCode(),
-              data: invoice.info.number,
-              width: 50,  // Set a fixed width
-              height: 50, // Set a fixed height
+          // Use Expanded to ensure the supplier address respects the flex
+          Expanded(
+            flex: 5,
+            child: buildSupplierAddress(invoice.supplier),
+          ),
+          // Use Expanded for the QR code as well to control its size within the layout
+          Expanded(
+            flex: 2,  // Adjust the flex value to better control the QR code's space
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: BarcodeWidget(
+                barcode: Barcode.qrCode(),
+                data: invoice.info.number,
+                width: 50,  // You can still define a size within the Expanded widget
+                height: 50,
+              ),
             ),
           ),
         ],

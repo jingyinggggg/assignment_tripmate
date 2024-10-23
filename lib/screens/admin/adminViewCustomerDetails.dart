@@ -336,7 +336,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
           );
 
           // Perform some async operation
-          await generateInvoice(bookingID, invoice, type, collection, "refund_invoice", false, false, isDepositRefund ? true : false);
+          await generateInvoice(bookingID, invoice, type, collection, "refund_invoice", false, true, isDepositRefund ? true : false);
 
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
@@ -1816,13 +1816,13 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
               children: [
                 Container(
                   padding: EdgeInsets.all(10.0),
-                  width: getScreenWidth(context) * 0.25,
-                  height: getScreenHeight(context) * 0.15,
+                  width: getScreenWidth(context) * 0.22,
+                  height: getScreenHeight(context) * 0.13,
                   margin: EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       image: NetworkImage(localBuddyData['profileImage'] ?? ''),
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),

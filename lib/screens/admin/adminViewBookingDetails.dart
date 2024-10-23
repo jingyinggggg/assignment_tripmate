@@ -186,6 +186,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
           String userId = booking['userID'];
           String carRentalBookingID = booking.id;
           int bookingStatus = booking['bookingStatus'];
+          int isRefund = booking['isRefund'];
           int refundStatus = booking['isRefundDeposit'];
           int isCheckCarCondition = booking['isCheckCarCondition'];
 
@@ -202,7 +203,8 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 'userID': userId,
                 'carRentalBookingID': carRentalBookingID,
                 'bookingStatus': bookingStatus,
-                'isRefund': refundStatus,
+                'isRefund': isRefund,
+                'isRefundDeposit': refundStatus,
                 'isCheckCarCondition': isCheckCarCondition,
                 'customerInfo': userDoc.data() as Map<String, dynamic>,
               });
@@ -794,7 +796,7 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center, // Center horizontally
                           children: [
-                            data[index]['isRefund'] == 1
+                            (data[index]['isRefund'] == 1 && data[index]['bookingStatus'] == 2) || (data[index]['isRefundDeposit'] == 1 && data[index]['bookingStatus'] == 1)
                                 ? Icon(Icons.check_circle, color: Colors.green, size: 18)
                                 : Container()
                           ],
