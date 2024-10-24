@@ -157,20 +157,47 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
               ),
               child: Text('Cancel'),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _rejectRequest(_rejectReasonController.text); // Perform reject request
+            ElevatedButton(
+              onPressed: () async {
+                if (_rejectReasonController.text.trim().isEmpty) {
+                  // Show error dialog if reason is empty
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Reject reason cannot be empty.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the error dialog
+                            },
+                            child: Text('OK'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+                  Navigator.of(context).pop(); // Close the dialog
+                  _rejectRequest(_rejectReasonController.text);
+                }
               },
-              style: TextButton.styleFrom(
-                backgroundColor: primaryColor, // Set the background color
-                foregroundColor: Colors.white, // Set the text color
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+              child: Text('Submit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Submit"),
             ),
           ],
         );
@@ -271,7 +298,7 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
               Text('Please provide a reason for rejection:'),
               SizedBox(height: 10),
               TextField(
-                controller: _rejectReasonController,
+                controller: _declineInterviewReasonController,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Enter rejection reason...',
@@ -295,20 +322,47 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
               ),
               child: Text('Cancel'),
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _declineInterview(_rejectReasonController.text); // Perform reject request
+            ElevatedButton(
+              onPressed: () async {
+                if (_declineInterviewReasonController.text.trim().isEmpty) {
+                  // Show error dialog if reason is empty
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Reject reason cannot be empty.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the error dialog
+                            },
+                            child: Text('OK'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+                  Navigator.of(context).pop(); // Close the dialog
+                  _declineInterview(_declineInterviewReasonController.text); 
+                }
               },
-              style: TextButton.styleFrom(
-                backgroundColor: primaryColor, // Set the background color
-                foregroundColor: Colors.white, // Set the text color
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+              child: Text('Submit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text("Submit"),
             ),
           ],
         );
