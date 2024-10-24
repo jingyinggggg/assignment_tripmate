@@ -41,6 +41,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   bool isPayingBalance = false;
   int _outerTabIndex = 0;  // For the outer Upcoming, Completed, Canceled
   int _innerTabIndex = 0;  // For the inner Tour Package, Car Rental, Local Buddy
+  TextEditingController _cancelTourBookingController = TextEditingController();
+  TextEditingController _cancelCarRentalBookingController = TextEditingController();
+  TextEditingController _cancelLocalBookingController = TextEditingController();
 
   @override
   void initState(){
@@ -514,7 +517,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelTourBooking(String tourBookingID, String tourID, int slot, String dateRange) async{
+  Future<void>cancelTourBooking(String tourBookingID, String tourID, int slot, String dateRange, String cancelReason) async{
     setState(() {
       isCancelTourBooking = true;
     });
@@ -522,7 +525,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       await FirebaseFirestore.instance
         .collection('tourBooking')
         .doc(tourBookingID)
-        .update({'bookingStatus': 2});
+        .update({
+          'bookingStatus': 2,
+          'cancelReason': cancelReason
+        });
       
       final tourPackageDoc = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
 
@@ -575,7 +581,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelCarBooking(String carBookingID) async{
+  Future<void>cancelCarBooking(String carBookingID, String cancelReason) async{
     setState(() {
       isCancelCarRentalBooking = true;
     });
@@ -583,7 +589,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       await FirebaseFirestore.instance
         .collection('carRentalBooking')
         .doc(carBookingID)
-        .update({'bookingStatus': 2});
+        .update({
+          'bookingStatus': 2,
+          'cancelReason': cancelReason
+        });
 
       showCustomDialog(
         context: context, 
@@ -613,7 +622,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelLocalBuddyBooking(String localBuddyBookingID) async{
+  Future<void>cancelLocalBuddyBooking(String localBuddyBookingID, String cancelReason) async{
     setState(() {
       isCancelLocalBuddyBooking = true;
     });
@@ -621,7 +630,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       await FirebaseFirestore.instance
         .collection('localBuddyBooking')
         .doc(localBuddyBookingID)
-        .update({'bookingStatus': 2});
+        .update({
+          'bookingStatus': 2,
+          'cancelReason': cancelReason
+        });
 
       showCustomDialog(
         context: context, 
@@ -1456,7 +1468,108 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                           TextButton(
                                             onPressed: () {
                                               Navigator.pop(context);
-                                              cancelTourBooking(tourbookings.tourBookingID, tourbookings.tourID, tourbookings.pax, tourbookings.travelDate);
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text('Cancel Booking'),
+                                                    content: Column(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text('Please provide a reason for booking cancellation:'),
+                                                        TextField(
+                                                          controller: _cancelTourBookingController,
+                                                          maxLines: 3,
+                                                          decoration: InputDecoration(
+                                                            hintText: 'Enter cancellation reason...',
+                                                            border: OutlineInputBorder(
+                                                              borderSide: BorderSide(color: primaryColor)
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog
+                                                        },
+                                                        child: Text('Cancel'),
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () async {
+                                                          if (_cancelTourBookingController.text.trim().isEmpty) {
+                                                            // Show error dialog if reason is empty
+                                                            showDialog(
+                                                              context: context,
+                                                              builder: (BuildContext context) {
+                                                                return AlertDialog(
+                                                                  title: Text('Error'),
+                                                                  content: Text('Cancellation reason cannot be empty.'),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed: () {
+                                                                        Navigator.of(context).pop(); // Close the error dialog
+                                                                      },
+                                                                      child: Text('OK'),
+                                                                      style: TextButton.styleFrom(
+                                                                        backgroundColor: primaryColor,
+                                                                        foregroundColor: Colors.white,
+                                                                        shape: RoundedRectangleBorder(
+                                                                          borderRadius: BorderRadius.circular(10),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          } else {
+                                                            // Proceed with cancelation if reason is provided
+                                                            // Navigator.of(context).pop(); // Close the main dialog
+                                                            setState(() {
+                                                              isCancelTourBooking = true;
+                                                            });
+                                                            cancelTourBooking(
+                                                              tourbookings.tourBookingID,
+                                                              tourbookings.tourID,
+                                                              tourbookings.pax,
+                                                              tourbookings.travelDate,
+                                                              _cancelTourBookingController.text,
+                                                            );
+                                                            setState(() {
+                                                              isCancelTourBooking = false;
+                                                            });
+                                                            // Navigator.pop(context);
+                                                          }
+                                                        },
+                                                        child: isCancelTourBooking
+                                                        ? SizedBox(
+                                                          width: 10,
+                                                          height: 10,
+                                                          child: CircularProgressIndicator(color: Colors.white,),
+                                                        )
+                                                        : Text('Submit'),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+
                                             },
                                             style: TextButton.styleFrom(
                                               backgroundColor: primaryColor, // Set the background color
@@ -1471,8 +1584,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                                 width: 20, 
                                                 height: 20, 
                                                 child: CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 3, 
+                                                  color: primaryColor,
                                                 ),
                                               )
                                             : Text("Confirm"),
@@ -1739,8 +1851,103 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.of(context).pop(); // Close the dialog
-                                          cancelCarBooking(carRentalbookings.carRentalBookingID);
+                                          Navigator.pop(context);
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('Cancel Booking'),
+                                                content: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text('Please provide a reason for booking cancellation:'),
+                                                    TextField(
+                                                      controller: _cancelCarRentalBookingController,
+                                                      maxLines: 3,
+                                                      decoration: InputDecoration(
+                                                        hintText: 'Enter cancellation reason...',
+                                                        border: OutlineInputBorder(
+                                                          borderSide: BorderSide(color: primaryColor)
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                    },
+                                                    child: Text('Cancel'),
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor,
+                                                      foregroundColor: Colors.white,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () async {
+                                                      if (_cancelCarRentalBookingController.text.trim().isEmpty) {
+                                                        // Show error dialog if reason is empty
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext context) {
+                                                            return AlertDialog(
+                                                              title: Text('Error'),
+                                                              content: Text('Cancellation reason cannot be empty.'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop(); // Close the error dialog
+                                                                  },
+                                                                  child: Text('OK'),
+                                                                  style: TextButton.styleFrom(
+                                                                    backgroundColor: primaryColor,
+                                                                    foregroundColor: Colors.white,
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(10),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      } else {
+                                                        // Proceed with cancelation if reason is provided
+                                                        // Navigator.of(context).pop(); // Close the main dialog
+                                                        setState(() {
+                                                          isCancelCarRentalBooking = true;
+                                                        });
+                                                        cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
+                                                        setState(() {
+                                                          isCancelCarRentalBooking = false;
+                                                        });
+                                                        // Navigator.pop(context);
+                                                      }
+                                                    },
+                                                    child: isCancelCarRentalBooking
+                                                    ? SizedBox(
+                                                      width: 10,
+                                                      height: 10,
+                                                      child: CircularProgressIndicator(color: Colors.white,),
+                                                    )
+                                                    : Text('Submit'),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: primaryColor,
+                                                      foregroundColor: Colors.white,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+
                                         },
                                         style: TextButton.styleFrom(
                                           backgroundColor: primaryColor, // Set the background color
@@ -1750,13 +1957,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
                                           ),
                                         ),
-                                        child: isCancelCarRentalBooking
+                                        child: isCancelTourBooking
                                         ? SizedBox(
                                             width: 20, 
                                             height: 20, 
                                             child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 3, 
+                                              color: primaryColor,
                                             ),
                                           )
                                         : Text("Confirm"),
@@ -1775,7 +1981,13 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                             ),
-                            child: Text(
+                            child: isCancelCarRentalBooking
+                            ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: primaryColor,),
+                            )
+                            :Text(
                               "Cancel Booking", 
                               style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                             ),
@@ -1999,8 +2211,103 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.of(context).pop(); // Close the dialog
-                                          cancelLocalBuddyBooking(localBuddyBookings.localBuddyBookingID);
+                                          Navigator.pop(context);
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('Cancel Booking'),
+                                                content: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text('Please provide a reason for booking cancellation:'),
+                                                    TextField(
+                                                      controller: _cancelLocalBookingController,
+                                                      maxLines: 3,
+                                                      decoration: InputDecoration(
+                                                        hintText: 'Enter cancellation reason...',
+                                                        border: OutlineInputBorder(
+                                                          borderSide: BorderSide(color: primaryColor)
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context).pop(); // Close the dialog
+                                                    },
+                                                    child: Text('Cancel'),
+                                                    style: TextButton.styleFrom(
+                                                      backgroundColor: primaryColor,
+                                                      foregroundColor: Colors.white,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () async {
+                                                      if (_cancelLocalBookingController.text.trim().isEmpty) {
+                                                        // Show error dialog if reason is empty
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext context) {
+                                                            return AlertDialog(
+                                                              title: Text('Error'),
+                                                              content: Text('Cancellation reason cannot be empty.'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () {
+                                                                    Navigator.of(context).pop(); // Close the error dialog
+                                                                  },
+                                                                  child: Text('OK'),
+                                                                  style: TextButton.styleFrom(
+                                                                    backgroundColor: primaryColor,
+                                                                    foregroundColor: Colors.white,
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius: BorderRadius.circular(10),
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      } else {
+                                                        // Proceed with cancelation if reason is provided
+                                                        // Navigator.of(context).pop(); // Close the main dialog
+                                                        setState(() {
+                                                          isCancelLocalBuddyBooking = true;
+                                                        });
+                                                        cancelLocalBuddyBooking(localBuddyBookings.localBuddyBookingID, _cancelLocalBookingController.text);
+                                                        setState(() {
+                                                          isCancelLocalBuddyBooking = false;
+                                                        });
+                                                        // Navigator.pop(context);
+                                                      }
+                                                    },
+                                                    child: isCancelLocalBuddyBooking
+                                                    ? SizedBox(
+                                                      width: 10,
+                                                      height: 10,
+                                                      child: CircularProgressIndicator(color: Colors.white,),
+                                                    )
+                                                    : Text('Submit'),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: primaryColor,
+                                                      foregroundColor: Colors.white,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+
                                         },
                                         style: TextButton.styleFrom(
                                           backgroundColor: primaryColor, // Set the background color
@@ -2015,8 +2322,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                             width: 20, 
                                             height: 20, 
                                             child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 3, 
+                                              color: primaryColor,
                                             ),
                                           )
                                         : Text("Confirm"),

@@ -1,3 +1,4 @@
+import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -165,13 +166,55 @@ class _AdminManageRegistrationRequestScreenState extends State<AdminManageRegist
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                _rejectRequest(_rejectReasonController.text); // Perform reject request
+                if (_rejectReasonController.text.trim().isEmpty) {
+                  // Show error dialog if reason is empty
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Reject reason cannot be empty.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the error dialog
+                            },
+                            child: Text('OK'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+                  Navigator.of(context).pop(); // Close the dialog
+                  _rejectRequest(_rejectReasonController.text); // Perform reject request
+                }
               },
               child: Text('Submit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ],
         );
