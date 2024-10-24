@@ -217,7 +217,7 @@ Widget carComponent({required CarList carList}) {
                   //   MaterialPageRoute(builder: (context) => EditCarBrandScreen(carBrand: carBrand)),
                   // );
                 },
-                icon: Icon(Icons.edit),
+                icon: Icon(Icons.remove_red_eye),
                 iconSize: 20,
                 color: Colors.grey.shade600,
                 tooltip: "Edit",

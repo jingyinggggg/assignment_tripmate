@@ -165,58 +165,68 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
   }
 
   Widget tourComponent({required TourPackage tourPackage}) {
-    return Container(
-      width: getScreenWidth(context),
-      child: Row(
-        children: [
-          Container(
-            width: getScreenWidth(context) * 0.15,
-            height: getScreenHeight(context) * 0.1,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(0),
-              image: DecorationImage(
-                image: NetworkImage(tourPackage.image),
-                fit: BoxFit.cover,
+  return Container(
+    width: getScreenWidth(context),
+    margin: EdgeInsets.only(bottom: 20),
+    child: Row(
+      children: [
+        Container(
+          width: getScreenWidth(context) * 0.15,
+          height: getScreenHeight(context) * 0.1,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(0),
+            image: DecorationImage(
+              image: NetworkImage(tourPackage.image),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Aligns text to occupy full width
+                children: [
+                  Expanded(
+                    child: Text(
+                      tourPackage.tourName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 10), // Adds spacing between name and agency
+                ],
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tourPackage.tourName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 5),
+              Text(
+                'Agency: ${tourPackage.agency}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  'Agency: ${tourPackage.agency}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () {
-              // Handle edit button action
-            },
-            icon: const Icon(Icons.edit),
-            iconSize: 20,
-            color: Colors.grey.shade600,
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        IconButton(
+          onPressed: () {
+            // Handle edit button action
+          },
+          icon: const Icon(Icons.remove_red_eye),
+          iconSize: 20,
+          color: Colors.grey.shade600,
+        ),
+      ],
+    ),
+  );
+}
+
 }

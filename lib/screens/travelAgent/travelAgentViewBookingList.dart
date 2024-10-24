@@ -20,6 +20,8 @@ class TravelAgentViewBookingListScreen extends StatefulWidget {
 class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookingListScreen> {
   List<TravelAgentTourBookingList> tourBookingList = [];
   List<TravelAgentCarRentalBookingList> carRentalBookingList = [];
+  List<TravelAgentTourBookingList> filteredTourBookingList = [];
+  List<TravelAgentCarRentalBookingList> filteredCarRentalBookingList = [];
   bool isFetchingTour = false;
   bool isFetchingCarRental = false;
 
@@ -66,6 +68,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         isFetchingTour = false;
         // Update the list with fetched data (assuming you have a list for display)
         tourBookingList = tourBookingLists;
+        filteredTourBookingList = tourBookingList;
       });
 
     } catch (e) {
@@ -112,6 +115,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
         isFetchingCarRental = false;
         // Update the list with fetched data (assuming you have a list for display)
         carRentalBookingList = carRentalBookingLists;
+        filteredCarRentalBookingList = carRentalBookingList;
       });
 
     } catch (e) {
@@ -122,11 +126,30 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     }
   }
 
+  // Search function for tour bookings
+  void onTourSearch(String value) {
+    setState(() {
+      filteredTourBookingList = tourBookingList
+          .where((booking) =>
+              booking.tourID.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
+  }
+
+  // Search function for car rentals
+  void onCarRentalSearch(String value) {
+    setState(() {
+      filteredCarRentalBookingList = carRentalBookingList
+          .where((booking) =>
+              booking.carRentalID.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2, 
+      length: 2,
       child: Scaffold(
         backgroundColor: Color.fromARGB(255, 241, 246, 249),
         resizeToAvoidBottomInset: true,
@@ -145,7 +168,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId)),
               );
             },
           ),
@@ -156,17 +179,13 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
               color: Colors.white,
               child: TabBar(
                 tabs: [
-                  Tab(
-                    child: Text("Tour Package"),
-                  ),
-                  Tab(
-                    child: Text("Car Rental"),
-                  )
+                  Tab(child: Text("Tour Package")),
+                  Tab(child: Text("Car Rental")),
                 ],
                 labelColor: primaryColor,
                 indicatorColor: primaryColor,
                 indicatorWeight: 2,
-                unselectedLabelColor: Color(0xFFA4B4C0), // Unselected tab text color
+                unselectedLabelColor: Color(0xFFA4B4C0),
                 indicatorPadding: EdgeInsets.zero,
                 indicatorSize: TabBarIndicatorSize.tab,
                 unselectedLabelStyle: TextStyle(fontSize: defaultFontSize),
@@ -180,34 +199,117 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
             Container(
               padding: EdgeInsets.all(15.0),
               child: isFetchingTour
-              ? Center(child: CircularProgressIndicator(color: primaryColor))
-              : tourBookingList.isEmpty
-                ? Center(child: Text('No tour booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-                : ListView.builder(
-                    itemCount: tourBookingList.length,
-                    itemBuilder: (context, index) {
-                      return TourBookingComponent(tourBooking: tourBookingList[index]);
-                    }
-                  ),
+                  ? Center(child: CircularProgressIndicator(color: primaryColor))
+                  : tourBookingList.isEmpty
+                      ? Center(child: Text('No tour booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                      : Column(
+                          children: [
+                            Container(
+                              height: 60,
+                              child: TextField(
+                                onChanged: (value) => onTourSearch(value),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.red, width: 2),
+                                  ),
+                                  hintText: "Search tour id...",
+                                  hintStyle: TextStyle(
+                                    fontSize: defaultFontSize,
+                                    color: Colors.grey.shade500,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Expanded( // Wrap ListView.builder with Expanded
+                              child: ListView.builder(
+                                itemCount: filteredTourBookingList.length,
+                                itemBuilder: (context, index) {
+                                  return TourBookingComponent(tourBooking: filteredTourBookingList[index]);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
             ),
             Container(
               padding: EdgeInsets.all(10.0),
               child: isFetchingCarRental
-              ? Center(child: CircularProgressIndicator(color: primaryColor))
-              : carRentalBookingList.isEmpty
-                ? Center(child: Text('No car rental booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
-                : ListView.builder(
-                    itemCount: carRentalBookingList.length,
-                    itemBuilder: (context, index) {
-                      return CarRentalBookingComponent(carRentalBooking: carRentalBookingList[index]);
-                    }
-                  ),
+                  ? Center(child: CircularProgressIndicator(color: primaryColor))
+                  : carRentalBookingList.isEmpty
+                      ? Center(child: Text('No car rental booking record found in the system.', style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+                      : Column(
+                          children: [
+                            Container(
+                              height: 60,
+                              child: TextField(
+                                onChanged: (value) => onCarRentalSearch(value),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: BorderSide(color: Colors.red, width: 2),
+                                  ),
+                                  hintText: "Search car rental id...",
+                                  hintStyle: TextStyle(
+                                    fontSize: defaultFontSize,
+                                    color: Colors.grey.shade500,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Expanded( // Wrap ListView.builder with Expanded
+                              child: ListView.builder(
+                                itemCount: filteredCarRentalBookingList.length,
+                                itemBuilder: (context, index) {
+                                  return CarRentalBookingComponent(carRentalBooking: filteredCarRentalBookingList[index]);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
             ),
           ],
         ),
-      )
+      ),
     );
   }
+
 
   Widget TourBookingComponent({required TravelAgentTourBookingList tourBooking}) {
     return GestureDetector(

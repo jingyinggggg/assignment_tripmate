@@ -604,7 +604,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                 ],
                               ),
                               SizedBox(height: 10),
-                              if(carBookingData!['bookingStatus'] == 1)...[
+                              if(carBookingData!['bookingStatus'] == 1 && carBookingData!['isRefundDeposit'] == 0)...[
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.start,
