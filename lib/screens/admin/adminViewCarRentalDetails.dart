@@ -1,55 +1,33 @@
 import 'dart:convert';
-import 'package:assignment_tripmate/screens/login.dart';
-import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
-import 'package:assignment_tripmate/screens/user/createBooking.dart';
+
+import 'package:assignment_tripmate/screens/admin/manageCarList.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:share_plus/share_plus.dart';
-// import 'package:latlong2/latlong.dart';
 
-class CarRentalDetailsScreen extends StatefulWidget {
+class AdminViewCarRentalDetailsScreen extends StatefulWidget {
   final String userId;
   final String carId;
-  final String fromAppLink;
 
-  const CarRentalDetailsScreen({super.key, required this.userId, required this.carId, required this.fromAppLink});
+  const AdminViewCarRentalDetailsScreen({super.key, required this.userId, required this.carId});
 
   @override
-  State<StatefulWidget> createState() => _CarRentalDetailsScreenState();
+  State<StatefulWidget> createState() => _AdminViewCarRentalDetailsScreenState();
 }
 
-class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
+class _AdminViewCarRentalDetailsScreenState extends State<AdminViewCarRentalDetailsScreen> {
   Map<String, dynamic>? carData;
   bool isLoading = true;
   LatLng targetCarLocation = LatLng(0, 0);
   Set<Marker> _markers = {};
-  bool isFavorited = false;
 
   @override
   void initState() {
     super.initState();
     _fetchCarDetails();
-    _checkIfFavorited();
   }
-
-  Future<void> _checkIfFavorited() async {
-    // Check if this tour package is already in the user's wishlist
-    final wishlistQuery = await FirebaseFirestore.instance
-        .collection('wishlist')
-        .where('userID', isEqualTo: widget.userId)
-        .get();
-
-    if (wishlistQuery.docs.isNotEmpty) {
-      final wishlistDocRef = wishlistQuery.docs.first.reference;
-      final carRental = await wishlistDocRef.collection('carRental').where('carRentalId', isEqualTo: widget.carId).get();
-      setState(() {
-        isFavorited = carRental.docs.isNotEmpty; // Set the favorite status based on the query
-      });
-    }
-  }  
 
   Future<void> _fetchCarDetails() async {
     setState(() {
@@ -120,95 +98,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _addToWishlist(String carRentalId) async {
-    try {
-      // Reference to the Firestore collection
-      final wishlistRef = FirebaseFirestore.instance.collection('wishlist');
-
-      // Check if the wishlist document for the user exists
-      final wishlistQuery = await wishlistRef.where('userID', isEqualTo: widget.userId).get();
-
-      DocumentReference wishlistDocRef;
-
-      if (wishlistQuery.docs.isEmpty) {
-        // If no wishlist exists, create a new one with a custom ID format
-        final snapshot = await wishlistRef.get();
-        final wishlistID = 'WL${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
-
-        wishlistDocRef = await wishlistRef.doc(wishlistID).set({
-          'userID': widget.userId,
-        }).then((_) => wishlistRef.doc(wishlistID)); // Get the reference of the new document
-      } else {
-        // Use the existing wishlist document
-        wishlistDocRef = wishlistQuery.docs.first.reference;
-      }
-
-      // Now add the tour package ID to the 'tourPackage' subcollection
-      await wishlistDocRef.collection('carRental').add({
-        'carRentalId': carRentalId,
-        // Add any other fields related to the tour package here
-      });
-
-      // Show SnackBar to inform the user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Current car rental details is added to your wishlist!'),
-          duration: Duration(seconds: 2), // Duration for which the SnackBar will be displayed
-        ),
-      );
-
-      setState(() {
-        isFavorited = true;
-      });
-    } catch (e) {
-      print('Error adding to wishlist: $e');
-    }
-  }
-
-  Future<void> _removeFromWishlist(String carRentalId) async {
-    try {
-      final wishlistQuery = await FirebaseFirestore.instance
-          .collection('wishlist')
-          .where('userID', isEqualTo: widget.userId)
-          .get();
-
-      if (wishlistQuery.docs.isNotEmpty) {
-        final wishlistDocRef = wishlistQuery.docs.first.reference;
-        final carRental = await wishlistDocRef.collection('carRental').where('carRentalId', isEqualTo: carRentalId).get();
-
-        if (carRental.docs.isNotEmpty) {
-          // Delete the tour package document
-          await carRental.docs.first.reference.delete();
-
-          // Show SnackBar to inform the user
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Current car rental details is removed from your wishlist!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-
-          setState(() {
-            isFavorited = false; // Update favorite status
-          });
-        }
-      }
-    } catch (e) {
-      print('Error removing from wishlist: $e');
-    }
-  }  
-
-  void _toggleWishlist() {
-    if (isFavorited) {
-      _removeFromWishlist(widget.carId);
-    } else {
-      _addToWishlist(widget.carId);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final String shareLink = 'https://tripmate.com/carRentalDetails/${widget.userId}/${widget.carId}/true';
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
@@ -225,81 +116,16 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            if (widget.fromAppLink == 'true') {
-              // Show a message (SnackBar, Dialog, etc.)
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please log into your account or register an account to explore more.'),
-                ),
-              );
-
-              // Delay the navigation to the login page
-              Future.delayed(const Duration(milliseconds: 500), () {
-                // context.go('/login'); // Ensure you have a route defined for '/login'
-                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
-              });
-            } else {
-              Navigator.pop(context);
-            }
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => AdminManageCarListScreen(userId: widget.userId))
+            );
           },
         ),
-        actions: [
-          Row(
-            mainAxisSize: MainAxisSize.min, // To keep the Row tight and avoid expanding
-            children: [
-              Container(
-                width: 35,
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: carData?['agencyID'] ?? ''))
-                    );
-                  },
-                  icon: ImageIcon(
-                    AssetImage('images/chat.png'),
-                    color: Colors.white,
-                    size: 21,
-                  ),
-                  tooltip: "Chat",
-                )
-              ),
-              Container(
-                width: 30,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.favorite,
-                    size: 23,
-                    color: isFavorited ? Colors.red : Colors.white,
-                  ),
-                  tooltip: 'Wishlist',
-                  onPressed: () {
-                    _toggleWishlist();
-                  },
-                ),
-              ),
-              Container(
-                width: 30,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.share,
-                    size: 23,
-                    color:  Colors.white,
-                  ),
-                  tooltip: 'Share',
-                  onPressed: () {
-                    Share.share(shareLink, subject: 'Check out this car rental!');
-                  },
-                ),
-              ),
-              SizedBox(width: 10,)
-            ],
-          ),
-        ],
 
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor,))
           : Stack(
               children: [
                 Container(
@@ -358,59 +184,9 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                         ),
                       ),
                       _buildScrollView(),
-                      Container(
-                        padding: EdgeInsets.only(left: 15, right: 15),
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2), // Adjust shadow color and opacity as needed
-                              blurRadius: 4.0,
-                              offset: Offset(0, -2), // Shadow above the container
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between
-                          children: [
-                            Text(
-                              'RM${(carData?['pricePerDay'] ?? 0).toStringAsFixed(0)}/day',
-                              style: TextStyle(
-                                fontSize: defaultLabelFontSize,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context, 
-                                  MaterialPageRoute(builder: (context) => createBookingScreen(userId: widget.userId, carRental: true, carRentalID: widget.carId,))
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10), // Button radius
-                                ),
-                              ),
-                              child: Text(
-                                'Rent Now',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: defaultFontSize,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
                     ],
                   ),
                 ),
-                // _buildCarImage(),
               ],
             ),
     );
@@ -444,7 +220,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   Widget _buildScrollView() {
     return Container(
-      height: getScreenHeight(context) * 0.40, // Fixed height for the scrollable container
+      height: getScreenHeight(context) * 0.50, // Fixed height for the scrollable container
       decoration: const BoxDecoration(color: Colors.white),
       child: SingleChildScrollView(
         child: Padding(
@@ -685,33 +461,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
     );
   }
 
-  Widget _buildCarImage() {
-    return Positioned(
-      top: getScreenHeight(context) * 0.2,
-      right: 10,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: SizedBox(
-          width: getScreenWidth(context) * 0.37,
-          height: getScreenHeight(context) * 0.18,
-          child: carData?['carImage'] != null
-              ? Image.network(
-                  carData!['carImage'],
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(child: CircularProgressIndicator());
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(child: Text('Error loading image'));
-                  },
-                )
-              : Center(child: Text('No image available')),
-        ),
-      ),
-    );
-  }
-
   Widget carInfoIcon(AssetImage image, String title, String subtitle) {
     return Container(
       width: 100,
@@ -740,5 +489,4 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
       ),
     );
   }
-
 }

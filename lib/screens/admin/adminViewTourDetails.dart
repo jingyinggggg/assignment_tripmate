@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:assignment_tripmate/screens/admin/adminViewTourList.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AdminTourPackageDetailsScreen extends StatefulWidget {
   final String userId;
@@ -23,7 +28,7 @@ class AdminTourPackageDetailsScreen extends StatefulWidget {
 class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsScreen> {
   Map<String, dynamic>? tourData;
   bool isLoading = false;
-  bool isButtonLoading = false;
+  bool isOpenFile = false;
 
   @override
   void initState() {
@@ -62,6 +67,46 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching tour data: $e')),
       );
+    }
+  }
+
+  Future openFile({required String url, String? fileName}) async {
+    setState(() {
+      isOpenFile = true;
+    });
+    final file = await downloadFile(url, fileName!);
+
+    if(file == null) return;
+    print('Path: ${file.path}');
+    OpenFile.open(file.path);
+
+    setState(() {
+      isOpenFile = false;
+    });
+  }
+
+  // Download file into private foler not visible to user
+  Future<File?> downloadFile(String url, String name) async {
+    final appStorage = await getApplicationDocumentsDirectory();
+    final file = File('${appStorage.path}/$name');
+
+    try{
+      final response = await Dio().get(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: false,
+          receiveTimeout: Duration(seconds: 10),
+        )
+      );
+
+      final raf = file.openSync(mode: FileMode.write);
+      raf.writeFromSync(response.data);
+      await raf.close();
+
+      return file;
+    } catch(e){
+      return null;
     }
   }
 
@@ -108,7 +153,6 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                           width: double.infinity,
                           height: 200,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
                             image: DecorationImage(
                               image: NetworkImage(tourData!['tourCover']),
                               fit: BoxFit.cover,
@@ -120,14 +164,14 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                             alignment: Alignment.center,
                             child: Container(
                               width: double.infinity,
-                              height: 50,
+                              height: 60,
                               color: Colors.white.withOpacity(0.7),
                               child: Center(
                                 child: Text(
                                   tourData!['tourName'] ?? 'No Name',
                                   style: const TextStyle(
                                     color: Colors.black,
-                                    fontSize: 22,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     shadows: [
                                       Shadow(
@@ -169,19 +213,6 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Container(
-                        //   alignment: Alignment.center,
-                        //   child: Text(
-                        //     "*** You are viewing from user perspective currently. ***",
-                        //     style: TextStyle(
-                        //       fontSize: 14,
-                        //       fontWeight: FontWeight.bold,
-                        //       color: Colors.red
-                        //     ),
-                        //     textAlign: TextAlign.center,
-                        //   ),
-                        // ),
-
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -195,20 +226,27 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const ImageIcon(
-                                    AssetImage("images/download-pdf.png"),
-                                    size: 23,
-                                    color: Colors.black,
-                                  ),
-                                  onPressed: () {
-                                    // Add PDF download functionality here if needed
-                                  },
-                                ),
-                                SizedBox(width: 10),
-                                Icon(
-                                  Icons.favorite_border,
-                                  size: 23,
-                                  color: Colors.black,
+                                  icon: isOpenFile
+                                      ? SizedBox(
+                                          width: 20.0, // Set the desired width
+                                          height: 20.0, // Set the desired height
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFF467BA1), // Set the color
+                                          ),
+                                        ) // Show loading indicator when loading
+                                      : const ImageIcon(
+                                          AssetImage("images/download-pdf.png"),
+                                          size: 23,
+                                          color: Colors.black,
+                                        ),
+                                  onPressed: isOpenFile
+                                      ? null // Disable button when loading
+                                      : () {
+                                          openFile(
+                                            url: tourData?['brochure'],
+                                            fileName: '${tourData?['tourName']}.pdf',
+                                          );
+                                        },
                                 ),
                               ],
                             ),
@@ -260,34 +298,6 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            ElevatedButton(
-                              onPressed: () {},
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    "Enquiry",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  const ImageIcon(
-                                    AssetImage("images/communication.png"),
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF467BA1),
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(0),
-                                ),
-                              ),
-                            )
                           ],
                         ),
 
@@ -303,7 +313,6 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                               itinerary['day'] ?? 'No Day',
                               itinerary['title'] ?? 'No Title',
                               itinerary['description'] ?? 'No Description',
-                              itinerary['overnight'] ?? 'No Remarks',
                             );
                           },
                         ),
@@ -366,7 +375,7 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
     );
   }
 
-  Widget itineraryComponent(String day, String title, String description, String overnightCity) {
+  Widget itineraryComponent(String day, String title, String description) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: IntrinsicHeight( // Ensure both sides of the Row stretch to the tallest child
@@ -449,16 +458,6 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                       style: const TextStyle(
                         fontSize: 15,
                         color: Colors.black,
-                      ),
-                      textAlign: TextAlign.justify,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '*** $overnightCity',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.justify,
                     ),

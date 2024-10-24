@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewCarRentalDetails.dart';
 import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -47,7 +48,7 @@ class _AdminManageCarListScreenState extends State<AdminManageCarListScreen> {
       });
     } catch (e) {
       // Handle any errors
-      print('Error fetching car brand list: $e');
+      print('Error fetching car list: $e');
       setState(() {
         isLoading = false;  // Stop loading in case of an error
       });
@@ -212,15 +213,15 @@ Widget carComponent({required CarList carList}) {
               IconButton(
                 onPressed: () {
                   // Handle edit action
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => EditCarBrandScreen(carBrand: carBrand)),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AdminViewCarRentalDetailsScreen(userId: widget.userId, carId: carList.carID,)),
+                  );
                 },
                 icon: Icon(Icons.remove_red_eye),
                 iconSize: 20,
                 color: Colors.grey.shade600,
-                tooltip: "Edit",
+                tooltip: "View",
               ),
             ],
           ),

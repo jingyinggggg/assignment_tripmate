@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewTourDetails.dart';
 import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -219,6 +220,10 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
         IconButton(
           onPressed: () {
             // Handle edit button action
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => AdminTourPackageDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourPackage.tourID))
+            );
           },
           icon: const Icon(Icons.remove_red_eye),
           iconSize: 20,

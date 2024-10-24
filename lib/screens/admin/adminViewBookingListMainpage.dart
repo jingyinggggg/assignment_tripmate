@@ -22,6 +22,8 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
 
   List<AdminLocalBuddyBookingList> localBuddyList = [];
   List<AdminAgencyList> agencyList = [];
+  List<AdminLocalBuddyBookingList> filteredLocalBuddyList = [];
+  List<AdminAgencyList> filteredAgencyList = [];
   bool isFetchingLocalBuddyList = false;
   bool isFetchingAgencyList = false;
   
@@ -117,6 +119,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
       // Update your state with the agency list
       setState(() {
         agencyList = agencyLists;
+        filteredAgencyList = agencyList;
       });
 
     } catch (e) {
@@ -176,6 +179,7 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
 
       setState(() {
         localBuddyList = buddyBookingLists;
+        filteredLocalBuddyList = localBuddyList;
       });
     } catch (e) {
       print('Error fetching local buddy booking list: $e');
@@ -184,6 +188,26 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
         isFetchingLocalBuddyList = false;
       });
     }
+  }
+
+  // Search function for agency list
+  void onAgencySearch(String value) {
+    setState(() {
+      filteredAgencyList = agencyList
+          .where((booking) =>
+              booking.agencyName.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
+  }
+
+  // Search function for local buddy booking
+  void onLocalBuddySearch(String value) {
+    setState(() {
+      filteredLocalBuddyList = localBuddyList
+          .where((booking) =>
+              booking.localBuddyName.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
   }
 
 
@@ -251,6 +275,40 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        height: 60,
+                        child: TextField(
+                          onChanged: (value) => onAgencySearch(value),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.red, width: 2),
+                            ),
+                            hintText: "Search agency name...",
+                            hintStyle: TextStyle(
+                              fontSize: defaultFontSize,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                       Text(
                         "***Note: The agency list only showed approved agency.***",
                         style: TextStyle(
@@ -287,9 +345,9 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: agencyList.length,
+                          itemCount: filteredAgencyList.length,
                           itemBuilder: (context, index) {
-                            return AgencyListComponent(agency: agencyList[index]);
+                            return AgencyListComponent(agency: filteredAgencyList[index]);
                           }
                         )
                       )
@@ -304,6 +362,40 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                 ? Center(child: Text("No local buddy booking in the system.", style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
                 : Column(
                     children: [
+                      Container(
+                        height: 60,
+                        child: TextField(
+                          onChanged: (value) => onLocalBuddySearch(value),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.red, width: 2),
+                            ),
+                            hintText: "Search local buddy name...",
+                            hintStyle: TextStyle(
+                              fontSize: defaultFontSize,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                       Text(
                         "***Note: The booking list only showed approved local buddy.***",
                         style: TextStyle(
@@ -340,9 +432,9 @@ class _AdminViewBookingListMainpageScreenState extends State<AdminViewBookingLis
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: localBuddyList.length,
+                          itemCount: filteredLocalBuddyList.length,
                           itemBuilder: (context, index) {
-                            return BuddyBookingComponent(buddyBooking: localBuddyList[index]);
+                            return BuddyBookingComponent(buddyBooking: filteredLocalBuddyList[index]);
                           }
                         )
                       )

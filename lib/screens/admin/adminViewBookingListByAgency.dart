@@ -25,6 +25,8 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
   
   List<TravelAgentTourBookingList> tourBookingList = [];
   List<TravelAgentCarRentalBookingList> carRentalBookingList = [];
+  List<TravelAgentTourBookingList> filteredTourBookingList = [];
+  List<TravelAgentCarRentalBookingList> filteredCarRentalBookingList = [];
   bool isFetchingTour = false;
   bool isFetchingCarRental = false;
 
@@ -71,6 +73,7 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
         isFetchingTour = false;
         // Update the list with fetched data (assuming you have a list for display)
         tourBookingList = tourBookingLists;
+        filteredTourBookingList = tourBookingList;
       });
 
     } catch (e) {
@@ -127,6 +130,7 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
         isFetchingCarRental = false;
         // Update the list with fetched data (assuming you have a list for display)
         carRentalBookingList = carRentalBookingLists;
+        filteredCarRentalBookingList = carRentalBookingList;
       });
 
     } catch (e) {
@@ -135,6 +139,26 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
       });
       print('Error fetching tour booking list: $e');
     }
+  }
+
+  // Search function for tour bookings
+  void onTourSearch(String value) {
+    setState(() {
+      filteredTourBookingList = tourBookingList
+          .where((booking) =>
+              booking.tourName.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
+  }
+
+  // Search function for car rentals
+  void onCarRentalSearch(String value) {
+    setState(() {
+      filteredCarRentalBookingList = carRentalBookingList
+          .where((booking) =>
+              booking.carName.toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
   }
   
   @override
@@ -210,12 +234,47 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                         ),
                       ),
                       SizedBox(height: 10),
+                      Container(
+                        height: 60,
+                        child: TextField(
+                          onChanged: (value) => onTourSearch(value),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.red, width: 2),
+                            ),
+                            hintText: "Search tour name...",
+                            hintStyle: TextStyle(
+                              fontSize: defaultFontSize,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: tourBookingList.length,
+                          itemCount: filteredTourBookingList.length,
                           itemBuilder: (context, index) {
-                            return TourBookingComponent(tourBooking: tourBookingList[index]);
+                            return TourBookingComponent(tourBooking: filteredTourBookingList[index]);
                           }
                         )
                       )
@@ -241,6 +300,40 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                         ),
                       ),
                       SizedBox(height: 10),
+                      Container(
+                        height: 60,
+                        child: TextField(
+                          onChanged: (value) => onCarRentalSearch(value),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(color: Colors.red, width: 2),
+                            ),
+                            hintText: "Search car model...",
+                            hintStyle: TextStyle(
+                              fontSize: defaultFontSize,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start, // Aligns items at the top
@@ -268,9 +361,9 @@ class _AdminViewBookingListByAgentScreenState extends State<AdminViewBookingList
                       Expanded(
                         child: ListView.builder(
                           shrinkWrap: true,
-                          itemCount: carRentalBookingList.length,
+                          itemCount: filteredCarRentalBookingList.length,
                           itemBuilder: (context, index) {
-                            return CarRentalBookingComponent(carRentalBooking: carRentalBookingList[index]);
+                            return CarRentalBookingComponent(carRentalBooking: filteredCarRentalBookingList[index]);
                           }
                         )
                       )

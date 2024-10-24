@@ -131,7 +131,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     setState(() {
       filteredTourBookingList = tourBookingList
           .where((booking) =>
-              booking.tourID.toUpperCase().contains(value.toUpperCase()))
+              booking.tourName.toUpperCase().contains(value.toUpperCase()))
           .toList();
     });
   }
@@ -141,7 +141,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
     setState(() {
       filteredCarRentalBookingList = carRentalBookingList
           .where((booking) =>
-              booking.carRentalID.toUpperCase().contains(value.toUpperCase()))
+              booking.carName.toUpperCase().contains(value.toUpperCase()))
           .toList();
     });
   }
@@ -229,7 +229,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
                                     borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide(color: Colors.red, width: 2),
                                   ),
-                                  hintText: "Search tour id...",
+                                  hintText: "Search tour name...",
                                   hintStyle: TextStyle(
                                     fontSize: defaultFontSize,
                                     color: Colors.grey.shade500,
@@ -283,7 +283,7 @@ class _TravelAgentViewBookingListScreenState extends State<TravelAgentViewBookin
                                     borderRadius: BorderRadius.circular(10),
                                     borderSide: BorderSide(color: Colors.red, width: 2),
                                   ),
-                                  hintText: "Search car rental id...",
+                                  hintText: "Search car model...",
                                   hintStyle: TextStyle(
                                     fontSize: defaultFontSize,
                                     color: Colors.grey.shade500,
