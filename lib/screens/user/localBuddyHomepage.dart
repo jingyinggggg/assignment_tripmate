@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyBottomNavigationBar.dart';
@@ -30,10 +32,13 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
   int _currentIndex = 0;
   List<LocalBuddy> _localBuddyList = [];
   List<LocalBuddy> _foundedLocalBuddy = [];
+  Position? _currentPosition;
+  String _currentAddress = "Fetching location...";
 
   @override
   void initState() {
     super.initState();
+    _getCurrentLocation();
     fetchLocalBuddyData();
     _checkCurrentUserStatus();
   }
@@ -53,19 +58,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
         DocumentSnapshot userSnapshot = await userRef.doc(doc['userID']).get();
 
         if (userSnapshot.exists) {
-          // String fullAddress = doc['location'];
-
-          // String? country = '';
-          // String? area = '';
-
-          // if (fullAddress.isNotEmpty) {
-          //   var locationData = await _getLocationAreaAndCountry(fullAddress);
-          //   country = locationData['country'];
-          //   area = locationData['area'];
-          // }
-
-          // String locationArea = '$area, $country';
-
           _localBuddyList.add(LocalBuddy(
             localBuddyID: doc['localBuddyID'],
             localBuddyName: userSnapshot['name'],
@@ -141,6 +133,63 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     throw Exception('Failed to get coordinates for address: $response');
   }
 
+  // // Function to get current location
+  // Future<void> _getCurrentLocation() async {
+  //   bool serviceEnabled;
+  //   LocationPermission permission;
+
+  //   // Check if location services are enabled
+  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //   if (!serviceEnabled) {
+  //     // Location services are not enabled, don't proceed
+  //     return Future.error('Location services are disabled.');
+  //   }
+
+  //   // Check location permissions
+  //   permission = await Geolocator.checkPermission();
+  //   if (permission == LocationPermission.denied) {
+  //     permission = await Geolocator.requestPermission();
+  //     if (permission == LocationPermission.denied) {
+  //       // Permissions are denied, return error
+  //       return Future.error('Location permissions are denied.');
+  //     }
+  //   }
+
+  //   if (permission == LocationPermission.deniedForever) {
+  //     // Permissions are permanently denied, handle accordingly
+  //     return Future.error('Location permissions are permanently denied.');
+  //   }
+
+  //   // Get the current position
+  //   Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    
+  //   // Set the position
+  //   setState(() {
+  //     _currentPosition = position;
+  //   });
+
+  //   // Now convert the position to a human-readable address
+  //   _getAddressFromLatLng(position);
+  // }
+
+  // // Function to convert lat/lng to address
+  // Future<void> _getAddressFromLatLng(Position position) async {
+  //   try {
+  //     List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+  //     Placemark place = placemarks[0];
+
+  //     setState(() {
+  //       // Combine the address parts into a readable string
+  //       _currentAddress = "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+  //     });
+  //   } catch (e) {
+  //     print('Error occurred while trying to get the address: $e');
+  //     setState(() {
+  //       _currentAddress = "Address not found";
+  //     });
+  //   }
+  // }
+
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     const double radiusOfEarth = 6371;
     double latDistance = (lat2 - lat1) * (pi / 180.0);
@@ -155,6 +204,14 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
   }
 
   void onSearch(String searchQuery) async {
+    if (searchQuery.trim().isEmpty) {
+      // If the search query is empty, reset the list to the full list of local buddies
+      setState(() {
+        _foundedLocalBuddy = _localBuddyList; // Reset to full list
+      });
+      return;
+    }
+
     try {
       Map<String, double> userLocation = await getCoordinatesFromAddress(searchQuery);
       double userLat = userLocation['lat']!;
@@ -175,18 +232,28 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       }
 
       setState(() {
-        _foundedLocalBuddy = filteredBuddies;
+        _foundedLocalBuddy = filteredBuddies; // Update with filtered list
       });
     } catch (e) {
       print('Error during search: $e');
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
       final List<Widget> _screens = [
       Column(
         children: [
+          // Display current location
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Text(
+              _currentAddress,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+            ),
+          ),
+
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 20, right: 10),
             child: Container(
