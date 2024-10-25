@@ -38,7 +38,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    // _getCurrentLocation();
     fetchLocalBuddyData();
     _checkCurrentUserStatus();
   }
