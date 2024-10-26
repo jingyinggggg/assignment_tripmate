@@ -356,18 +356,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget remember_me() {
-    return Checkbox(
-      value: rememberMe,
-      onChanged: (bool? value) {
-        setState(() {
-          rememberMe = value!;
-        });
-      },
-      activeColor: Color(0xFF467BA1), // Color when the checkbox is checked
-      side: BorderSide(color: Color(0xFF467BA1), width: 2.0), // Border color and width
-    );
-  }
+  // Widget remember_me() {
+  //   return Checkbox(
+  //     value: rememberMe,
+  //     onChanged: (bool? value) {
+  //       setState(() {
+  //         rememberMe = value!;
+  //       });
+  //     },
+  //     activeColor: Color(0xFF467BA1), // Color when the checkbox is checked
+  //     side: BorderSide(color: Color(0xFF467BA1), width: 2.0), // Border color and width
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -430,20 +430,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            remember_me(),
-                            const Text(
-                              "Remember me",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontFamily: 'Inika',
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black87,
-                              ),
-                            )
-                          ],
-                        ),
+                        // Row(
+                        //   children: [
+                        //     remember_me(),
+                        //     const Text(
+                        //       "Remember me",
+                        //       style: TextStyle(
+                        //         fontSize: 12,
+                        //         fontFamily: 'Inika',
+                        //         fontWeight: FontWeight.w900,
+                        //         color: Colors.black87,
+                        //       ),
+                        //     )
+                        //   ],
+                        // ),
                         TextButton(
                           onPressed: () {
                             // Handle button press to navigate to the next page

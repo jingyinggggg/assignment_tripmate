@@ -138,13 +138,21 @@ class _createBookingScreenState extends State<createBookingScreen> {
     }
 
     setState(() {
-      _maintenanceDates = maintenanceDates;
+      _maintenanceDates = maintenanceDates; // Set the fetched dates
+      _normalizeMaintenanceDates(); // Normalize the dates to remove duplicates
     });
 
-    // Checking the contents
+    // Optional: Check the contents of _maintenanceDates
     for (var date in _maintenanceDates) {
-      print("Maintenance Date Fetched: \n ${date}"); // Outputs the dates in the format you expect
+      print("Maintenance Date Fetched: ${date}"); // Outputs the dates in the format you expect
     }
+  }
+
+  // This function normalizes the maintenance dates
+  void _normalizeMaintenanceDates() {
+    _maintenanceDates = _maintenanceDates
+        .toSet() // Convert to a Set to remove duplicates
+        .toList(); // Convert back to List
   }
 
   Future<void> _fetchUserDetails() async{
@@ -521,8 +529,10 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'bookingID': id,
         'userID': widget.userId,
         'carID': widget.carRentalID,
-        'bookingStartDate': _selectedStartDate,
-        'bookingEndDate': _selectedEndDate,
+        // 'bookingStartDate': _selectedStartDate,
+        // 'bookingEndDate': _selectedEndDate,
+        'bookingDate': selectedBookingDates,
+        'totalDays': CRDifferenceInDays,
         'totalPrice': carRentalTotalPrice,
         'isCheckCarCondition': 0,
         'isRefund': 0,
@@ -1552,6 +1562,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             ),
                             const SizedBox(height: 10),
                             _buildDatePickerTextFieldCell(
+                              context,
                               _rentStartDateController, 
                               'Start Date', 
                               'Select a date',
@@ -1566,6 +1577,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             ),
                             SizedBox(height: 15),
                             _buildDatePickerTextFieldCell(
+                              context,
                               _rentEndDateController, 
                               'End Date', 
                               'Select a date',
@@ -2734,19 +2746,38 @@ class _createBookingScreenState extends State<createBookingScreen> {
     bool isEndDate = false,
     bool startDateSelected = true,
   }) async {
-    // Find the next valid selectable date if initialDate is not selectable
-    initialDate = _findNextSelectableDate(initialDate);
+    DateTime minimumDate = DateTime.now().add(Duration(days: 3));
+
+    // print("Maintenance Dates: ${_maintenanceDates.map((d) => DateFormat('dd/MM/yyyy').format(d)).join(', ')}");
+
+    DateTime validInitialDate = _findNextSelectableDate(
+      initialDate.isBefore(minimumDate) ? minimumDate : initialDate,
+      (DateTime date) {
+        DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+        bool isSelectable = normalizedDate.isAfter(minimumDate) &&
+                            !_maintenanceDates.any((maintenanceDate) =>
+                                maintenanceDate.year == normalizedDate.year &&
+                                maintenanceDate.month == normalizedDate.month &&
+                                maintenanceDate.day == normalizedDate.day);
+        // print("Checking date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+        return isSelectable;
+      },
+    );
 
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: initialDate,
+      initialDate: validInitialDate,
       firstDate: firstDate,
       lastDate: lastDate ?? DateTime(2101),
       selectableDayPredicate: (DateTime date) {
-        // Normalize the date for comparison
         DateTime normalizedDate = DateTime(date.year, date.month, date.day);
-        // Disable maintenance dates
-        return !_maintenanceDates.contains(normalizedDate);
+        bool isSelectable = normalizedDate.isAfter(minimumDate) &&
+                            !_maintenanceDates.any((maintenanceDate) =>
+                                maintenanceDate.year == normalizedDate.year &&
+                                maintenanceDate.month == normalizedDate.month &&
+                                maintenanceDate.day == normalizedDate.day);
+        // print("Selectable Predicate - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+        return isSelectable;
       },
     );
 
@@ -2760,129 +2791,242 @@ class _createBookingScreenState extends State<createBookingScreen> {
   }
 
 
-  // Helper function to find the next selectable date
-  DateTime _findNextSelectableDate(DateTime date) {
-    // Normalize the date for comparison (removing time component)
-    DateTime normalizedDate = DateTime(date.year, date.month, date.day);
-    
-    // Check if the current date is selectable
-    while (_maintenanceDates.contains(normalizedDate)) {
-      print('Date $normalizedDate is not selectable, moving to next day.'); // Log the current date
-      normalizedDate = normalizedDate.add(Duration(days: 1)); // Move to the next day
-    }
+// Helper function to find the next selectable date using a predicate
+DateTime _findNextSelectableDate(DateTime date, bool Function(DateTime) predicate) {
+  DateTime normalizedDate = DateTime(date.year, date.month, date.day);
 
-    print('Next selectable date found: $normalizedDate'); // Log the next valid date
-    return normalizedDate; // Return the next valid selectable date
+  // Check if the current date meets the predicate conditions
+  while (!predicate(normalizedDate)) {
+    // print("Next Selectable Date Check - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)}");
+    normalizedDate = normalizedDate.add(Duration(days: 1)); // Move to the next day
   }
+
+  return normalizedDate;
+}
+
 
   Widget _buildDatePickerTextFieldCell(
-    TextEditingController controller,
-    String labelText,
-    String hintText, {
-    DateTime? firstDate,
-    void Function(DateTime)? onDateSelected,
-    bool isEndDate = false,
-    bool startDateSelected = true,
-  }) {
-    return GestureDetector(
-      onTap: () {},
-      child: TextField(
-        controller: controller,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 14,
-          color: Colors.black,
-        ),
-        readOnly: true,
-        decoration: InputDecoration(
-          hintText: hintText,
-          labelText: labelText,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: Color(0xFF467BA1),
-              width: 2.5,
-            ),
-          ),
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-          suffixIcon: IconButton(
-            icon: const Icon(
-              Icons.calendar_today_outlined,
-              color: Color(0xFF467BA1),
-              size: 20,
-            ),
-            onPressed: () {
-              DateTime initialDate = controller.text.isNotEmpty
-                  ? DateFormat('dd/MM/yyyy').parse(controller.text)
-                  : DateTime.now(); // Use the text if available
-
-              // Ensure the initial date for end date is at least the next day
-              DateTime firstEndDate = isEndDate
-                  ? _selectedStartDate?.add(Duration(days: 1)) ?? DateTime.now()
-                  : initialDate;
-
-              // Use the next selectable date for the initial end date
-              initialDate = _findNextSelectableDate(firstEndDate);
-
-              print("Initial Date: ${initialDate}");
-
-              _showDatePicker(
-                context: context,
-                initialDate: initialDate,
-                firstDate: firstDate ?? DateTime.now(),
-                controller: controller,
-                onDateSelected: (DateTime selectedDate) {
-                  if (isEndDate) {
-                    _selectedEndDate = selectedDate;
-
-                    // Calculate the rental price when the end date is selected
-                    if (_selectedStartDate != null) {
-                      _calculateRentalPrice();
-                    }
-                  } else {
-                    _selectedStartDate = selectedDate;
-
-                    // Clear the end date controller and reset the end date
-                    _rentEndDateController.text = '';
-                    _selectedEndDate = null;
-                  }
-
-                  // Call the onDateSelected callback if provided
-                  if (onDateSelected != null) {
-                    onDateSelected(selectedDate);
-                  }
-                },
-                isEndDate: isEndDate,
-                startDateSelected: _selectedStartDate != null,
-              );
-            },
-          ),
+  BuildContext context,
+  TextEditingController controller,
+  String labelText,
+  String hintText, {
+  DateTime? firstDate,
+  void Function(DateTime)? onDateSelected,
+  bool isEndDate = false,
+  bool startDateSelected = true,
+}) {
+  return TextField(
+    controller: controller,
+    style: TextStyle(
+      fontWeight: FontWeight.w800,
+      fontSize: 14,
+      color: Colors.black,
+    ),
+    readOnly: true,
+    decoration: InputDecoration(
+      hintText: hintText,
+      labelText: labelText,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Color(0xFF467BA1),
+          width: 2.5,
         ),
       ),
-    );
-  }
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Color(0xFF467BA1),
+          width: 2.5,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(
+          color: Color(0xFF467BA1),
+          width: 2.5,
+        ),
+      ),
+      floatingLabelBehavior: FloatingLabelBehavior.always,
+      labelStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
+      suffixIcon: IconButton(
+        icon: const Icon(
+          Icons.calendar_today_outlined,
+          color: Color(0xFF467BA1),
+          size: 20,
+        ),
+        onPressed: () {
+          DateTime initialDate = controller.text.isNotEmpty
+              ? DateFormat('dd/MM/yyyy').parse(controller.text)
+              : DateTime.now();
 
+          // Determine the minimum date based on whether it’s the end date or start date
+          DateTime minimumDate = isEndDate
+              ? _selectedStartDate?.add(Duration(days: 1)) ?? DateTime.now()
+              : initialDate;
+
+          // Use `_findNextSelectableDate` to get a valid initial date
+          DateTime validInitialDate = _findNextSelectableDate(
+            minimumDate,
+            (DateTime date) {
+              DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+              return normalizedDate.isAfter(DateTime.now().add(Duration(days: 3))) &&
+                     !_maintenanceDates.contains(normalizedDate);
+            },
+          );
+
+          _showDatePicker(
+            context: context,
+            initialDate: validInitialDate,
+            firstDate: firstDate ?? DateTime.now(),
+            controller: controller,
+            onDateSelected: (DateTime selectedDate) {
+              if (isEndDate) {
+                _selectedEndDate = selectedDate;
+
+                // Calculate rental price when the end date is selected
+                if (_selectedStartDate != null) {
+                  _calculateRentalPrice();
+                }
+              } else {
+                _selectedStartDate = selectedDate;
+
+                // Clear end date controller and reset end date
+                _rentEndDateController.text = '';
+                _selectedEndDate = null;
+              }
+
+              // Trigger the onDateSelected callback if provided
+              if (onDateSelected != null) {
+                onDateSelected(selectedDate);
+              }
+            },
+            isEndDate: isEndDate,
+            startDateSelected: _selectedStartDate != null,
+          );
+        },
+      ),
+    ),
+  );
+}
+
+
+
+
+
+  // Widget _buildDatePickerTextFieldCell(
+  //   TextEditingController controller,
+  //   String labelText,
+  //   String hintText, {
+  //   DateTime? firstDate,
+  //   void Function(DateTime)? onDateSelected,
+  //   bool isEndDate = false,
+  //   bool startDateSelected = true,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: () {},
+  //     child: TextField(
+  //       controller: controller,
+  //       style: TextStyle(
+  //         fontWeight: FontWeight.w800,
+  //         fontSize: 14,
+  //         color: Colors.black,
+  //       ),
+  //       readOnly: true,
+  //       decoration: InputDecoration(
+  //         hintText: hintText,
+  //         labelText: labelText,
+  //         filled: true,
+  //         fillColor: Colors.white,
+  //         border: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         focusedBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         enabledBorder: OutlineInputBorder(
+  //           borderRadius: BorderRadius.circular(10),
+  //           borderSide: const BorderSide(
+  //             color: Color(0xFF467BA1),
+  //             width: 2.5,
+  //           ),
+  //         ),
+  //         floatingLabelBehavior: FloatingLabelBehavior.always,
+  //         labelStyle: const TextStyle(
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.bold,
+  //           color: Colors.black87,
+  //         ),
+  //         suffixIcon: IconButton(
+  //           icon: const Icon(
+  //             Icons.calendar_today_outlined,
+  //             color: Color(0xFF467BA1),
+  //             size: 20,
+  //           ),
+  //           onPressed: () {
+  //             DateTime initialDate = controller.text.isNotEmpty
+  //                 ? DateFormat('dd/MM/yyyy').parse(controller.text)
+  //                 : DateTime.now(); // Use the text if available
+
+  //             // Ensure the initial date for end date is at least the next day
+  //             DateTime firstEndDate = isEndDate
+  //                 ? _selectedStartDate?.add(Duration(days: 1)) ?? DateTime.now()
+  //                 : initialDate;
+
+  //             // Use the next selectable date for the initial end date
+  //             initialDate = _findNextSelectableDate(firstEndDate);
+
+  //             print("Initial Date: ${initialDate}");
+
+  //             _showDatePicker(
+  //               context: context,
+  //               initialDate: initialDate,
+  //               firstDate: firstDate ?? DateTime.now(),
+  //               controller: controller,
+  //               onDateSelected: (DateTime selectedDate) {
+  //                 if (isEndDate) {
+  //                   _selectedEndDate = selectedDate;
+
+  //                   // Calculate the rental price when the end date is selected
+  //                   if (_selectedStartDate != null) {
+  //                     _calculateRentalPrice();
+  //                   }
+  //                 } else {
+  //                   _selectedStartDate = selectedDate;
+
+  //                   // Clear the end date controller and reset the end date
+  //                   _rentEndDateController.text = '';
+  //                   _selectedEndDate = null;
+  //                 }
+
+  //                 // Call the onDateSelected callback if provided
+  //                 if (onDateSelected != null) {
+  //                   onDateSelected(selectedDate);
+  //                 }
+  //               },
+  //               isEndDate: isEndDate,
+  //               startDateSelected: _selectedStartDate != null,
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   void _calculateRentalPrice() {
     if (_selectedStartDate != null && _selectedEndDate != null) {
@@ -2890,21 +3034,18 @@ class _createBookingScreenState extends State<createBookingScreen> {
       int totalDays = _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
 
       // Create a list of all dates in the range
-      List<DateTime> dateRange = List.generate(totalDays, 
-        (index) => _selectedStartDate!.add(Duration(days: index)));
-      
-      // Clear the bookingDates array before adding new dates
-      selectedBookingDates.clear();
+      List<DateTime> dateRange = List.generate(
+        totalDays,
+        (index) => _selectedStartDate!.add(Duration(days: index)),
+      );
+
 
       // Add valid dates to the bookingDates array, excluding maintenance dates
+      List<DateTime> validBookingDates = [];
       for (DateTime date in dateRange) {
         if (!_maintenanceDates.contains(date)) {
-          selectedBookingDates.add(date);
+          validBookingDates.add(date);
         }
-      }
-
-      for(var date in selectedBookingDates){
-        print(date);
       }
 
       // Count maintenance dates within the selected range
@@ -2914,15 +3055,59 @@ class _createBookingScreenState extends State<createBookingScreen> {
       int effectiveRentalDays = totalDays - maintenanceDays;
 
       setState(() {
-          CRDifferenceInDays = effectiveRentalDays;
-          double pricePerDay = _carRental!.price!.toDouble(); 
-          rentPrice = effectiveRentalDays * pricePerDay;
-          carRentalTotalPrice = rentPrice! + carRentalDeposit;
+        CRDifferenceInDays = effectiveRentalDays;
+        double pricePerDay = _carRental!.price!.toDouble();
+        rentPrice = effectiveRentalDays * pricePerDay;
+        carRentalTotalPrice = rentPrice! + carRentalDeposit;
+        selectedBookingDates = validBookingDates;
       });
+
+      print("Selected booking dates: $selectedBookingDates");
     } else {
       print('Please select both start and end dates.');
     }
   }
+
+
+  // void _calculateRentalPrice() {
+  //   if (_selectedStartDate != null && _selectedEndDate != null) {
+  //     // Calculate the total number of days between start and end dates
+  //     int totalDays = _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
+
+  //     // Create a list of all dates in the range
+  //     List<DateTime> dateRange = List.generate(totalDays, 
+  //       (index) => _selectedStartDate!.add(Duration(days: index)));
+      
+  //     // Clear the bookingDates array before adding new dates
+  //     selectedBookingDates.clear();
+
+  //     // Add valid dates to the bookingDates array, excluding maintenance dates
+  //     for (DateTime date in dateRange) {
+  //       if (!_maintenanceDates.contains(date)) {
+  //         selectedBookingDates.add(date);
+  //       }
+  //     }
+
+  //     for(var date in selectedBookingDates){
+  //       print("Selected booking date: $date");
+  //     }
+
+  //     // Count maintenance dates within the selected range
+  //     int maintenanceDays = dateRange.where((date) => _maintenanceDates.contains(date)).length;
+
+  //     // Calculate the effective rental days
+  //     int effectiveRentalDays = totalDays - maintenanceDays;
+
+  //     setState(() {
+  //         CRDifferenceInDays = effectiveRentalDays;
+  //         double pricePerDay = _carRental!.price!.toDouble(); 
+  //         rentPrice = effectiveRentalDays * pricePerDay;
+  //         carRentalTotalPrice = rentPrice! + carRentalDeposit;
+  //     });
+  //   } else {
+  //     print('Please select both start and end dates.');
+  //   }
+  // }
 
 
   void _updateReturnDatePicker(DateTime firstDate) {
