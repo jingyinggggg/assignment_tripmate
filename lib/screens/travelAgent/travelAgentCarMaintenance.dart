@@ -15,18 +15,94 @@ class TravelAgentCarMaintenanceScreen extends StatefulWidget {
 }
 
 class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintenanceScreen> {
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate; // Keep this as null initially
   String? _selectedCarStatus;
   String? carModel;
   bool isUpdating = false;
   bool _isDataInitialized = false;
+  bool isFetchingCarMaintenance = false;
   List<String> carStatus = ['Reserved', 'Maintenance'];
+  List<Map<String, dynamic>> _carMaintenanceData = [];
+  List<DateTime> _maintenanceDates = [];
+  List<DateTime> _carRentalBookingDates = [];
 
   @override
   void initState() {
     super.initState();
     _fetchCarData();
+    _fetchCarMaintenanceData();
+    _fetchMaintenanceDates();
+    _fetchCarRentalBookingDates();
+  }
+
+  Future<void> _fetchMaintenanceDates() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('car_maintenance')
+        .where('carID', isEqualTo: widget.carId)
+        .get();
+
+    List<DateTime> maintenanceDates = [];
+
+    for (var doc in snapshot.docs) {
+      DateTime startDate = (doc['carMaintenanceStartDate'] as Timestamp).toDate();
+      DateTime endDate = (doc['carMaintenanceEndDate'] as Timestamp).toDate();
+
+      // Generate all dates in the range and add them to the list
+      for (DateTime date = startDate; 
+          !date.isAfter(endDate);
+          date = date.add(Duration(days: 1))) {
+        maintenanceDates.add(date);
+      }
+    }
+
+    setState(() {
+      _maintenanceDates = maintenanceDates; // Set the fetched dates
+      _normalizeDates(_maintenanceDates); // Normalize the dates to remove duplicates
+    });
+
+    // Optional: Check the contents of _maintenanceDates
+    for (var date in _maintenanceDates) {
+      print("Maintenance Date Fetched: ${date}"); // Outputs the dates in the format you expect
+    }
+  }
+
+  Future<void> _fetchCarRentalBookingDates() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('carRentalBooking')
+        .where('carID', isEqualTo: widget.carId)
+        .get();
+
+    List<DateTime> carRentalBookingDates = [];
+
+    for (var doc in snapshot.docs) {
+      // Fetch the array of booking dates from Firebase
+      List<dynamic> bookingDatesArray = doc['bookingDate'];
+      
+      // Convert each Timestamp in the array to DateTime and add to the list
+      for (var date in bookingDatesArray) {
+        carRentalBookingDates.add((date as Timestamp).toDate());
+      }
+    }
+
+    setState(() {
+      _carRentalBookingDates = carRentalBookingDates; // Set the fetched dates
+      _normalizeDates(_carRentalBookingDates); // Normalize dates if needed
+    });
+
+    // Optional: Print the fetched booking dates
+    for (var date in _carRentalBookingDates) {
+      print("Car Rental Booking Date Fetched: ${date}");
+    }
+  }
+
+  // This function normalizes the maintenance dates
+  void _normalizeDates(List<DateTime> list) {
+    list = list
+        .toSet() // Convert to a Set to remove duplicates
+        .toList(); // Convert back to List
   }
 
   Future<void> _fetchCarData() async {
@@ -59,6 +135,62 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
       print("Error fetching car details: $e");
     }
   }
+
+  Future<void> _fetchCarMaintenanceData() async {
+    setState(() {
+      isFetchingCarMaintenance = true;
+    });
+
+    try {
+      // Reference to the car maintenance collection, filtered by the car ID
+      CollectionReference carMainRef = FirebaseFirestore.instance.collection('car_maintenance');
+      
+      // Fetch maintenance records for the current car, ordered by document ID
+      QuerySnapshot carMainSnapshot = await carMainRef
+          .where('carID', isEqualTo: widget.carId)
+          .orderBy(FieldPath.documentId, descending: true) // Order by document ID
+          .get();
+
+      // Date formatter for the desired format
+      final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
+
+      for(var data in carMainSnapshot.docs){
+        // Convert Firestore Timestamps to DateTime
+        DateTime startDate = (data['carMaintenanceStartDate'] as Timestamp).toDate();
+        DateTime endDate = (data['carMaintenanceEndDate'] as Timestamp).toDate();
+
+        // Format the dates
+        String formattedStartDate = dateFormat.format(startDate);
+        String formattedEndDate = dateFormat.format(endDate);
+
+        // String startDate = data['carMaintenanceStartDate'];
+        // String endDate = data['carMaintenanceEndDate'];
+
+        setState(() {
+          _carMaintenanceData.add({
+            'startDate': formattedStartDate,
+            'endDate': formattedEndDate
+          });
+        });
+      }
+
+      setState(() {
+        isFetchingCarMaintenance = false;
+      });
+
+    } catch (e) {
+      setState(() {
+        isFetchingCarMaintenance = false;
+      });
+      print("Error fetching car maintenance data: $e");
+
+      // Show error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching car maintenance data')),
+      );
+    }
+  }
+
 
   // Method to show date picker
   Future<void> _selectStartDate(BuildContext context) async {
@@ -258,9 +390,38 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
                         ),
                       ),
                       SizedBox(height: 10),
-                      maintenanceDate('Select Maintenance Start Date', 'Start Date', _selectedStartDate, _selectStartDate),
+                      _buildDatePickerTextFieldCell(
+                        context,
+                        _startDateController, 
+                        'Start Date', 
+                        'Select Maintenance Start Date',
+                        onDateSelected: (DateTime selectedDate){
+                          setState(() {
+                            _selectedStartDate = selectedDate;
+                          });
+
+                          DateTime firstEndDate = selectedDate.add(Duration(days:1));
+                          _updateEndDatePicker(firstEndDate);
+                        }
+                      ),
                       SizedBox(height: 20),
-                      maintenanceDate('Select Maintenance End Date', 'End Date', _selectedEndDate, _selectEndDate),
+                      _buildDatePickerTextFieldCell(
+                        context,
+                        _endDateController, 
+                        'End Date', 
+                        'Select Maintenance End Date',
+                        firstDate: _getFirstDate(),
+                        isEndDate: true,
+                        startDateSelected: _startDateController.text.isNotEmpty,
+                        onDateSelected: (DateTime selectedDate){
+                          setState(() {
+                            _selectedEndDate = selectedDate;
+                          });
+                        }
+                      ),
+                      // maintenanceDate('Select Maintenance Start Date', 'Start Date', _selectedStartDate, _selectStartDate),
+                      // SizedBox(height: 20),
+                      // maintenanceDate('Select Maintenance End Date', 'End Date', _selectedEndDate, _selectEndDate),
                       SizedBox(height: 20),
                       buildDropDownList(
                         carStatus, 
@@ -295,6 +456,72 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
                             ),
                           ),
                         ],
+                      ),
+
+                      SizedBox(height: 20),
+                      Text(
+                        "Car Maintenance History",
+                        style: TextStyle(
+                          fontSize: defaultLabelFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black
+                        ),
+                      ),
+                      SizedBox(height: 10,),
+                      SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(color: Colors.white),
+                              child: Table(
+                                border: TableBorder.all(color: primaryColor, width: 1.5),
+                                columnWidths: {
+                                  0: FixedColumnWidth(40), // Width for the "No" column
+                                  1: FixedColumnWidth(150), // Width for the "Start Date" column
+                                  2: FixedColumnWidth(150), // Width for the "End Date" column
+                                },
+                                children: [
+                                  TableRow(
+                                    decoration: BoxDecoration(color: Colors.grey.shade300),
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text('No', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold),),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text('Start Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text('End Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                  for (int index = 0; index < _carMaintenanceData.length; index++)
+                                    TableRow(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text('${index + 1}', textAlign: TextAlign.center),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(_carMaintenanceData[index]['startDate'] ?? '', textAlign: TextAlign.center),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(_carMaintenanceData[index]['endDate'] ?? '', textAlign: TextAlign.center),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -434,6 +661,199 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
         fontWeight: FontWeight.bold,
         fontSize: defaultFontSize,
         color: Colors.black,
+      ),
+    );
+  }
+
+    void _updateEndDatePicker(DateTime firstDate) {
+    setState(() {
+      // Reset the return date controller
+      _endDateController.clear();
+      _endDateController.text = ""; // Resetting the text field
+    });
+  }
+
+  DateTime _getFirstDate() {
+    // Return the first available return date based on the selected depart date or a default date
+    return _selectedStartDate?.add(const Duration(days: 0)) ?? DateTime.now().add(const Duration(days: 0));
+  }
+
+  Future<void> _showDatePicker({
+    required BuildContext context,
+    required DateTime initialDate,
+    required DateTime firstDate,
+    required TextEditingController controller,
+    DateTime? lastDate,
+    void Function(DateTime)? onDateSelected,
+    bool isEndDate = false,
+    bool startDateSelected = true,
+  }) async {
+    DateTime minimumDate = DateTime.now().add(Duration(days: 3));
+
+    // print("Maintenance Dates: ${_maintenanceDates.map((d) => DateFormat('dd/MM/yyyy').format(d)).join(', ')}");
+
+    DateTime validInitialDate = _findNextSelectableDate(
+      initialDate.isBefore(minimumDate) ? minimumDate : initialDate,
+      (DateTime date) {
+        DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+        bool isSelectable = normalizedDate.isAfter(minimumDate) &&
+                            !_maintenanceDates.any((maintenanceDate) =>
+                                maintenanceDate.year == normalizedDate.year &&
+                                maintenanceDate.month == normalizedDate.month &&
+                                maintenanceDate.day == normalizedDate.day) &&
+                            !_carRentalBookingDates.any((bookingDate) =>
+                                bookingDate.year == normalizedDate.year &&
+                                bookingDate.month == normalizedDate.month &&
+                                bookingDate.day == normalizedDate.day);
+        print("Checking date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+        return isSelectable;
+      },
+    );
+
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: validInitialDate,
+      firstDate: firstDate,
+      lastDate: lastDate ?? DateTime(2101),
+      selectableDayPredicate: (DateTime date) {
+        DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+        bool isSelectable = normalizedDate.isAfter(minimumDate) &&
+                            !_maintenanceDates.any((maintenanceDate) =>
+                                maintenanceDate.year == normalizedDate.year &&
+                                maintenanceDate.month == normalizedDate.month &&
+                                maintenanceDate.day == normalizedDate.day) &&
+                            !_carRentalBookingDates.any((bookingDate) =>
+                                bookingDate.year == normalizedDate.year &&
+                                bookingDate.month == normalizedDate.month &&
+                                bookingDate.day == normalizedDate.day);
+        print("Selectable Predicate - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+        return isSelectable;
+      },
+    );
+
+    if (pickedDate != null) {
+      String formattedDate = DateFormat('dd/MM/yyyy').format(pickedDate);
+      controller.text = formattedDate;
+      if (onDateSelected != null) {
+        onDateSelected(pickedDate);
+      }
+    }
+  }
+
+  // Helper function to find the next selectable date using a predicate
+  DateTime _findNextSelectableDate(DateTime date, bool Function(DateTime) predicate) {
+    DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+
+    // Check if the current date meets the predicate conditions
+    while (!predicate(normalizedDate)) {
+      // print("Next Selectable Date Check - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)}");
+      normalizedDate = normalizedDate.add(Duration(days: 1)); // Move to the next day
+    }
+
+    return normalizedDate;
+  }
+
+
+  Widget _buildDatePickerTextFieldCell(
+    BuildContext context,
+    TextEditingController controller,
+    String labelText,
+    String hintText, {
+    DateTime? firstDate,
+    void Function(DateTime)? onDateSelected,
+    bool isEndDate = false,
+    bool startDateSelected = true,
+  }) {
+    return TextField(
+      controller: controller,
+      style: TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 14,
+        color: Colors.black,
+      ),
+      readOnly: true,
+      decoration: InputDecoration(
+        hintText: hintText,
+        labelText: labelText,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(
+            color: Color(0xFF467BA1),
+            width: 2.5,
+          ),
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+        suffixIcon: IconButton(
+          icon: const Icon(
+            Icons.calendar_today_outlined,
+            color: Color(0xFF467BA1),
+            size: 20,
+          ),
+          onPressed: () {
+            DateTime initialDate = controller.text.isNotEmpty
+                ? DateFormat('dd/MM/yyyy').parse(controller.text)
+                : DateTime.now();
+
+            // Determine the minimum date based on whether it’s the end date or start date
+            DateTime minimumDate = isEndDate
+                ? _selectedStartDate?.add(Duration(days: 1)) ?? DateTime.now()
+                : initialDate;
+
+            // Use `_findNextSelectableDate` to get a valid initial date
+            DateTime validInitialDate = _findNextSelectableDate(
+              minimumDate,
+              (DateTime date) {
+                DateTime normalizedDate = DateTime(date.year, date.month, date.day);
+                return normalizedDate.isAfter(DateTime.now().add(Duration(days: 3))) &&
+                      !_maintenanceDates.contains(normalizedDate) && !_carRentalBookingDates.contains(normalizedDate);
+              },
+            );
+
+            _showDatePicker(
+              context: context,
+              initialDate: validInitialDate,
+              firstDate: firstDate ?? DateTime.now(),
+              controller: controller,
+              onDateSelected: (DateTime selectedDate) {
+                if (isEndDate) {
+                  _selectedEndDate = selectedDate;
+
+                  // Clear end date controller and reset end date
+                  _endDateController.text = '';
+                  _selectedEndDate = null;
+                }
+
+                // Trigger the onDateSelected callback if provided
+                if (onDateSelected != null) {
+                  onDateSelected(selectedDate);
+                }
+              },
+              isEndDate: isEndDate,
+              startDateSelected: _selectedStartDate != null,
+            );
+          },
+        ),
       ),
     );
   }
