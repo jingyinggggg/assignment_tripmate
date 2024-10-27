@@ -354,50 +354,43 @@ class tourBooking{
   }
 }
 
-class carRentalBooking{
+class carRentalBooking {
   final String carRentalBookingID;
   final String carID;
   late String carName;
   late String carImage;
-  final String bookingDate;
+  final List<DateTime> bookingDate;
   final double totalPrice;
   final int bookingStatus;
   final int isRefund;
   final int? isDepositRefund;
 
   carRentalBooking({
-    required this.carRentalBookingID, 
+    required this.carRentalBookingID,
     required this.carID,
-    required this.bookingDate, 
+    required this.bookingDate,
     required this.totalPrice,
     required this.bookingStatus,
     required this.isRefund,
     required this.isDepositRefund,
   });
 
-
   factory carRentalBooking.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    // Convert bookingStartDate and bookingEndDate to DateTime objects
-    DateTime bookingStartDate = data['bookingStartDate'].toDate();
-    DateTime bookingEndDate = data['bookingEndDate'].toDate();
-
-    // Format the dates as dd/MM/yyyy
-    String formattedStartDate = DateFormat('dd/MM/yyyy').format(bookingStartDate);
-    String formattedEndDate = DateFormat('dd/MM/yyyy').format(bookingEndDate);
-
-    // Combine the start and end dates into a single string
-    String bookingDateRange = "$formattedStartDate - $formattedEndDate";
+    // Convert the list of timestamps to DateTime objects
+    List<DateTime> bookingDates = (data['bookingDate'] as List<dynamic>)
+        .map((date) => (date as Timestamp).toDate())
+        .toList();
 
     carRentalBooking carRentalBookings = carRentalBooking(
       carRentalBookingID: doc.id,
       carID: data['carID'],
       totalPrice: data['totalPrice'],
-      bookingDate: bookingDateRange, // Use the formatted date range here
+      bookingDate: bookingDates, // Use the converted DateTime list here
       bookingStatus: data['bookingStatus'],
       isRefund: data['isRefund'],
-      isDepositRefund: data['isRefundDeposit']
+      isDepositRefund: data['isRefundDeposit'],
     );
 
     carRentalBookings.carName = data['carModel'] ?? '';
@@ -413,7 +406,7 @@ class localBuddyBooking{
   late String localBuddyName;
   late String localBuddyImage;
   late String locationArea;
-  final String bookingDate;
+  final List<DateTime> bookingDate;
   final double totalPrice;
   final int bookingStatus;
   final int isRefund;
@@ -430,30 +423,16 @@ class localBuddyBooking{
   factory localBuddyBooking.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    // Check if bookingStartDate and bookingEndDate are not null before calling toDate()
-    DateTime? bookingStartDate = data['bookingStartDate'] != null
-        ? (data['bookingStartDate'] as Timestamp).toDate()
-        : null;
-    DateTime? bookingEndDate = data['bookingEndDate'] != null
-        ? (data['bookingEndDate'] as Timestamp).toDate()
-        : null;
-
-    // Format the dates as dd/MM/yyyy, or set default values if null
-    String formattedStartDate = bookingStartDate != null
-        ? DateFormat('dd/MM/yyyy').format(bookingStartDate)
-        : 'N/A';  // Default to 'N/A' or any placeholder value if null
-    String formattedEndDate = bookingEndDate != null
-        ? DateFormat('dd/MM/yyyy').format(bookingEndDate)
-        : 'N/A';  // Default to 'N/A' or any placeholder value if null
-
-    // Combine the start and end dates into a single string
-    String bookingDateRange = "$formattedStartDate - $formattedEndDate";
+    // Convert the list of timestamps to DateTime objects
+    List<DateTime> bookingDates = (data['bookingDate'] as List<dynamic>)
+        .map((date) => (date as Timestamp).toDate())
+        .toList();
 
     localBuddyBooking localBuddyBookings = localBuddyBooking(
       localBuddyBookingID: doc.id,
       localBuddyID: data['localBuddyID'],
       totalPrice: data['totalPrice'],
-      bookingDate: bookingDateRange,  // Use the formatted date range here
+      bookingDate: bookingDates,  // Use the formatted date range here
       bookingStatus: data['bookingStatus'],
       isRefund: data['isRefund']
     );

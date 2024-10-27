@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
@@ -258,6 +259,25 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
             Navigator.pop(context);
           },
         ),
+        actions: [
+          Container(
+            width: 45,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: custData!['id']))
+                );
+              },
+              icon: ImageIcon(
+                AssetImage('images/chat.png'),
+                color: Colors.white,
+                size: 21,
+              ),
+              tooltip: "Chat with customer",
+            )
+          ),
+        ],
       ),
       body: isFetchingCustomerDetails || isFetchingCarBooking || isFetchingTourBooking
           ? Center(child: CircularProgressIndicator(color: primaryColor))
@@ -935,7 +955,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "Date: ${data['travelDate'] ?? "N/A"}",
+                        "Booking Date: ${data['travelDate'] ?? "N/A"}",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -1009,18 +1029,10 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
   }
 
   Widget carComponent({required Map<String, dynamic> data, required Map<String, dynamic> carData}) {
-    // Declare formattedDateRange with a default value
-    String formattedDateRange = "Date unavailable";
 
-    if (data['bookingStartDate'] != null && data['bookingEndDate'] != null) {
-      DateTime startDate = data['bookingStartDate'].toDate(); // Converts Firestore Timestamp to DateTime
-      DateTime endDate = data['bookingEndDate'].toDate();
-
-      // Format the dates and assign to formattedDateRange
-      formattedDateRange = '${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}';
-    } else {
-      print("Booking start date or end date is missing.");
-    }
+    List<DateTime> bookingDates = (data['bookingDate'] as List<dynamic>)
+      .map((date) => (date as Timestamp).toDate())
+      .toList();
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.0),
@@ -1117,14 +1129,18 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
-                      Text(
-                        "Date: $formattedDateRange", // Use the formattedDateRange here
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                      Container(
+                        width: 240, // Set a desired width
+                        child: Text(
+                          "Booking Date: ${bookingDates.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                          maxLines: 1, // Optional: Limits to a single line
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
                     ],

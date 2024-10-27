@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -100,9 +101,16 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
       if(carSnapshot.exists){
         Map<String, dynamic>? data = carSnapshot.data() as  Map<String, dynamic>?;
-        setState(() {
-          carBookingData = data;
-        });
+        // Convert booking dates from Timestamp to DateTime
+        if (data != null && data['bookingDate'] != null) {
+          List<Timestamp> timestamps = List<Timestamp>.from(data['bookingDate']);
+          List<DateTime> bookingDates = timestamps.map((timestamp) => timestamp.toDate()).toList();
+
+          setState(() {
+            carBookingData = data;
+            carBookingData!['bookingDate'] = bookingDates; // Update bookingDate with DateTime list
+          });
+        }
       }
     } catch(e){
       print('Error fetch car booking data: $e');
@@ -123,9 +131,18 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
       if(localBuddySnapshot.exists){
         Map<String, dynamic>? data = localBuddySnapshot.data() as  Map<String, dynamic>?;
-        setState(() {
-          localBuddyBookingData = data;
-        });
+        if (data != null && data['bookingDate'] != null) {
+          List<Timestamp> timestamps = List<Timestamp>.from(data['bookingDate']);
+          List<DateTime> bookingDates = timestamps.map((timestamp) => timestamp.toDate()).toList();
+
+          setState(() {
+            localBuddyBookingData = data;
+            localBuddyBookingData!['bookingDate'] = bookingDates; // Update bookingDate with DateTime list
+          });
+        }
+        // setState(() {
+        //   localBuddyBookingData = data;
+        // });
       }
     } catch(e){
       print('Error fetch local buddy booking data: $e');
@@ -263,6 +280,25 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          Container(
+            width: 45,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userID, receiverUserId: widget.localBuddyID != null ? localBuddyData!['userID'] : widget.carRentalID != null ? carData!['agencyID'] : tourData!['agentID']))
+                );
+              },
+              icon: ImageIcon(
+                AssetImage('images/chat.png'),
+                color: Colors.white,
+                size: 21,
+              ),
+              tooltip: widget.localBuddyID != null ? "Chat with local buddy" : "Chat with agent",
+            )
+          ),
+        ],
       ),
       body: isFetchingCustomerDetails || isFetchingCarBooking || isFetchingTourBooking || isFetchingLocalBuddyBooking
           ? Center(child: CircularProgressIndicator(color: primaryColor))
@@ -443,6 +479,102 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         children: [
                           carComponent(data: carBookingData!, carData: carData!),
                           SizedBox(height: 10),
+                          Container(
+                            alignment: Alignment.topCenter,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(color: Colors.black, width: 1.5),
+                                bottom: BorderSide(color: Colors.black, width: 1.5),
+                              ),
+                            ),
+                            child: Text(
+                              'Car Details',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: primaryColor, width: 1.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Padding( // Adding some padding to avoid text touching the container's border
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start, // Align text to the left
+                                children: [
+                                  Text(
+                                    'Pick Up Location',
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      ),
+                                  ),
+                                  SizedBox(height: 5), // Adding some space between the title and the content
+                                  Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 20,
+                                      color: primaryColor,
+                                    ),
+                                    SizedBox(width: 5),
+                                    Flexible( // Wraps the text, allowing it to wrap properly within the row and container
+                                      child: Text(
+                                        carData!['pickUpLocation'] ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                        ),
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible, 
+                                        textAlign: TextAlign.justify,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  'Drop Off Location',
+                                  style: TextStyle(
+                                  fontSize: defaultFontSize,
+                                  fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 5), // Adding some space between the title and the content
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      size: 20,
+                                      color: primaryColor,
+                                    ),
+                                    SizedBox(width: 5),
+                                    Flexible( // Wraps the text, allowing it to wrap properly within the row and container
+                                      child: Text(
+                                        carData!['dropOffLocation'] ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                        ),
+                                        maxLines: null,
+                                        overflow: TextOverflow.visible, 
+                                        textAlign: TextAlign.justify,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] ,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
                           Container(
                             alignment: Alignment.topCenter,
                             decoration: BoxDecoration(
@@ -950,7 +1082,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "Date: ${data['travelDate'] ?? "N/A"}",
+                        "Booking Date: ${data['travelDate'] ?? "N/A"}",
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,
@@ -1034,18 +1166,6 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Widget carComponent({required Map<String, dynamic> data, required Map<String, dynamic> carData}) {
-    // Declare formattedDateRange with a default value
-    String formattedDateRange = "Date unavailable";
-
-    if (data['bookingStartDate'] != null && data['bookingEndDate'] != null) {
-      DateTime startDate = data['bookingStartDate'].toDate(); // Converts Firestore Timestamp to DateTime
-      DateTime endDate = data['bookingEndDate'].toDate();
-
-      // Format the dates and assign to formattedDateRange
-      formattedDateRange = '${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}';
-    } else {
-      print("Booking start date or end date is missing.");
-    }
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.0),
@@ -1145,14 +1265,18 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
-                      Text(
-                        "Date: $formattedDateRange", // Use the formattedDateRange here
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                      Container(
+                        width: 240,
+                        child: Text(
+                          "Booking Date: ${data['bookingDate'].map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.visible,
+                          maxLines: null,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5),
                     ],
@@ -1185,18 +1309,6 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Widget localBuddyComponent({required Map<String, dynamic> data, required Map<String, dynamic> localBuddyData}) {
-    // Declare formattedDateRange with a default value
-    String formattedDateRange = "Date unavailable";
-
-    if (data['bookingStartDate'] != null && data['bookingEndDate'] != null) {
-      DateTime startDate = data['bookingStartDate'].toDate(); // Converts Firestore Timestamp to DateTime
-      DateTime endDate = data['bookingEndDate'].toDate();
-
-      // Format the dates and assign to formattedDateRange
-      formattedDateRange = '${DateFormat('dd/MM/yyyy').format(startDate)} - ${DateFormat('dd/MM/yyyy').format(endDate)}';
-    } else {
-      print("Booking start date or end date is missing.");
-    }
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.0),
@@ -1297,7 +1409,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "Date: $formattedDateRange", // Use the formattedDateRange here
+                        "Booking Date: ${data['bookingDate'].map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}", // Use the formattedDateRange here
                         style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w500,

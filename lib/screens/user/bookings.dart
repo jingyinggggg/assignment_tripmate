@@ -87,6 +87,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot upTourBookingSnapshot = await upTourBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 0)
+          .orderBy('bookingCreateTime', descending: true)
           .get();
 
       // Initialize an empty list for upcoming tour bookings
@@ -135,6 +136,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot comTourBookingSnapshot = await comTourBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 1)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       // Initialize an empty list for completed tour bookings
@@ -184,6 +186,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot canTourBookingSnapshot = await canTourBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 2)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       // Initialize an empty list for completed tour bookings
@@ -251,6 +254,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot upCarRentalBookingSnapshot = await upCarRentalBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 0)
+          .orderBy('bookingCreateTime', descending: true)
           .get();
 
       // Initialize an empty list for upcoming car rental bookings
@@ -291,6 +295,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot comCarRentalBookingSnapshot = await comCarRentalBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 1)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       List<carRentalBooking> comCarRentalBookings = [];
@@ -328,6 +333,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot canCarRentalBookingSnapshot = await canCarRentalBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 2)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       List<carRentalBooking> canCarRentalBookings = [];
@@ -384,6 +390,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot upLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 0)
+          .orderBy('bookingCreateTime', descending: true)
           .get();
 
       List<String> localBuddyIDs = [];
@@ -426,6 +433,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot comLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 1)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       List<String> comlocalBuddyIDs = [];
@@ -468,6 +476,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       QuerySnapshot canLocalBuddyBookingSnapshot = await upLocalBuddyBookingRef
           .where('userID', isEqualTo: widget.userID)
           .where('bookingStatus', isEqualTo: 2)
+          // .orderBy('bookingCreateTime', descending: true)
           .get();
 
       List<String> canlocalBuddyIDs = [];
@@ -1314,7 +1323,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                       ),
                       SizedBox(height: 5),
                       Text(
-                        "Date: ${tourbookings.travelDate}", 
+                        "Booking Date: ${tourbookings.travelDate}", 
                         style: TextStyle(
                           color: Colors.black, 
                           fontWeight: FontWeight.w500, 
@@ -1729,15 +1738,28 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
                       SizedBox(height: 5),
-                      Text(
-                        "Date: ${carRentalbookings.bookingDate}", 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w500, 
-                          fontSize: 10,
+                      Container(
+                        width: 240, // Set a desired width
+                        child: Text(
+                          "Booking Date: ${carRentalbookings.bookingDate.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                          maxLines: 1, // Optional: Limits to a single line
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
+                      // Text(
+                      //   "Dates: ${carRentalbookings.bookingDate.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}",
+                      //   style: TextStyle(
+                      //     color: Colors.black,
+                      //     fontWeight: FontWeight.w500,
+                      //     fontSize: 10,
+                      //   ),
+                      //   overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                      // ),
                       status == 1
                       ? Column(
                           children: [
@@ -2108,14 +2130,18 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
                       SizedBox(height: 5),
-                      Text(
-                        "Date: ${localBuddyBookings.bookingDate}", 
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontWeight: FontWeight.w500, 
-                          fontSize: 10,
+                      Container(
+                        width: 240, // Set a desired width
+                        child: Text(
+                          "Booking Date: ${localBuddyBookings.bookingDate.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
+                          maxLines: 1, // Optional: Limits to a single line
                         ),
-                        overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                       ),
                       SizedBox(height: 5),
                       Text(
