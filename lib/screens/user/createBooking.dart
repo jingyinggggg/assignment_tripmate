@@ -1628,6 +1628,16 @@ class _createBookingScreenState extends State<createBookingScreen> {
                               ),
                               textAlign: TextAlign.left,
                             ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Note: Only valid booking date will be enabled in the calendar. The disable date is either car maintenance or has been reserved by other customers.',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: defaultFontSize,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.justify,
+                            ),
                             const SizedBox(height: 10),
                             _buildDatePickerTextFieldCell(
                               context,
@@ -2037,7 +2047,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                '***Please noted that only local buddy working day will be enabled in the calendar.***',
+                                'Note: Only local buddy working day and valid booking date will be enabled in the calendar.',
                                 style: TextStyle(
                                   color: Colors.red,
                                   fontSize: defaultFontSize,
