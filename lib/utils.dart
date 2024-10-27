@@ -564,3 +564,45 @@ class AdminAgencyList {
   }
 }
 
+class localBuddyCustomerAppointment {
+  final String localBuddyBookingID;
+  final String custID;
+  late String custName;
+  final List<DateTime> bookingDate;
+  final double totalPrice;
+  final int bookingStatus;
+  final int totalDays;
+
+  localBuddyCustomerAppointment({
+    required this.localBuddyBookingID,
+    required this.custID,
+    required this.bookingDate,
+    required this.totalPrice,
+    required this.bookingStatus,
+    required this.totalDays,
+  });
+
+  factory localBuddyCustomerAppointment.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    List<DateTime> bookingDates = (data['bookingDate'] as List<dynamic>)
+        .map((date) => (date as Timestamp).toDate())
+        .toList();
+
+    localBuddyCustomerAppointment localBuddyAppointments = localBuddyCustomerAppointment(
+      localBuddyBookingID: doc.id,
+      custID: data['userID'],
+      totalPrice: data['totalPrice'],
+      bookingDate: bookingDates,
+      bookingStatus: data['bookingStatus'],
+      totalDays: data['totalDays'],
+    );
+
+    localBuddyAppointments.custName = data['name'] ?? '';
+
+    return localBuddyAppointments;
+  }
+}
+
+
+

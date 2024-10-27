@@ -75,6 +75,7 @@ dependencies:
   pdf: ^3.11.1
   url_launcher: ^6.3.1
   fl_chart: ^0.69.0
+  syncfusion_flutter_calendar: ^26.2.14
   # geolocator: ^13.0.1
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20

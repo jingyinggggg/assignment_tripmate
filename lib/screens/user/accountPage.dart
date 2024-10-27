@@ -1,6 +1,7 @@
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/blog.dart';
 import 'package:assignment_tripmate/screens/user/helpCenter.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyViewAppointment.dart';
 import 'package:assignment_tripmate/screens/user/profile.dart';
 import 'package:assignment_tripmate/screens/user/setting.dart';
 import 'package:assignment_tripmate/screens/user/wishlist.dart';
@@ -19,6 +20,41 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends State<AccountScreen> {
   int currentPageIndex = 0;
+  bool isLocalBuddy = false;
+  String? localBuddyID;
+
+  @override
+  void initState() {
+    super.initState();
+    _verifyLocalBuddy();
+  }
+
+  Future<void> _verifyLocalBuddy() async {
+    try {
+      // Reference the 'localBuddy' collection
+      CollectionReference ref = FirebaseFirestore.instance.collection('localBuddy');
+
+      // Query the collection for documents where userID matches the current user's ID
+      QuerySnapshot querySnapshot = await ref.where('userID', isEqualTo: widget.userId).get();
+
+      // Check if any documents were found
+      if (querySnapshot.docs.isNotEmpty) {
+        DocumentSnapshot userDoc = querySnapshot.docs.first;
+        var userData = userDoc.data() as Map<String, dynamic>;
+        setState(() {
+          isLocalBuddy = true;
+          localBuddyID = userDoc['localBuddyID'];
+        });
+      } else {
+        setState(() {
+          isLocalBuddy = false;
+        });
+      }
+    } catch (e) {
+      // Handle any errors that occur during the fetch
+      print("Error verifying local buddy: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +206,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
                   Positioned(
-                    top: screenHeight * 0.35,
-                    left: screenWidth * 0.42,
+                    top: isLocalBuddy ? screenHeight * 0.35 : screenHeight * 0.36,
+                    left: isLocalBuddy ? screenWidth * 0.42 : screenWidth * 0.22,
                     child: Column(
                       children: [
                         const Text(
@@ -229,69 +265,76 @@ class _AccountScreenState extends State<AccountScreen> {
                   //     ],
                   //   ),
                   // ),
-                  // Positioned(
-                  //   top: screenHeight * 0.42,
-                  //   left: screenWidth * 0.06,
-                  //   child: Column(
-                  //     children: [
-                  //       const Text(
-                  //         "Blog",
-                  //         style: TextStyle(
-                  //             fontWeight: FontWeight.w900,
-                  //             color: Colors.black,
-                  //             fontSize: 14),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           Navigator.push(
-                  //             context,
-                  //             MaterialPageRoute(
-                  //                 builder: (context) =>
-                  //                     BlogMainScreen(userId: widget.userId)),
-                  //           );
-                  //         },
-                  //         child: Image.asset(
-                  //           'images/location-pin.png',
-                  //           width: screenWidth * 0.1,
-                  //           height: screenWidth * 0.1,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
-                  Positioned(
-                    top: screenHeight * 0.4,
-                    left: screenWidth * 0.06,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "Revenue",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              fontSize: 14),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
-                          },
-                          child: Image.asset(
-                            'images/location-pin.png',
-                            width: screenWidth * 0.1,
-                            height: screenWidth * 0.1,
+                  if(isLocalBuddy)...[
+                    Positioned(
+                      top: screenHeight * 0.4,
+                      left: screenWidth * 0.06,
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Agenda",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
+                                fontSize: 14),
                           ),
-                        ),
-                      ],
+                          GestureDetector(
+                            onTap: () {
+                              if (localBuddyID != null) { // Check if localBuddyID is not null
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          LocalBuddyViewAppointmentScreen(userId: widget.userId, localBuddyId: localBuddyID!)),
+                                );
+                              } else {
+                                // Handle the null case (optional, maybe show an error message)
+                                print("Local Buddy ID is null");
+                              }
+                            },
+                            child: Image.asset(
+                              'images/location-pin.png',
+                              width: screenWidth * 0.1,
+                              height: screenWidth * 0.1,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      top: screenHeight * 0.54,
+                      left: screenWidth * 0.13,
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Revenue",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                color: Colors.black,
+                                fontSize: 14),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //       builder: (context) =>
+                              //           const SettingScreen()),
+                              // );
+                            },
+                            child: Image.asset(
+                              'images/location-pin.png',
+                              width: screenWidth * 0.1,
+                              height: screenWidth * 0.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   Positioned(
-                    top: screenHeight * 0.6,
-                    left: screenWidth * 0.25,
+                    top: isLocalBuddy ? screenHeight * 0.59 : screenHeight * 0.6,
+                    left: isLocalBuddy ? screenWidth * 0.35 : screenWidth * 0.25,
                     child: Column(
                       children: [
                         const Text(
