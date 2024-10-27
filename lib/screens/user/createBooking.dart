@@ -70,7 +70,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
   double? rentPrice;
   int? CRDifferenceInDays;
   List<DateTime> _maintenanceDates = [];
+  List<DateTime> _carRentalBookingDates = [];
   List<DateTime> selectedBookingDates = [];
+  String? selectedBookingDateString;
 
   // Local Buddy
   bool isLoadingLocalBuddy = false;
@@ -86,6 +88,9 @@ class _createBookingScreenState extends State<createBookingScreen> {
   List<Map<String, dynamic>> availabilityLocalBuddyList = [];
   double? LBTotalPrice;
   int? LBDifferenceInDays;
+  List<DateTime> _localBuddyBookingDates = [];
+  List<DateTime> selectedLocalBuddyBookingDates = [];
+  String? selectedLocalBuddyBookingDateString;
 
   bool isInvoiceLoading = false;
 
@@ -111,8 +116,10 @@ class _createBookingScreenState extends State<createBookingScreen> {
       _fetchTourDetails();
     } else if (widget.carRental) {
       _fetchMaintenanceDates();
+      _fetchCarRentalBookingDates();
       _fetchCarDetails();
     } else {
+      _fetchLocalBuddyBookingDate();
       _fetchLocalBuddyDetails();
     }
   }
@@ -139,7 +146,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
 
     setState(() {
       _maintenanceDates = maintenanceDates; // Set the fetched dates
-      _normalizeMaintenanceDates(); // Normalize the dates to remove duplicates
+      _normalizeDates(_maintenanceDates); // Normalize the dates to remove duplicates
     });
 
     // Optional: Check the contents of _maintenanceDates
@@ -148,9 +155,67 @@ class _createBookingScreenState extends State<createBookingScreen> {
     }
   }
 
+  Future<void> _fetchCarRentalBookingDates() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('carRentalBooking')
+        .where('carID', isEqualTo: widget.carRentalID)
+        .get();
+
+    List<DateTime> carRentalBookingDates = [];
+
+    for (var doc in snapshot.docs) {
+      // Fetch the array of booking dates from Firebase
+      List<dynamic> bookingDatesArray = doc['bookingDate'];
+      
+      // Convert each Timestamp in the array to DateTime and add to the list
+      for (var date in bookingDatesArray) {
+        carRentalBookingDates.add((date as Timestamp).toDate());
+      }
+    }
+
+    setState(() {
+      _carRentalBookingDates = carRentalBookingDates; // Set the fetched dates
+      _normalizeDates(_carRentalBookingDates); // Normalize dates if needed
+    });
+
+    // Optional: Print the fetched booking dates
+    for (var date in _carRentalBookingDates) {
+      print("Car Rental Booking Date Fetched: ${date}");
+    }
+  }
+
+  Future<void> _fetchLocalBuddyBookingDate() async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('localBuddyBooking')
+        .where('localBuddyID', isEqualTo: widget.localBuddyID)
+        .get();
+
+    List<DateTime> localBuddyBookingDates = [];
+
+    for (var doc in snapshot.docs) {
+      // Fetch the array of booking dates from Firebase
+      List<dynamic> bookingDatesArray = doc['bookingDate'];
+      
+      // Convert each Timestamp in the array to DateTime and add to the list
+      for (var date in bookingDatesArray) {
+        localBuddyBookingDates.add((date as Timestamp).toDate());
+      }
+    }
+
+    setState(() {
+      _localBuddyBookingDates = localBuddyBookingDates; // Set the fetched dates
+      _normalizeDates(_localBuddyBookingDates); // Normalize dates if needed
+    });
+
+    // Optional: Print the fetched booking dates
+    for (var date in _localBuddyBookingDates) {
+      print("Local Buddy Booking Date Fetched: ${date}");
+    }
+  }
+
   // This function normalizes the maintenance dates
-  void _normalizeMaintenanceDates() {
-    _maintenanceDates = _maintenanceDates
+  void _normalizeDates(List<DateTime> list) {
+    list = list
         .toSet() // Convert to a Set to remove duplicates
         .toList(); // Convert back to List
   }
@@ -581,7 +646,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
                 total: carRentalDeposit,
               ),
               InvoiceItem(
-                description: "${_carRental!.carModel} (${dateFormat.format(_selectedStartDate!)} - ${dateFormat.format(_selectedEndDate!)})",
+                description: "${_carRental!.carModel} - ($selectedBookingDateString))",
+                // description: "${_carRental!.carModel} (${dateFormat.format(selectedBookingDates)})",
                 quantity: CRDifferenceInDays!,
                 unitPrice: _carRental!.price!.toInt(),
                 total:  rentPrice ?? 0.0,
@@ -642,8 +708,10 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'bookingID': id,
         'userID': widget.userId,
         'localBuddyID': widget.localBuddyID,
-        'bookingStartDate': _selectedLbStartDate,
-        'bookingEndDate': _selectedLbEndDate,
+        'bookingDate': selectedLocalBuddyBookingDates,
+        'totalDays': LBDifferenceInDays,
+        // 'bookingStartDate': _selectedLbStartDate,
+        // 'bookingEndDate': _selectedLbEndDate,
         'totalPrice': LBTotalPrice,
         // 'isCancel': 0,
         'bookingStatus': 0,
@@ -685,7 +753,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
             // Wrap the single InvoiceItem in a list
             items: [
               InvoiceItem(
-                description: "Local Buddy: ${_localBuddy!.localBuddyName} (${dateFormat.format(_selectedLbStartDate!)} - ${dateFormat.format(_selectedLbEndDate!)})",
+                description: "Local Buddy: ${_localBuddy!.localBuddyName} ($selectedLocalBuddyBookingDateString)",
                 quantity: LBDifferenceInDays!,
                 unitPrice: _localBuddy!.price!.toInt(),
                 total:  LBTotalPrice ?? 0.0,
@@ -2758,8 +2826,12 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             !_maintenanceDates.any((maintenanceDate) =>
                                 maintenanceDate.year == normalizedDate.year &&
                                 maintenanceDate.month == normalizedDate.month &&
-                                maintenanceDate.day == normalizedDate.day);
-        // print("Checking date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+                                maintenanceDate.day == normalizedDate.day) &&
+                            !_carRentalBookingDates.any((bookingDate) =>
+                                bookingDate.year == normalizedDate.year &&
+                                bookingDate.month == normalizedDate.month &&
+                                bookingDate.day == normalizedDate.day);
+        print("Checking date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
         return isSelectable;
       },
     );
@@ -2775,8 +2847,12 @@ class _createBookingScreenState extends State<createBookingScreen> {
                             !_maintenanceDates.any((maintenanceDate) =>
                                 maintenanceDate.year == normalizedDate.year &&
                                 maintenanceDate.month == normalizedDate.month &&
-                                maintenanceDate.day == normalizedDate.day);
-        // print("Selectable Predicate - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
+                                maintenanceDate.day == normalizedDate.day) &&
+                            !_carRentalBookingDates.any((bookingDate) =>
+                                bookingDate.year == normalizedDate.year &&
+                                bookingDate.month == normalizedDate.month &&
+                                bookingDate.day == normalizedDate.day);
+        print("Selectable Predicate - Date: ${DateFormat('dd/MM/yyyy').format(normalizedDate)} - Selectable: $isSelectable");
         return isSelectable;
       },
     );
@@ -2877,7 +2953,7 @@ DateTime _findNextSelectableDate(DateTime date, bool Function(DateTime) predicat
             (DateTime date) {
               DateTime normalizedDate = DateTime(date.year, date.month, date.day);
               return normalizedDate.isAfter(DateTime.now().add(Duration(days: 3))) &&
-                     !_maintenanceDates.contains(normalizedDate);
+                     !_maintenanceDates.contains(normalizedDate) && !_carRentalBookingDates.contains(normalizedDate);
             },
           );
 
@@ -3029,44 +3105,51 @@ DateTime _findNextSelectableDate(DateTime date, bool Function(DateTime) predicat
   // }
 
   void _calculateRentalPrice() {
-    if (_selectedStartDate != null && _selectedEndDate != null) {
-      // Calculate the total number of days between start and end dates
-      int totalDays = _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
+  if (_selectedStartDate != null && _selectedEndDate != null) {
+    // Calculate the total number of days between start and end dates
+    int totalDays = _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
 
-      // Create a list of all dates in the range
-      List<DateTime> dateRange = List.generate(
-        totalDays,
-        (index) => _selectedStartDate!.add(Duration(days: index)),
-      );
+    // Create a list of all dates in the range
+    List<DateTime> dateRange = List.generate(
+      totalDays,
+      (index) => _selectedStartDate!.add(Duration(days: index)),
+    );
 
-
-      // Add valid dates to the bookingDates array, excluding maintenance dates
-      List<DateTime> validBookingDates = [];
-      for (DateTime date in dateRange) {
-        if (!_maintenanceDates.contains(date)) {
-          validBookingDates.add(date);
-        }
+    // Add valid dates to the bookingDates array, excluding maintenance and car rental booking dates
+    List<DateTime> validBookingDates = [];
+    for (DateTime date in dateRange) {
+      if (!_maintenanceDates.contains(date) && !_carRentalBookingDates.contains(date)) {
+        validBookingDates.add(date);
       }
-
-      // Count maintenance dates within the selected range
-      int maintenanceDays = dateRange.where((date) => _maintenanceDates.contains(date)).length;
-
-      // Calculate the effective rental days
-      int effectiveRentalDays = totalDays - maintenanceDays;
-
-      setState(() {
-        CRDifferenceInDays = effectiveRentalDays;
-        double pricePerDay = _carRental!.price!.toDouble();
-        rentPrice = effectiveRentalDays * pricePerDay;
-        carRentalTotalPrice = rentPrice! + carRentalDeposit;
-        selectedBookingDates = validBookingDates;
-      });
-
-      print("Selected booking dates: $selectedBookingDates");
-    } else {
-      print('Please select both start and end dates.');
     }
+
+    // Count maintenance and booking dates within the selected range
+    int maintenanceAndBookingDays = dateRange.where((date) =>
+      _maintenanceDates.contains(date) || _carRentalBookingDates.contains(date)
+    ).length;
+
+    // Calculate the effective rental days
+    int effectiveRentalDays = totalDays - maintenanceAndBookingDays;
+
+    setState(() {
+      CRDifferenceInDays = effectiveRentalDays;
+      double pricePerDay = _carRental!.price!.toDouble();
+      rentPrice = effectiveRentalDays * pricePerDay;
+      carRentalTotalPrice = rentPrice! + carRentalDeposit;
+      selectedBookingDates = validBookingDates;
+
+      // Format valid booking dates as "dd/MM/yyyy" and join them into a single string
+      final dateFormat = DateFormat('dd/MM/yyyy');
+      selectedBookingDateString = selectedBookingDates.map((date) => dateFormat.format(date)).join(', ');
+    });
+
+    print("Selected booking dates: $selectedBookingDates");
+    print("Selected booking dates string: $selectedBookingDateString");
+  } else {
+    print('Please select both start and end dates.');
   }
+}
+
 
 
   // void _calculateRentalPrice() {
@@ -3244,140 +3327,305 @@ DateTime _findNextSelectableDate(DateTime date, bool Function(DateTime) predicat
   }
 
   Widget _buildDatePickerLocalBuddyTextFieldCell(
-    TextEditingController controller,
-    String labeltext,
-    String hintText, {
-    DateTime? firstDate,
-    void Function(DateTime)? onDateSelected,
-    bool isEndDate = false,
-    bool startDateSelected = true,
-  }) {
-    return GestureDetector(
-      onTap: () async {
-        if (isEndDate && !startDateSelected) {
-          // Show a message asking the user to select the start date first
-          _showSelectStartDateFirstMessage();
-          return;
-        }
+  TextEditingController controller,
+  String labeltext,
+  String hintText, {
+  DateTime? firstDate,
+  void Function(DateTime)? onDateSelected,
+  bool isEndDate = false,
+  bool startDateSelected = true,
+}) {
+  return GestureDetector(
+    onTap: () async {
+      if (isEndDate && !startDateSelected) {
+        _showSelectStartDateFirstMessage();
+        return;
+      }
 
-        // Get valid weekdays from availableLocalBuddyDay
-        List<int> validWeekdays = _getValidWeekdays(availableLocalBuddyDay);
+      // Get valid weekdays from availableLocalBuddyDay
+      List<int> validWeekdays = _getValidWeekdays(availableLocalBuddyDay);
 
-        // For the start date picker, find the next valid date
-        DateTime initialDate = _getNextValidDate(validWeekdays, DateTime.now());
-        DateTime firstAvailableDate = firstDate ?? initialDate;
+      // Calculate the initial date as three days from now
+      DateTime initialDate = DateTime.now().add(Duration(days: 4));
+      DateTime firstAvailableDate = firstDate ?? _getNextValidDate(validWeekdays, initialDate);
 
-        // For the end date picker, set the first available date to the selected start date or the first valid date
+      // For the end date picker, set the first available date to the selected start date or the first valid date
+      if (isEndDate && _selectedLbStartDate != null) {
+        firstAvailableDate = _selectedLbStartDate!;
+      } else if (isEndDate && _selectedLbStartDate == null) {
+        _showSelectStartDateFirstMessage();
+        return;
+      }
+
+      // Ensure initialEndDate for end date picker starts from selected start date or is the first valid date
+      DateTime initialEndDate = _selectedLbStartDate ?? initialDate; // Use selected start date or next valid date
+      if (initialEndDate.isBefore(firstAvailableDate)) {
+        initialEndDate = firstAvailableDate; // Adjust if it is before the first available date
+      }
+
+      // Show the date picker with valid dates and constraints
+      DateTime? pickedDate = await showDatePicker(
+        context: context,
+        initialDate: initialEndDate,
+        firstDate: firstAvailableDate,
+        lastDate: DateTime(2101),
+        selectableDayPredicate: (DateTime day) {
+          // Disable dates that are not valid weekdays or already booked
+          return validWeekdays.contains(day.weekday) &&
+              !_localBuddyBookingDates.contains(day) && // Check against booked dates
+              day.isAfter(DateTime.now().add(Duration(days: 2))); // Ensure it's more than 2 days away
+        },
+      );
+
+      // Calculate the number of valid days between start date and end date
+      if (pickedDate != null) {
         if (isEndDate && _selectedLbStartDate != null) {
-          firstAvailableDate = _selectedLbStartDate!;
-        } else {
-          // If no start date is selected, show a message and return
-          if (isEndDate && _selectedLbStartDate == null) {
-            _showSelectStartDateFirstMessage();
-            return;
+          // Debugging information
+          print("Selected Start Date: ${_selectedLbStartDate}");
+          print("Picked End Date: $pickedDate");
+
+          // Count the valid days between start date and end date
+          int validDaysCount = 0;
+          selectedLocalBuddyBookingDates.clear();
+
+          for (DateTime date = _selectedLbStartDate!; date.isBefore(pickedDate) || date.isAtSameMomentAs(pickedDate); date = date.add(Duration(days: 1))) {
+            if (validWeekdays.contains(date.weekday) && !_localBuddyBookingDates.contains(date)) {
+              validDaysCount++;
+              selectedLocalBuddyBookingDates.add(date);
+              print("Valid Date: $date");
+            }
           }
-        }
 
-        // Ensure initialDate for end date picker starts from selected start date or is the first valid date
-        DateTime initialEndDate = _selectedLbStartDate ?? initialDate; // Use selected start date or next valid date
-        if (initialEndDate.isBefore(firstAvailableDate)) {
-          initialEndDate = firstAvailableDate; // Adjust if it is before the first available date
-        }
+          // Debugging: print total valid days
+          print("Total Valid Days: $validDaysCount");
 
-        // Show the date picker with valid dates and constraints
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: initialEndDate,
-          firstDate: firstAvailableDate,
-          lastDate: DateTime(2101),
-          selectableDayPredicate: (DateTime day) {
-            return validWeekdays.contains(day.weekday);
-          },
-        );
-
-        // Calculate the number of days between start date and end date
-        if (isEndDate && _selectedLbStartDate != null) {
-          LBDifferenceInDays = pickedDate!.difference(_selectedLbStartDate!).inDays + 1;
-
-          setState(() { 
-            // Ensure _localBuddy.price is treated as a double
+          setState(() {
+            LBDifferenceInDays = validDaysCount;
             double price = _localBuddy!.price!.toDouble(); // Convert to double if it's an int
             LBTotalPrice = (LBDifferenceInDays! * price); // Now this is safe as both are doubles
+
+            final dateFormat = DateFormat('dd/MM/yyyy');
+            selectedLocalBuddyBookingDateString = selectedLocalBuddyBookingDates.map((date) => dateFormat.format(date)).join(', ');
           });
 
+          print("Selected booking dates: $selectedLocalBuddyBookingDates");
+          print("Selected booking dates string: $selectedLocalBuddyBookingDateString");
+
+          // // Store the difference in days for further calculations
+          // LBDifferenceInDays = validDaysCount;
+
+          // // Calculate total price based on valid booking days
+          // double price = _localBuddy!.price!.toDouble(); // Convert to double if it's an int
+          // LBTotalPrice = (LBDifferenceInDays! * price); // Now this is safe as both are doubles
         }
 
-        if (pickedDate != null) {
-          // Format the picked date
-          controller.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+        // Format the picked date
+        controller.text = DateFormat('dd/MM/yyyy').format(pickedDate);
 
-          // If a date is selected, trigger the callback
-          if (onDateSelected != null) {
-            onDateSelected(pickedDate);
-          }
+        // If a date is selected, trigger the callback
+        if (onDateSelected != null) {
+          onDateSelected(pickedDate);
         }
-      },
-      child: AbsorbPointer(
-        child: TextField(
-          controller: controller,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: defaultFontSize,
-            color: Colors.black,
+      }
+    },
+    child: AbsorbPointer(
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: defaultFontSize,
+          color: Colors.black,
+        ),
+        readOnly: true,
+        decoration: InputDecoration(
+          hintText: hintText,
+          labelText: labeltext,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
           ),
-          readOnly: true,
-          decoration: InputDecoration(
-            hintText: hintText,
-            labelText: labeltext,
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color(0xFF467BA1),
+              width: 2.5,
+            ),
+          ),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          labelStyle: const TextStyle(
+            fontSize: defaultLabelFontSize,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            shadows: [
+              Shadow(
+                offset: Offset(0.5, 0.5),
+                color: Colors.black87,
               ),
+            ],
+          ),
+          suffixIcon: IconButton(
+            icon: const Icon(
+              Icons.calendar_today_outlined,
+              color: Color(0xFF467BA1),
+              size: 20,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Color(0xFF467BA1),
-                width: 2.5,
-              ),
-            ),
-            floatingLabelBehavior: FloatingLabelBehavior.always,
-            labelStyle: const TextStyle(
-              fontSize: defaultLabelFontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-              shadows: [
-                Shadow(
-                  offset: Offset(0.5, 0.5),
-                  color: Colors.black87,
-                ),
-              ],
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(
-                Icons.calendar_today_outlined,
-                color: Color(0xFF467BA1),
-                size: 20,
-              ),
-              onPressed: () async {
-                // Date picker logic handled in onTap
-              },
-            ),
+            onPressed: () async {
+              // Date picker logic handled in onTap
+            },
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+  // Widget _buildDatePickerLocalBuddyTextFieldCell(
+  //   TextEditingController controller,
+  //   String labeltext,
+  //   String hintText, {
+  //   DateTime? firstDate,
+  //   void Function(DateTime)? onDateSelected,
+  //   bool isEndDate = false,
+  //   bool startDateSelected = true,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: () async {
+  //       if (isEndDate && !startDateSelected) {
+  //         // Show a message asking the user to select the start date first
+  //         _showSelectStartDateFirstMessage();
+  //         return;
+  //       }
+
+  //       // Get valid weekdays from availableLocalBuddyDay
+  //       List<int> validWeekdays = _getValidWeekdays(availableLocalBuddyDay);
+
+  //       // For the start date picker, find the next valid date
+  //       DateTime initialDate = _getNextValidDate(validWeekdays, DateTime.now());
+  //       DateTime firstAvailableDate = firstDate ?? initialDate;
+
+  //       // For the end date picker, set the first available date to the selected start date or the first valid date
+  //       if (isEndDate && _selectedLbStartDate != null) {
+  //         firstAvailableDate = _selectedLbStartDate!;
+  //       } else {
+  //         // If no start date is selected, show a message and return
+  //         if (isEndDate && _selectedLbStartDate == null) {
+  //           _showSelectStartDateFirstMessage();
+  //           return;
+  //         }
+  //       }
+
+  //       // Ensure initialDate for end date picker starts from selected start date or is the first valid date
+  //       DateTime initialEndDate = _selectedLbStartDate ?? initialDate; // Use selected start date or next valid date
+  //       if (initialEndDate.isBefore(firstAvailableDate)) {
+  //         initialEndDate = firstAvailableDate; // Adjust if it is before the first available date
+  //       }
+
+  //       // Show the date picker with valid dates and constraints
+  //       DateTime? pickedDate = await showDatePicker(
+  //         context: context,
+  //         initialDate: initialEndDate,
+  //         firstDate: firstAvailableDate,
+  //         lastDate: DateTime(2101),
+  //         selectableDayPredicate: (DateTime day) {
+  //           return (validWeekdays.contains(day.weekday));
+  //         },
+  //       );
+
+  //       // Calculate the number of days between start date and end date
+  //       if (isEndDate && _selectedLbStartDate != null) {
+  //         LBDifferenceInDays = pickedDate!.difference(_selectedLbStartDate!).inDays + 1;
+
+  //         setState(() { 
+  //           // Ensure _localBuddy.price is treated as a double
+  //           double price = _localBuddy!.price!.toDouble(); // Convert to double if it's an int
+  //           LBTotalPrice = (LBDifferenceInDays! * price); // Now this is safe as both are doubles
+  //         });
+
+  //       }
+
+  //       if (pickedDate != null) {
+  //         // Format the picked date
+  //         controller.text = DateFormat('dd/MM/yyyy').format(pickedDate);
+
+  //         // If a date is selected, trigger the callback
+  //         if (onDateSelected != null) {
+  //           onDateSelected(pickedDate);
+  //         }
+  //       }
+  //     },
+  //     child: AbsorbPointer(
+  //       child: TextField(
+  //         controller: controller,
+  //         style: TextStyle(
+  //           fontWeight: FontWeight.w800,
+  //           fontSize: defaultFontSize,
+  //           color: Colors.black,
+  //         ),
+  //         readOnly: true,
+  //         decoration: InputDecoration(
+  //           hintText: hintText,
+  //           labelText: labeltext,
+  //           filled: true,
+  //           fillColor: Colors.white,
+  //           border: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(10),
+  //             borderSide: const BorderSide(
+  //               color: Color(0xFF467BA1),
+  //               width: 2.5,
+  //             ),
+  //           ),
+  //           focusedBorder: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(10),
+  //             borderSide: const BorderSide(
+  //               color: Color(0xFF467BA1),
+  //               width: 2.5,
+  //             ),
+  //           ),
+  //           enabledBorder: OutlineInputBorder(
+  //             borderRadius: BorderRadius.circular(10),
+  //             borderSide: const BorderSide(
+  //               color: Color(0xFF467BA1),
+  //               width: 2.5,
+  //             ),
+  //           ),
+  //           floatingLabelBehavior: FloatingLabelBehavior.always,
+  //           labelStyle: const TextStyle(
+  //             fontSize: defaultLabelFontSize,
+  //             fontWeight: FontWeight.bold,
+  //             color: Colors.black87,
+  //             shadows: [
+  //               Shadow(
+  //                 offset: Offset(0.5, 0.5),
+  //                 color: Colors.black87,
+  //               ),
+  //             ],
+  //           ),
+  //           suffixIcon: IconButton(
+  //             icon: const Icon(
+  //               Icons.calendar_today_outlined,
+  //               color: Color(0xFF467BA1),
+  //               size: 20,
+  //             ),
+  //             onPressed: () async {
+  //               // Date picker logic handled in onTap
+  //             },
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
