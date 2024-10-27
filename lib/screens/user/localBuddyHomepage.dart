@@ -33,7 +33,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
   List<LocalBuddy> _localBuddyList = [];
   List<LocalBuddy> _foundedLocalBuddy = [];
   // Position? _currentPosition;
-  String _currentAddress = "Fetching location...";
+  // String _currentAddress = "Fetching location...";
 
   @override
   void initState() {
@@ -246,13 +246,13 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       Column(
         children: [
           // Display current location
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Text(
-              _currentAddress,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.all(10.0),
+          //   child: Text(
+          //     _currentAddress,
+          //     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+          //   ),
+          // ),
 
           Padding(
             padding: const EdgeInsets.only(left: 10, top: 20, right: 10),

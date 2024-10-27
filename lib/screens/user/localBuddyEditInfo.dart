@@ -33,6 +33,7 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   bool isFetchLoading = false;
   Uint8List? _image;
   Uint8List? _referenceImage;
+  String? localBuddyID;
 
   List<String> selectedDays = [];
 
@@ -64,6 +65,16 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
           _pricingController.text = userData['price']?.toString() ?? '0';
           _bioController.text = userData['bio'] ?? '';
           _previousExperienceController.text = userData['previousExperience'] ?? '';
+          localBuddyID = userData['localBuddyID'];
+
+          // Ensure availability is a List and extract days
+          if (userData['availability'] is List) {
+            selectedDays = (userData['availability'] as List<dynamic>)
+                .map((item) => item['day'].toString()) // Accessing the 'day' string from each map
+                .toList();
+          } else {
+            selectedDays = []; // Default to an empty list if not available or not a List
+          }
 
           isFetchLoading = false;
         });
@@ -126,6 +137,7 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
     });
 
     try {
+
       // Prepare availability data
       List<Map<String, dynamic>> availability = selectedDays.map((day) {
         return {
@@ -156,6 +168,7 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
 
       // Call the saveLocalBuddyData function with the optional parameters
       String resp = await StoreData().saveLocalBuddyData(
+        localBuddyID: localBuddyID,
         occupation: _occupationController.text,
         location: _locationController.text,
         languageSpoken: _languageSpokenController.text,
@@ -166,13 +179,14 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         bio: _bioController.text,  // Required field, already checked
         previousExperience: previousExperience,  // Optional field
         action: 0,
+        registrationStatus: 2
       );
 
       // Show success dialog
       showCustomDialog(
         context: context,
         title: 'Success',
-        content: 'You have update your details successfully.',
+        content: 'You have updated your details successfully.',
         onPressed: () {
           Navigator.push(
             context,
@@ -198,6 +212,7 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
       });
     }
   }
+
 
   Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
     final String apiKeys = apiKey;
@@ -421,7 +436,7 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
             child: ElevatedButton(
               onPressed: () {_saveBuddyData();},
               child: isLoading
-                  ? CircularProgressIndicator()
+                  ? CircularProgressIndicator(color: Colors.white,)
                   : Text(
                       'Update',
                       style: TextStyle(

@@ -471,8 +471,8 @@ class StoreData {
       } else {
         // Update the existing document
         // Remove localBuddyID and userID from the data before updating
-        buddyData.remove('localBuddyID');
-        buddyData.remove('userID');
+        // buddyData.remove('localBuddyID');
+        // buddyData.remove('userID');
         await _firestore.collection("localBuddy").doc(localBuddyID).update(buddyData);
       }
 
