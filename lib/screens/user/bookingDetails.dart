@@ -313,6 +313,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                   ? Column(
                     children: [
                         tourComponent(data: tourBookingData!, tourData: tourData!),
+                        if(tourBookingData!['bookingStatus'] == 2)...[
+                          SizedBox(height: 10,),
+                          Container(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              "Cancel Reason: ${tourBookingData!['cancelReason'] ?? "N/A" }",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold
+                              ),
+                              textAlign: TextAlign.justify,
+                            ),
+                          )
+                        ],
                         SizedBox(height: 10),
                         Container(
                           alignment: Alignment.topCenter,
@@ -478,6 +493,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     ? Column(
                         children: [
                           carComponent(data: carBookingData!, carData: carData!),
+                          if(carBookingData!['bookingStatus'] == 2)...[
+                            SizedBox(height: 10,),
+                            Container(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              "Cancel Reason: ${carBookingData!['cancelReason'] ?? "N/A" }",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold
+                              ),
+                              textAlign: TextAlign.justify,
+                            ),
+                          )
+                          ],
                           SizedBox(height: 10),
                           Container(
                             alignment: Alignment.topCenter,
@@ -810,6 +840,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                       ? Column(
                           children: [
                             localBuddyComponent(data: localBuddyBookingData!, localBuddyData: localBuddyData!),
+                            if(localBuddyBookingData!['bookingStatus'] == 2)...[
+                              SizedBox(height: 10,),
+                              Container(
+                                alignment: Alignment.topLeft,
+                                child: Text(
+                                  "Cancel Reason: ${localBuddyBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              )
+                            ],
                             SizedBox(height: 10),
                             Container(
                               alignment: Alignment.topCenter,

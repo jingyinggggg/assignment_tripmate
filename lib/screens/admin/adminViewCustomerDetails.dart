@@ -1,13 +1,17 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/customerModel.dart';
 import 'package:assignment_tripmate/invoiceModel.dart';
 import 'package:assignment_tripmate/pdf_invoice_api.dart';
 import 'package:assignment_tripmate/supplierModel.dart';
+import 'package:assignment_tripmate/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
@@ -64,6 +68,10 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
   Map<String, dynamic>? tourBookingData;
   Map<String, dynamic>? carBookingData;
   Map<String, dynamic>? localBuddyBookingData;
+  bool isSelectingImage = false;
+  Uint8List? _transferProof;
+  String? uploadedProof;
+  final TextEditingController _proofNameController = TextEditingController();
 
   @override
   void initState() {
@@ -79,6 +87,44 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       _fetchLocalBuddyBookingDetails();
       _fetchLocalBuddyDetails();
     }
+  }
+
+  String decryptText(String encryptedText) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final parts = encryptedText.split(':'); // Split to get IV and encrypted data
+
+    if (parts.length != 2) {
+      throw ArgumentError("Invalid encrypted format"); // Check for expected format
+    }
+
+    final iv = encrypt.IV.fromBase64(parts[0]); // Retrieve the original IV
+    final encryptedData = encrypt.Encrypted.fromBase64(parts[1]);
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    return encrypter.decrypt(encryptedData, iv: iv); // Decrypt using original IV
+  }
+
+  Future<String> uploadImageToStorage(String childName, Uint8List file) async{
+  
+    Reference ref = FirebaseStorage.instance.ref().child(childName);
+    UploadTask uploadTask = ref.putData(file);
+    TaskSnapshot snapshot = await uploadTask;
+    String downloadURL = await snapshot.ref.getDownloadURL();
+    return downloadURL;
+  }
+
+  Future<void> selectImage() async {
+    setState(() {
+      isSelectingImage = true;
+    });
+
+    Uint8List? img = await ImageUtils.selectImage(context);
+
+    setState(() {
+      _transferProof = img;
+      _proofNameController.text = img != null ? 'Proof Uploaded' : 'No proof uploaded';
+      isSelectingImage = false;
+    });
   }
 
   Future<void>_fetchCustomerDetails() async {
@@ -366,6 +412,116 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     }
   }
 
+  void showPaymentOption(BuildContext context, String amount, Function onSubmit, String bankName, String accountName, String accountNumber) {
+    bool isProofUploaded = _proofNameController.text.isNotEmpty;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Text("Bank Details"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.max, // Change this to max
+                  children: [
+                    Text("Refund $amount to the following account:", textAlign: TextAlign.justify),
+                    const SizedBox(height: 8),
+                    Text(
+                      // "Bank: ",
+                      "Bank: ${decryptText(bankName)}\nAccount Name: ${decryptText(accountName)}\nAccount Number: ${decryptText(accountNumber)}",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        setDialogState(() {
+                          isSelectingImage = true; // Start showing the loading indicator in the dialog
+                        });
+
+                        await selectImage();
+
+                        // Check if proof is uploaded
+                        setDialogState(() {
+                          isSelectingImage = false; // Stop showing the loading indicator in the dialog
+                          isProofUploaded = _proofNameController.text.isNotEmpty; // Update proof upload status
+                        });
+                      },
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text("Upload Transfer Proof"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: primaryColor, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Proof: ${_proofNameController.text.isNotEmpty ? _proofNameController.text : "No proof uploaded"}",
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        if (isSelectingImage)
+                          const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text("Close"),
+                  style: TextButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: (isProofUploaded) ? () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    onSubmit(); // Call the provided function
+                  } : null,
+                  child: const Text("Submit"),
+                  style: TextButton.styleFrom(
+                    backgroundColor: (isProofUploaded) 
+                      ? primaryColor 
+                      : Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> refundToCustomer(String type, String bookingID, int price, String collection, {bool isDepositRefund = false}) async{
     setState(() {
       isRefunding = true;
@@ -432,10 +588,41 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
           // After the operation is done, hide the loading dialog
           Navigator.of(context).pop(); // This will close the loading dialog
 
-          // Navigate to the homepage after PDF viewer
-          Future.delayed(Duration(milliseconds: 500), () {
-            Navigator.pop(context);
+          setState(() {
+            isRefunding = false;
           });
+
+          // Navigate back to customer details
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminViewCustomerDetailsScreen(
+                userId: widget.userId,
+                customerId: widget.customerId,
+                tourBookingID: widget.tourBookingID != null ? widget.tourBookingID : null,
+                tourID: widget.tourID != null ? widget.tourID : null,
+                carRentalBookingID: widget.carRentalBookingID != null ? widget.carRentalBookingID : null,
+                carRentalID: widget.carRentalID != null ? widget.carRentalID : null,
+                localBuddyBookingID: widget.localBuddyBookingID != null ? widget.localBuddyBookingID : null,
+                localBuddyID: widget.localBuddyID != null ? widget.localBuddyID : null,
+              ),
+            ),
+          );
+
+          // // Navigate to the homepage after PDF viewer
+          // Future.delayed(Duration(milliseconds: 500), () {
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => AdminViewCustomerDetailsScreen(
+          //         userId: widget.userId,
+          //         customerId: widget.customerId,
+          //         tourBookingID: widget.tourBookingID,
+          //         tourID: widget.tourID,
+          //       ),
+          //     ),
+          //   );
+          // });
         },
         textButton: "View Invoice",
       );
@@ -557,8 +744,8 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       final date = DateTime.now();
       final invoice = Invoice(
         supplier: Supplier(
-          name: companyData!['companyName'],
-          address: companyData!['companyAddress'],
+          name: "Admin",
+          address: "admin@tripmate.com",
         ),
         customer: Customer(
           name: custData!['name'],
@@ -585,10 +772,78 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       // After the operation is done, hide the loading dialog
       Navigator.of(context).pop(); // Close loading dialog
 
-      // Open the generated PDF invoice
-      String pdfUrl = "link_to_generated_pdf"; // Update with your PDF URL logic
-      String fileName = "Deposit_Invoice_${widget.tourBookingID}.pdf"; // Set the filename
-      await downloadAndOpenPdfFromUrl(pdfUrl, fileName); // Function to download and open PDF
+      // Optionally, refresh the page/state after opening the PDF
+      setState(() {
+        isGenerating = false; // Reset generating state
+      });
+
+      // Navigate back to customer details
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminViewCustomerDetailsScreen(
+            userId: widget.userId,
+            customerId: widget.customerId,
+            tourBookingID: widget.tourBookingID,
+            tourID: widget.tourID,
+          ),
+        ),
+      );
+
+    } catch (e) {
+      setState(() {
+        isGenerating = false; // Reset generating state in case of error
+      });
+      
+      // Show failure dialog
+      showCustomDialog(
+        context: context,
+        title: "Failed",
+        content: "Something went wrong! Please try again...",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    }
+  }
+
+  Future<void> _generateFullPaymentTourInvoice() async {
+    setState(() {
+      isGenerating = true; // Set generating state
+    });
+
+    try {
+      showLoadingDialog(context, "Generating Invoice...");
+      final date = DateTime.now();
+      final invoice = Invoice(
+        supplier: Supplier(
+          name: "Admin",
+          address: "admin@tripmate.com",
+        ),
+        customer: Customer(
+          name: custData!['name'],
+          address: custData!['address'],
+        ),
+        info: InvoiceInfo(
+          date: date,
+          description: "You have paid the balance tour fee. Below is the invoice summary:",
+          number: '${DateTime.now().year}-${widget.tourBookingID}B',
+        ),
+        items: [
+          InvoiceItem(
+            description: "Balance Tour Fee (Booking ID: ${widget.tourBookingID})",
+            quantity: 1,
+            unitPrice: (tourBookingData!['totalPrice'] - 1000).toInt(),
+            total: (tourBookingData!['totalPrice'] - 1000),
+          ),
+        ],
+      );
+
+      // Generate the invoice
+      await generateInvoice(widget.tourBookingID!, invoice, "Tour Package", "tourBooking", "balance_payment", false, false, false);
+
+      // After the operation is done, hide the loading dialog
+      Navigator.of(context).pop(); // Close loading dialog
 
       // Optionally, refresh the page/state after opening the PDF
       setState(() {
@@ -639,8 +894,8 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       final date = DateTime.now();
       final invoice = Invoice(
         supplier: Supplier(
-          name: companyData!['companyName'],
-          address: companyData!['companyAddress'],
+          name: "Admin",
+          address: "admin@tripmate.com",
         ),
         customer: Customer(
           name: custData!['name'],
@@ -815,6 +1070,8 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                  _generateDepositTourInvoice(); // Call the original function
                 } else if (type == 'Car'){
                   _generateCarInvoice();
+                } else if (type == 'Full Tour'){
+                  _generateFullPaymentTourInvoice();
                 } else {
                   _generateLocalBuddyInvoice();
                 }
@@ -939,6 +1196,18 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 ),
                                 textAlign: TextAlign.justify,
                               ),
+                              if(tourBookingData!['bookingStatus'] == 2)...[
+                                SizedBox(height: 10,),
+                                Text(
+                                  "Cancel Reason: ${tourBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
                               SizedBox(height: 20),
                               Container(
                                 alignment: Alignment.topCenter,
@@ -1169,7 +1438,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                               )
                             ],
 
-                            if(tourBookingData != null && tourBookingData!['transferProof'] != null && tourBookingData!['depositInvoice'] == null)...[
+                            if(tourBookingData != null && tourBookingData!['transferProof'] != null && tourBookingData!['depositInvoice'] == null && tourBookingData!['bookingStatus'] == 0)...[
                               SizedBox(height: 20),
                               Container(
                                 width: double.infinity,
@@ -1194,8 +1463,45 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                               )
                             ],
 
+                            if(tourBookingData != null && tourBookingData!['balanceTransferProof'] != null && tourBookingData!['invoice'] == null)...[
+                              SizedBox(height: 20),
+                              Container(
+                                width: double.infinity,
+                                height: 50,
+                                child: TextButton(
+                                  child: Text(
+                                    "Generate Full Payment Invoice",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onPressed: isGenerating ? null : () => showConfirmationDialog("Full Tour"),// Disable if generating
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                )
+                              )
+                            ],
+
                             if(carBookingData != null && carData != null) ...[
                               carComponent(data: carBookingData!, carData: carData!),
+                              if(carBookingData!['bookingStatus'] == 2)...[
+                                SizedBox(height: 10,),
+                                Text(
+                                  "Cancel Reason: ${carBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
                               SizedBox(height: 20),
                               Container(
                                 alignment: Alignment.topCenter,
@@ -1355,7 +1661,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 ],
                               ),
 
-                              if(carBookingData != null && carBookingData!['transferProof'] != null && carBookingData!['invoice'] == null)...[
+                              if(carBookingData != null && carBookingData!['transferProof'] != null && carBookingData!['invoice'] == null && carBookingData!['bookingStatus'] == 0)...[
                                 SizedBox(height: 20),
                                 Container(
                                   width: double.infinity,
@@ -1536,7 +1842,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 Container(),
 
                               SizedBox(height: 10),
-                              carBookingData!['bookingStatus'] == 2
+                              carBookingData!['bookingStatus'] == 2 && carBookingData!['isRefund'] == 0
                               ? Container(
                                 width: double.infinity,
                                 height: 50,
@@ -1548,7 +1854,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                           return AlertDialog(
                                             title: const Text("Confirmation"),
                                             content: Text(
-                                              "Due to the cancellation fee is RM100.00. Therefore, only amount of RM${NumberFormat('#,##0.00').format((carBookingData!['totalPrice'] - 100) ?? 0)} will be refunded to customer.",
+                                              "Amount of RM${NumberFormat('#,##0.00').format((carBookingData!['totalPrice']) ?? 0)} will be refunded to customer. Are you sure you want issue the refund?",
                                               textAlign: TextAlign.justify,
                                             ),
                                             actions: <Widget>[
@@ -1569,7 +1875,17 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop(); // Close the dialog
-                                                  refundToCustomer('Car Rental', carBookingData!['bookingID'], (carBookingData!['totalPrice'] - 100).toInt(), 'carRentalBooking');
+                                                  showPaymentOption(
+                                                    context, 
+                                                    "RM ${(carBookingData!['totalPrice']).toInt()}", 
+                                                    (){
+                                                      refundToCustomer('Car Rental', carBookingData!['bookingID'], (carBookingData!['totalPrice']).toInt(), 'carRentalBooking');
+                                                    }, 
+                                                    carBookingData!['bankName'], 
+                                                    carBookingData!['accountName'], 
+                                                    carBookingData!['accountNumber']
+                                                  );
+                                                  // refundToCustomer('Car Rental', carBookingData!['bookingID'], (carBookingData!['totalPrice'] - 100).toInt(), 'carRentalBooking');
                                                 },
                                                 style: TextButton.styleFrom(
                                                   backgroundColor: primaryColor, // Set the background color
@@ -1637,7 +1953,16 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                                   TextButton(
                                                     onPressed: () {
                                                       Navigator.of(context).pop(); // Close the dialog
-                                                      refundToCustomer('Car Rental', carBookingData!['bookingID'], 300, 'carRentalBooking', isDepositRefund: true);
+                                                      showPaymentOption(
+                                                        context, 
+                                                        "RM 300", 
+                                                        (){
+                                                          refundToCustomer('Car Rental', carBookingData!['bookingID'], 300, 'carRentalBooking', isDepositRefund: true);
+                                                        }, 
+                                                        carBookingData!['bankName'], 
+                                                        carBookingData!['accountName'], 
+                                                        carBookingData!['accountNumber']
+                                                      );
                                                     },
                                                     style: TextButton.styleFrom(
                                                       backgroundColor: primaryColor, // Set the background color
@@ -1678,6 +2003,18 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
 
                             if(localBuddyBookingData != null && localBuddyData != null) ...[
                               localBuddyComponent(data: localBuddyBookingData!, localBuddyData: localBuddyData!),
+                              if(localBuddyBookingData!['bookingStatus'] == 2)...[
+                                SizedBox(height: 10,),
+                                Text(
+                                  "Cancel Reason: ${localBuddyBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
                               SizedBox(height: 20),
                               Container(
                                 alignment: Alignment.topCenter,
@@ -1837,7 +2174,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 ],
                               ),
                               SizedBox(height: 20),
-                              if(localBuddyBookingData != null && localBuddyBookingData!['transferProof'] != null && localBuddyBookingData!['invoice'] == null)...[
+                              if(localBuddyBookingData != null && localBuddyBookingData!['transferProof'] != null && localBuddyBookingData!['invoice'] == null && localBuddyBookingData!['bookingStatus'] == 0)...[
                                 SizedBox(height: 20),
                                 Container(
                                   width: double.infinity,
@@ -1932,7 +2269,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                   ],
                                 ),
                               SizedBox(height: 20),
-                              localBuddyBookingData!['bookingStatus'] == 2
+                              localBuddyBookingData!['bookingStatus'] == 2 && localBuddyBookingData!['isRefund'] == 0
                               ? Container(
                                 width: double.infinity,
                                 height: 50,
@@ -1944,7 +2281,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                           return AlertDialog(
                                             title: const Text("Confirmation"),
                                             content: Text(
-                                              "Due to the cancellation fee is RM100.00. Therefore, only amount of RM${NumberFormat('#,##0.00').format((localBuddyBookingData!['totalPrice'] - 100) ?? 0)} will be refunded to customer.",
+                                              "Amount of RM${NumberFormat('#,##0.00').format((localBuddyBookingData!['totalPrice']) ?? 0)} will be refunded to customer. Are you sure you want issue the refund?",
                                               textAlign: TextAlign.justify,
                                             ),
                                             actions: <Widget>[
@@ -1965,7 +2302,17 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.of(context).pop(); // Close the dialog
-                                                  refundToCustomer('Local Buddy', localBuddyBookingData!['bookingID'], (localBuddyBookingData!['totalPrice'] - 100).toInt(), 'localBuddyBooking');
+                                                  showPaymentOption(
+                                                    context, 
+                                                    "RM ${(localBuddyBookingData!['totalPrice']).toInt()}", 
+                                                    (){
+                                                      refundToCustomer('Local Buddy', localBuddyBookingData!['bookingID'], (localBuddyBookingData!['totalPrice']).toInt(), 'localBuddyBooking');
+                                                    }, 
+                                                    localBuddyBookingData!['bankName'], 
+                                                    localBuddyBookingData!['accountName'], 
+                                                    localBuddyBookingData!['accountNumber']
+                                                  );
+                                                  // refundToCustomer('Local Buddy', localBuddyBookingData!['bookingID'], (localBuddyBookingData!['totalPrice']).toInt(), 'localBuddyBooking');
                                                 },
                                                 style: TextButton.styleFrom(
                                                   backgroundColor: primaryColor, // Set the background color

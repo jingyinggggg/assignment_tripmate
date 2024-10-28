@@ -1,11 +1,14 @@
 import 'dart:convert';
-import 'package:assignment_tripmate/customerModel.dart';
+import 'dart:typed_data';
+import 'package:encrypt/encrypt.dart' as encrypt;
+// import 'package:assignment_tripmate/customerModel.dart';
 import 'package:assignment_tripmate/invoiceModel.dart';
 import 'package:assignment_tripmate/pdf_invoice_api.dart';
 import 'package:assignment_tripmate/screens/user/bookingDetails.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
-import 'package:assignment_tripmate/supplierModel.dart';
-import 'package:http/http.dart' as http;
+// import 'package:assignment_tripmate/supplierModel.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -44,6 +47,14 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   TextEditingController _cancelTourBookingController = TextEditingController();
   TextEditingController _cancelCarRentalBookingController = TextEditingController();
   TextEditingController _cancelLocalBookingController = TextEditingController();
+  bool isSelectingImage = false;
+  Uint8List? _transferProof;
+  String? uploadedProof;
+  final TextEditingController _proofNameController = TextEditingController();
+  final TextEditingController _bankNameController = TextEditingController();
+  final TextEditingController _accountNameController = TextEditingController();
+  final TextEditingController _accountNumberController = TextEditingController();
+
 
   @override
   void initState(){
@@ -58,6 +69,18 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   void dispose() {
     super.dispose();
   }
+
+    // Encryption helper function
+  String encryptText(String text) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    final encrypted = encrypter.encrypt(text, iv: iv);
+    // Combine IV and encrypted text with a delimiter
+    return "${iv.base64}:${encrypted.base64}";
+  }
+
 
   Future<void>_fetchUserData() async{
     try{
@@ -631,17 +654,25 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelLocalBuddyBooking(String localBuddyBookingID, String cancelReason) async{
+  Future<void>cancelLocalBuddyBooking(String localBuddyBookingID, String cancelReason, String bankName, String accountName, String accountNumber) async{
     setState(() {
       isCancelLocalBuddyBooking = true;
     });
     try{
+      // Encrypt bank details
+      final encryptedBankName = encryptText(_bankNameController.text);
+      final encryptedAccountName = encryptText(_accountNameController.text);
+      final encryptedAccountNumber = encryptText(_accountNumberController.text);
+
       await FirebaseFirestore.instance
         .collection('localBuddyBooking')
         .doc(localBuddyBookingID)
         .update({
           'bookingStatus': 2,
-          'cancelReason': cancelReason
+          'cancelReason': cancelReason,
+          'bankName': encryptedBankName,
+          'accountName': encryptedAccountName,
+          'accountNumber': encryptedAccountNumber,
         });
 
       showCustomDialog(
@@ -672,79 +703,99 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
+
+
   Future<void> payBalanceTour(String tourBookingID, String companyName, String companyAddress, double totalPrice) async{
     setState(() {
       isPayingBalance = true;
     });
     try{
-      await FirebaseFirestore.instance
+      String fileName = "balanceTransferProof.jpg";
+
+      if(_transferProof != null){
+        uploadedProof = await uploadImageToStorage("invoice/Tour Package/${widget.userID}/${tourBookingID}/$fileName", _transferProof!);
+
+        await FirebaseFirestore.instance
         .collection('tourBooking')
         .doc(tourBookingID)
         .update({
-          'fullyPaid' : 1
+          'fullyPaid' : 1,
+          'balanceTransferProof': uploadedProof!
         });
-      
+
+      }
+
       showCustomDialog(
         context: context, 
         title: "Payment Successful", 
-        content: "You have pay the balance for this booking successfully.", 
+        content: "You have pay the balance for this booking successfully. Please wait for the admin to process your booking and generate the invoice.", 
         onPressed: () async {
           // Close the payment successful dialog
           Navigator.of(context).pop();
-
-          // Use Future.microtask to show the loading dialog after the previous dialog is closed
-          Future.microtask(() {
-            showLoadingDialog(context, "Generating Invoice...");
-          });
-
-          final date = DateTime.now();
-          // final date = DateTime(2024, 10, 19);
-
-          final invoice = Invoice(
-            supplier: Supplier(
-              name: companyName,
-              address: companyAddress,
-            ),
-            customer: Customer(
-              name: userData!['name'],
-              address: userData!['address'],
-            ),
-            info: InvoiceInfo(
-              date: date,
-              description: "You have paid the balance tour fee. Below is the invoice summary:",
-              number: '${DateTime.now().year}-${tourBookingID}B',
-            ),
-            // Wrap the single InvoiceItem in a list
-            items: [
-              InvoiceItem(
-                description: "Balance Tour Fee (Booking ID: ${tourBookingID})",
-                quantity: 1,
-                unitPrice: totalPrice.toInt(),
-                total: totalPrice,
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserHomepageScreen(
+                userId: widget.userID,
+                currentPageIndex: 3,
               ),
-            ],
+            ),
           );
 
-          // Perform some async operation
-          await generateInvoice(tourBookingID, invoice, "Tour Package", "tourBooking", "balance_payment", false, false, false);
 
-          // After the operation is done, hide the loading dialog
-          Navigator.of(context).pop(); // This will close the loading dialog
+          // Use Future.microtask to show the loading dialog after the previous dialog is closed
+          // Future.microtask(() {
+          //   showLoadingDialog(context, "Generating Invoice...");
+          // });
 
-          // Navigate to the homepage after PDF viewer
-          Future.delayed(Duration(milliseconds: 500), () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => UserHomepageScreen(
-                  userId: widget.userID,
-                  currentPageIndex: 3,
-                ),
-              ),
-            );
-          });
+          // final date = DateTime.now();
+          // // final date = DateTime(2024, 10, 19);
+
+          // final invoice = Invoice(
+          //   supplier: Supplier(
+          //     name: companyName,
+          //     address: companyAddress,
+          //   ),
+          //   customer: Customer(
+          //     name: userData!['name'],
+          //     address: userData!['address'],
+          //   ),
+          //   info: InvoiceInfo(
+          //     date: date,
+          //     description: "You have paid the balance tour fee. Below is the invoice summary:",
+          //     number: '${DateTime.now().year}-${tourBookingID}B',
+          //   ),
+          //   // Wrap the single InvoiceItem in a list
+          //   items: [
+          //     InvoiceItem(
+          //       description: "Balance Tour Fee (Booking ID: ${tourBookingID})",
+          //       quantity: 1,
+          //       unitPrice: totalPrice.toInt(),
+          //       total: totalPrice,
+          //     ),
+          //   ],
+          // );
+
+          // // Perform some async operation
+          // await generateInvoice(tourBookingID, invoice, "Tour Package", "tourBooking", "balance_payment", false, false, false);
+
+          // // After the operation is done, hide the loading dialog
+          // Navigator.of(context).pop(); // This will close the loading dialog
+
+          // // Navigate to the homepage after PDF viewer
+          // Future.delayed(Duration(milliseconds: 500), () {
+          //   Navigator.pushReplacement(
+          //     context,
+          //     MaterialPageRoute(
+          //       builder: (context) => UserHomepageScreen(
+          //         userId: widget.userID,
+          //         currentPageIndex: 3,
+          //       ),
+          //     ),
+          //   );
+          // });
         },
-        textButton: "View Invoice",
+        textButton: "Done",
       );
     } catch(e){
       showCustomDialog(
@@ -779,221 +830,353 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     );
   }
 
-  Future<void> showPaymentOption(BuildContext context, String deposit, Function onOptionSelected) async {
-    String? selectedPaymentOption; // To store the selected payment option
+  Future<String> uploadImageToStorage(String childName, Uint8List file) async{
+  
+    Reference ref = FirebaseStorage.instance.ref().child(childName);
+    UploadTask uploadTask = ref.putData(file);
+    TaskSnapshot snapshot = await uploadTask;
+    String downloadURL = await snapshot.ref.getDownloadURL();
+    return downloadURL;
+  }
 
-    await showDialog<void>(
+  Future<void> selectImage() async {
+    setState(() {
+      isSelectingImage = true;
+    });
+
+    Uint8List? img = await ImageUtils.selectImage(context);
+
+    setState(() {
+      _transferProof = img;
+      _proofNameController.text = img != null ? 'Proof Uploaded' : 'No proof uploaded';
+      isSelectingImage = false;
+    });
+  }
+
+  void showPaymentOption(BuildContext context, String amount, Function onSubmit) {
+    bool isProofUploaded = _proofNameController.text.isNotEmpty;
+
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Select Payment Option', 
-            style: TextStyle(
-              fontSize: defaultLabelFontSize,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return Container(
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            return AlertDialog(
+              title: const Text("Bank Details"),
+              content: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min, // To adjust based on content
-                  children: <Widget>[
-                    ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-                      leading: Transform.scale(
-                        scale: 0.6, // Scale the radio size
-                        child: Radio<String>(
-                          value: "Touch'n Go",
-                          groupValue: selectedPaymentOption,
-                          activeColor: primaryColor, // Set the selected radio color to blue
-                          onChanged: (String? value) {
-                            setState(() {
-                              selectedPaymentOption = value; // Update selected payment option
-                            });
-                          },
+                  mainAxisSize: MainAxisSize.max, // Change this to max
+                  children: [
+                    Text("Please transfer $amount to the following account:", textAlign: TextAlign.justify),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Bank: Hong Leong Bank\nAccount Name: TripMate\nAccount Number: 1234567890",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        setDialogState(() {
+                          isSelectingImage = true; // Start showing the loading indicator in the dialog
+                        });
+
+                        await selectImage();
+
+                        // Check if proof is uploaded
+                        setDialogState(() {
+                          isSelectingImage = false; // Stop showing the loading indicator in the dialog
+                          isProofUploaded = _proofNameController.text.isNotEmpty; // Update proof upload status
+                        });
+                      },
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text("Upload Transfer Proof"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: primaryColor, width: 1.5),
                         ),
                       ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-                        children: [
-                          Text(
-                            "Touch'n Go",
-                            style: TextStyle(
-                              fontSize: defaultFontSize,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black
-                            ),
-                          ),
-                          Image(
-                            image: AssetImage('images/TNG-eWallet.png'),
-                            width: 40,
-                            alignment: Alignment.centerRight,
-                          ), 
-                        ],
-                      ),
                     ),
-
-                    ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-                      leading: Transform.scale(
-                        scale: 0.6, // Scale the radio size
-                        child: Radio<String>(
-                          value: 'Credit Card',
-                          groupValue: selectedPaymentOption,
-                          activeColor: primaryColor, // Set the selected radio color to blue
-                          onChanged: (String? value) {
-                            setState(() {
-                              selectedPaymentOption = value; // Update selected payment option
-                            });
-                          },
-                        ),
-                      ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-                        children: [
-                          Text(
-                            'Credit Card',
-                            style: TextStyle(
-                              fontSize: defaultFontSize,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black
-                            ),
-                          ),
-                          Image(
-                            image: AssetImage('images/credit_card.png'),
-                            width: 40,
-                          ), 
-                        ],
-                      ),
-                    ),
-
-                    ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-                      leading: Transform.scale(
-                        scale: 0.6, // Scale the radio size
-                        child: Radio<String>(
-                          value: 'PayPal',
-                          groupValue: selectedPaymentOption,
-                          activeColor: primaryColor, // Set the selected radio color to blue
-                          onChanged: (String? value) {
-                            setState(() {
-                              selectedPaymentOption = value; // Update selected payment option
-                            });
-                          },
-                        ),
-                      ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-                        children: [
-                          Text(
-                            'PayPal',
-                            style: TextStyle(
-                              fontSize: defaultFontSize,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black
-                            ),
-                          ),
-                          Image(
-                            image: AssetImage('images/paypal.png'),
-                            width: 50,
-                            height: 40,
-                          ), 
-                        ],
-                      ),
-                    ),
-
-                    ListTile(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-                      leading: Transform.scale(
-                        scale: 0.6, // Scale the radio size
-                        child: Radio<String>(
-                          value: 'Online Banking',
-                          groupValue: selectedPaymentOption,
-                          activeColor: primaryColor, // Set the selected radio color to blue
-                          onChanged: (String? value) {
-                            setState(() {
-                              selectedPaymentOption = value; // Update selected payment option
-                            });
-                          },
-                        ),
-                      ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-                        children: [
-                          Text(
-                            'Online Banking',
-                            style: TextStyle(
-                              fontSize: defaultFontSize,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black
-                            ),
-                          ),
-                          Icon(Icons.account_balance, color: primaryColor, size: 20), // Icon for Bank Transfer
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-                    Text(
-                      'Total Price: $deposit',
-                      style: TextStyle(
-                        fontSize: defaultLabelFontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    SizedBox(height: 10),
-
+                    const SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextButton(
-                          child: Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close the dialog
-                          },
-                          style: TextButton.styleFrom(
-                            backgroundColor: primaryColor, // Set the background color
-                            foregroundColor: Colors.white, // Set the text color
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                            ),
+                        Expanded(
+                          child: Text(
+                            "Proof: ${_proofNameController.text.isNotEmpty ? _proofNameController.text : "No proof uploaded"}",
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                        SizedBox(width: 10),
-
-                        TextButton(
-                          child: Text('Pay'),
-                          style: TextButton.styleFrom(
-                            backgroundColor: selectedPaymentOption != null ? primaryColor : Colors.grey.shade300, // Set the background color
-                            foregroundColor: Colors.white, // Set the text color
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                            ),
+                        if (isSelectingImage)
+                          const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
                           ),
-                          onPressed: selectedPaymentOption != null
-                            ? () {
-                                onOptionSelected(selectedPaymentOption!); // Pass the selected payment option to the callback
-                                Navigator.of(context).pop(); // Close the dialog
-                              }
-                            : null,
-                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text("Close"),
+                  style: TextButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: (isProofUploaded) ? () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    onSubmit(); // Call the provided function
+                  } : null,
+                  child: const Text("Submit"),
+                  style: TextButton.styleFrom(
+                    backgroundColor: (isProofUploaded) 
+                      ? primaryColor 
+                      : Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
+
+  // Future<void> showPaymentOption(BuildContext context, String deposit, Function onOptionSelected) async {
+  //   String? selectedPaymentOption; // To store the selected payment option
+
+  //   await showDialog<void>(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Text(
+  //           'Select Payment Option', 
+  //           style: TextStyle(
+  //             fontSize: defaultLabelFontSize,
+  //             fontWeight: FontWeight.w600,
+  //             color: Colors.black,
+  //           ),
+  //         ),
+  //         content: StatefulBuilder(
+  //           builder: (BuildContext context, StateSetter setState) {
+  //             return Container(
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min, // To adjust based on content
+  //                 children: <Widget>[
+  //                   ListTile(
+  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+  //                     leading: Transform.scale(
+  //                       scale: 0.6, // Scale the radio size
+  //                       child: Radio<String>(
+  //                         value: "Touch'n Go",
+  //                         groupValue: selectedPaymentOption,
+  //                         activeColor: primaryColor, // Set the selected radio color to blue
+  //                         onChanged: (String? value) {
+  //                           setState(() {
+  //                             selectedPaymentOption = value; // Update selected payment option
+  //                           });
+  //                         },
+  //                       ),
+  //                     ),
+  //                     title: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+  //                       children: [
+  //                         Text(
+  //                           "Touch'n Go",
+  //                           style: TextStyle(
+  //                             fontSize: defaultFontSize,
+  //                             fontWeight: FontWeight.w500,
+  //                             color: Colors.black
+  //                           ),
+  //                         ),
+  //                         Image(
+  //                           image: AssetImage('images/TNG-eWallet.png'),
+  //                           width: 40,
+  //                           alignment: Alignment.centerRight,
+  //                         ), 
+  //                       ],
+  //                     ),
+  //                   ),
+
+  //                   ListTile(
+  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+  //                     leading: Transform.scale(
+  //                       scale: 0.6, // Scale the radio size
+  //                       child: Radio<String>(
+  //                         value: 'Credit Card',
+  //                         groupValue: selectedPaymentOption,
+  //                         activeColor: primaryColor, // Set the selected radio color to blue
+  //                         onChanged: (String? value) {
+  //                           setState(() {
+  //                             selectedPaymentOption = value; // Update selected payment option
+  //                           });
+  //                         },
+  //                       ),
+  //                     ),
+  //                     title: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+  //                       children: [
+  //                         Text(
+  //                           'Credit Card',
+  //                           style: TextStyle(
+  //                             fontSize: defaultFontSize,
+  //                             fontWeight: FontWeight.w500,
+  //                             color: Colors.black
+  //                           ),
+  //                         ),
+  //                         Image(
+  //                           image: AssetImage('images/credit_card.png'),
+  //                           width: 40,
+  //                         ), 
+  //                       ],
+  //                     ),
+  //                   ),
+
+  //                   ListTile(
+  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+  //                     leading: Transform.scale(
+  //                       scale: 0.6, // Scale the radio size
+  //                       child: Radio<String>(
+  //                         value: 'PayPal',
+  //                         groupValue: selectedPaymentOption,
+  //                         activeColor: primaryColor, // Set the selected radio color to blue
+  //                         onChanged: (String? value) {
+  //                           setState(() {
+  //                             selectedPaymentOption = value; // Update selected payment option
+  //                           });
+  //                         },
+  //                       ),
+  //                     ),
+  //                     title: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+  //                       children: [
+  //                         Text(
+  //                           'PayPal',
+  //                           style: TextStyle(
+  //                             fontSize: defaultFontSize,
+  //                             fontWeight: FontWeight.w500,
+  //                             color: Colors.black
+  //                           ),
+  //                         ),
+  //                         Image(
+  //                           image: AssetImage('images/paypal.png'),
+  //                           width: 50,
+  //                           height: 40,
+  //                         ), 
+  //                       ],
+  //                     ),
+  //                   ),
+
+  //                   ListTile(
+  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
+  //                     leading: Transform.scale(
+  //                       scale: 0.6, // Scale the radio size
+  //                       child: Radio<String>(
+  //                         value: 'Online Banking',
+  //                         groupValue: selectedPaymentOption,
+  //                         activeColor: primaryColor, // Set the selected radio color to blue
+  //                         onChanged: (String? value) {
+  //                           setState(() {
+  //                             selectedPaymentOption = value; // Update selected payment option
+  //                           });
+  //                         },
+  //                       ),
+  //                     ),
+  //                     title: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
+  //                       children: [
+  //                         Text(
+  //                           'Online Banking',
+  //                           style: TextStyle(
+  //                             fontSize: defaultFontSize,
+  //                             fontWeight: FontWeight.w500,
+  //                             color: Colors.black
+  //                           ),
+  //                         ),
+  //                         Icon(Icons.account_balance, color: primaryColor, size: 20), // Icon for Bank Transfer
+  //                       ],
+  //                     ),
+  //                   ),
+
+  //                   SizedBox(height: 20),
+  //                   Text(
+  //                     'Total Price: $deposit',
+  //                     style: TextStyle(
+  //                       fontSize: defaultLabelFontSize,
+  //                       fontWeight: FontWeight.bold,
+  //                     ),
+  //                   ),
+
+  //                   SizedBox(height: 10),
+
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.end,
+  //                     crossAxisAlignment: CrossAxisAlignment.end,
+  //                     children: [
+  //                       TextButton(
+  //                         child: Text('Cancel'),
+  //                         onPressed: () {
+  //                           Navigator.of(context).pop(); // Close the dialog
+  //                         },
+  //                         style: TextButton.styleFrom(
+  //                           backgroundColor: primaryColor, // Set the background color
+  //                           foregroundColor: Colors.white, // Set the text color
+  //                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       SizedBox(width: 10),
+
+  //                       TextButton(
+  //                         child: Text('Pay'),
+  //                         style: TextButton.styleFrom(
+  //                           backgroundColor: selectedPaymentOption != null ? primaryColor : Colors.grey.shade300, // Set the background color
+  //                           foregroundColor: Colors.white, // Set the text color
+  //                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+  //                           ),
+  //                         ),
+  //                         onPressed: selectedPaymentOption != null
+  //                           ? () {
+  //                               onOptionSelected(selectedPaymentOption!); // Pass the selected payment option to the callback
+  //                               Navigator.of(context).pop(); // Close the dialog
+  //                             }
+  //                           : null,
+  //                       ),
+  //                     ],
+  //                   )
+  //                 ],
+  //               ),
+  //             );
+  //           },
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund, bool isDepositRefund) async {
     setState(() {
@@ -1411,7 +1594,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                           TextButton(
                                             onPressed: () {
                                               Navigator.of(context).pop(); // Close the dialog
-                                              showPaymentOption(context, 'RM${NumberFormat('#,##0.00').format(tourbookings.totalPrice - 1000)}', (selectedOption) {
+                                              showPaymentOption(context, 'RM${NumberFormat('#,##0.00').format(tourbookings.totalPrice - 1000)}', () {
                                                 payBalanceTour(tourbookings.tourBookingID, tourbookings.agencyName, tourbookings.agencyAddress, tourbookings.totalPrice - 1000); // Call bookTour when payment option is selected
                                               });
                                             },
@@ -1853,7 +2036,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                   return AlertDialog(
                                     title: Text('Confirmation'),
                                     content: Text(
-                                      "Please noted that a cancellation fee of RM100.00 will be deducted from the total price which means that you will only received RM${NumberFormat('#,##0.00').format((carRentalbookings.totalPrice - 100))}. Are you sure you still want to cancel this booking?",
+                                      "Are you sure you want to cancel this booking?",
                                       textAlign: TextAlign.justify,
                                     ),
                                     actions: [
@@ -2217,7 +2400,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                   return AlertDialog(
                                     title: Text('Confirmation'),
                                     content: Text(
-                                      "Please noted that a cancellation fee of RM100.00 will be deducted from the total price which means that you will only received RM${NumberFormat('#,##0.00').format((localBuddyBookings.totalPrice - 100))}. Are you sure you still want to cancel this booking?",
+                                      "Are you sure you want to cancel this booking?",
                                       textAlign: TextAlign.justify,
                                     ),
                                     actions: [
@@ -2241,96 +2424,228 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                           showDialog(
                                             context: context,
                                             builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text('Cancel Booking'),
-                                                content: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Text('Please provide a reason for booking cancellation:'),
-                                                    TextField(
-                                                      controller: _cancelLocalBookingController,
-                                                      maxLines: 3,
-                                                      decoration: InputDecoration(
-                                                        hintText: 'Enter cancellation reason...',
-                                                        border: OutlineInputBorder(
-                                                          borderSide: BorderSide(color: primaryColor)
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Close the dialog
-                                                    },
-                                                    child: Text('Cancel'),
-                                                    style: TextButton.styleFrom(
-                                                      backgroundColor: primaryColor,
-                                                      foregroundColor: Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () async {
-                                                      if (_cancelLocalBookingController.text.trim().isEmpty) {
-                                                        // Show error dialog if reason is empty
-                                                        showDialog(
-                                                          context: context,
-                                                          builder: (BuildContext context) {
-                                                            return AlertDialog(
-                                                              title: Text('Error'),
-                                                              content: Text('Cancellation reason cannot be empty.'),
-                                                              actions: [
-                                                                TextButton(
-                                                                  onPressed: () {
-                                                                    Navigator.of(context).pop(); // Close the error dialog
-                                                                  },
-                                                                  child: Text('OK'),
-                                                                  style: TextButton.styleFrom(
-                                                                    backgroundColor: primaryColor,
-                                                                    foregroundColor: Colors.white,
-                                                                    shape: RoundedRectangleBorder(
-                                                                      borderRadius: BorderRadius.circular(10),
-                                                                    ),
+                                              return StatefulBuilder(
+                                                builder: (BuildContext context, StateSetter setDialogState) {
+                                                  return AlertDialog(
+                                                    title: Text('Cancel Booking'),
+                                                    content: SingleChildScrollView(
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Text('Please provide a reason for booking cancellation:',style: TextStyle(fontWeight: FontWeight.bold, fontSize: defaultFontSize),),
+                                                          SizedBox(height: 10),
+                                                          TextField(
+                                                            controller: _cancelLocalBookingController,
+                                                            maxLines: 3,
+                                                            decoration: InputDecoration(
+                                                              labelText: "Cancellation Reason",
+                                                              hintText: "Enter cancellation reason...",
+                                                              labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                                                              filled: true,
+                                                              fillColor: Colors.white,
+                                                              border: OutlineInputBorder(
+                                                                borderSide: const BorderSide(
+                                                                  color: Color(0xFF467BA1),
+                                                                  width: 2.5,
+                                                                ),
+                                                              ),
+                                                              focusedBorder: OutlineInputBorder(
+                                                                borderSide: const BorderSide(
+                                                                  color: Color(0xFF467BA1),
+                                                                  width: 2.5,
+                                                                ),
+                                                              ),
+                                                              enabledBorder: OutlineInputBorder(
+                                                                borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                                                              ),
+                                                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                            ),
+                                                            style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                                                          ),
+                                                          const SizedBox(height: 20),
+                                                            const Text(
+                                                              "Please enter your bank details for booking fee refund:",
+                                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: defaultFontSize),
+                                                            ),
+                                                            SizedBox(height: 10),
+                                                            TextField(
+                                                              controller: _bankNameController,
+                                                              decoration: InputDecoration(
+                                                                labelText: "Bank Name",
+                                                                hintText: "Bank Name",
+                                                                labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                                                                filled: true,
+                                                                fillColor: Colors.white,
+                                                                border: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
                                                                   ),
                                                                 ),
-                                                              ],
-                                                            );
-                                                          },
-                                                        );
-                                                      } else {
-                                                        // Proceed with cancelation if reason is provided
-                                                        // Navigator.of(context).pop(); // Close the main dialog
-                                                        setState(() {
-                                                          isCancelLocalBuddyBooking = true;
-                                                        });
-                                                        cancelLocalBuddyBooking(localBuddyBookings.localBuddyBookingID, _cancelLocalBookingController.text);
-                                                        setState(() {
-                                                          isCancelLocalBuddyBooking = false;
-                                                        });
-                                                        // Navigator.pop(context);
-                                                      }
-                                                    },
-                                                    child: isCancelLocalBuddyBooking
-                                                    ? SizedBox(
-                                                      width: 10,
-                                                      height: 10,
-                                                      child: CircularProgressIndicator(color: Colors.white,),
-                                                    )
-                                                    : Text('Submit'),
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor: primaryColor,
-                                                      foregroundColor: Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(10),
+                                                                focusedBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
+                                                                  ),
+                                                                ),
+                                                                enabledBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                                                                ),
+                                                                floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                              ),
+                                                              style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                                                              // onChanged: (value) {
+                                                              //   setDialogState(() {
+                                                              //     updateAccountDetailsFill();
+                                                              //   });
+                                                              // },
+                                                            ),
+                                                            SizedBox(height: 10),
+                                                            TextField(
+                                                              controller: _accountNameController,
+                                                              decoration: InputDecoration(
+                                                                labelText: "Account Name",
+                                                                hintText: "Account Name",
+                                                                labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                                                                filled: true,
+                                                                fillColor: Colors.white,
+                                                                border: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
+                                                                  ),
+                                                                ),
+                                                                focusedBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
+                                                                  ),
+                                                                ),
+                                                                enabledBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                                                                ),
+                                                                floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                              ),
+                                                              style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                                                              // onChanged: (value) {
+                                                              //   setDialogState(() {
+                                                              //     updateAccountDetailsFill();
+                                                              //   });
+                                                              // },
+                                                            ),
+                                                            SizedBox(height: 10),
+                                                            TextField(
+                                                              controller: _accountNumberController,
+                                                              decoration: InputDecoration(
+                                                                labelText: "Account Number",
+                                                                hintText: "Account Number",
+                                                                labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                                                                filled: true,
+                                                                fillColor: Colors.white,
+                                                                border: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
+                                                                  ),
+                                                                ),
+                                                                focusedBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(
+                                                                    color: Color(0xFF467BA1),
+                                                                    width: 2.5,
+                                                                  ),
+                                                                ),
+                                                                enabledBorder: OutlineInputBorder(
+                                                                  borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                                                                ),
+                                                                floatingLabelBehavior: FloatingLabelBehavior.always,
+                                                              ),
+                                                              style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                                                              keyboardType: TextInputType.number,
+                                                              // onChanged: (value) {
+                                                              //   setDialogState(() {
+                                                              //     updateAccountDetailsFill();
+                                                              //   });
+                                                              // },
+                                                            ),
+                                                        ],
                                                       ),
                                                     ),
-                                                  ),
-                                                ],
-                                              );
+                                                    
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog
+                                                        },
+                                                        child: Text('Cancel'),
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () async {
+                                                          if (_cancelLocalBookingController.text.trim().isEmpty && _bankNameController.text.trim().isEmpty && _accountNameController.text.trim().isEmpty && _accountNumberController.text.trim().isEmpty) {
+                                                            // Show error dialog if reason is empty
+                                                            showDialog(
+                                                              context: context,
+                                                              builder: (BuildContext context) {
+                                                                return AlertDialog(
+                                                                  title: Text('Error'),
+                                                                  content: Text('Please make sure you have filled in all required field.'),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed: () {
+                                                                        Navigator.of(context).pop(); // Close the error dialog
+                                                                      },
+                                                                      child: Text('OK'),
+                                                                      style: TextButton.styleFrom(
+                                                                        backgroundColor: primaryColor,
+                                                                        foregroundColor: Colors.white,
+                                                                        shape: RoundedRectangleBorder(
+                                                                          borderRadius: BorderRadius.circular(10),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          } else {
+                                                            // Proceed with cancelation if reason is provided
+                                                            // Navigator.of(context).pop(); // Close the main dialog
+                                                            setState(() {
+                                                              isCancelLocalBuddyBooking = true;
+                                                            });
+                                                            cancelLocalBuddyBooking(localBuddyBookings.localBuddyBookingID, _cancelLocalBookingController.text, _bankNameController.text, _accountNameController.text, _accountNumberController.text);
+                                                            setState(() {
+                                                              isCancelLocalBuddyBooking = false;
+                                                            });
+                                                            // Navigator.pop(context);
+                                                          }
+                                                        },
+                                                        child: isCancelLocalBuddyBooking
+                                                        ? SizedBox(
+                                                          width: 10,
+                                                          height: 10,
+                                                          child: CircularProgressIndicator(color: Colors.white,),
+                                                        )
+                                                        : Text('Submit'),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                              )
+                                              ;
                                             },
                                           );
 

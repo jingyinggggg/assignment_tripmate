@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:assignment_tripmate/constants.dart';
-import 'package:assignment_tripmate/customerModel.dart';
+// import 'package:assignment_tripmate/customerModel.dart';
 import 'package:assignment_tripmate/invoiceModel.dart';
 import 'package:assignment_tripmate/pdf_invoice_api.dart';
-import 'package:assignment_tripmate/saveImageToFirebase.dart';
+// import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
-import 'package:assignment_tripmate/supplierModel.dart';
+// import 'package:assignment_tripmate/supplierModel.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -135,13 +135,14 @@ class _createBookingScreenState extends State<createBookingScreen> {
     }
   }
 
-  // Encryption helper function
   String encryptText(String text) {
     final key = encrypt.Key.fromUtf8('16CharactersLong');
-    final iv = encrypt.IV.fromLength(16);
+    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
     final encrypted = encrypter.encrypt(text, iv: iv);
-    return encrypted.base64;
+    // Combine IV and encrypted text with a delimiter
+    return "${iv.base64}:${encrypted.base64}";
   }
 
   Future<void> _fetchMaintenanceDates() async {
@@ -460,8 +461,8 @@ class _createBookingScreenState extends State<createBookingScreen> {
     }
   }
 
-    Future<String> uploadImageToStorage(String childName, Uint8List file) async{
-    
+  Future<String> uploadImageToStorage(String childName, Uint8List file) async{
+  
     Reference ref = FirebaseStorage.instance.ref().child(childName);
     UploadTask uploadTask = ref.putData(file);
     TaskSnapshot snapshot = await uploadTask;
@@ -2095,7 +2096,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                           Expanded( // Allow the Text to expand and wrap text
                                             child: Text(
-                                              'The deposit will be refunded if the booking is canceled. Cancellations made less than 24 hours before the bookings may be subject to a RM 100.00 cancellation fee.',
+                                              'The bookings must be made 3 days in advanced.',
                                               style: TextStyle(
                                                 fontSize: defaultFontSize,
                                                 fontWeight: FontWeight.w500,
@@ -2119,7 +2120,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                           ),
                                           Expanded( // Allow the Text to expand and wrap text
                                             child: Text(
-                                              'The payment can pay through online banking or QR pay.',
+                                              'The payment can pay through online banking.',
                                               style: TextStyle(
                                                 fontSize: defaultFontSize,
                                                 fontWeight: FontWeight.w500,
@@ -2462,7 +2463,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                             ),
                                             Expanded( // Allow the Text to expand and wrap text
                                               child: Text(
-                                                'Cancellations must be made at least 24 hours before the scheduled booking for a full refund.',
+                                                'The bookings must be made 3 days in advanced.',
                                                 style: TextStyle(
                                                   fontSize: defaultFontSize,
                                                   fontWeight: FontWeight.w500,
@@ -2486,31 +2487,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                             ),
                                             Expanded( // Allow the Text to expand and wrap text
                                               child: Text(
-                                                'Cancellations made less than 24 hours before the bookings may be subject to a RM 100.00 cancellation fee.',
-                                                style: TextStyle(
-                                                  fontSize: defaultFontSize,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
-                                                ),
-                                                textAlign: TextAlign.justify,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '3. ',
-                                              style: TextStyle(
-                                                fontSize: defaultFontSize,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            Expanded( // Allow the Text to expand and wrap text
-                                              child: Text(
-                                                'The payment can pay through online banking or QR pay.',
+                                                'The payment can pay through online banking.',
                                                 style: TextStyle(
                                                   fontSize: defaultFontSize,
                                                   fontWeight: FontWeight.w500,
