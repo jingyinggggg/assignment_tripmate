@@ -261,14 +261,14 @@ class _TravelAgentViewBookingDetailsScreenState extends State<TravelAgentViewBoo
                             alignment: Alignment.center,
                             child: Container(
                               width: double.infinity,
-                              height: 50,
+                              height: 60,
                               color: Colors.white.withOpacity(0.7),
                               child: Center(
                                 child: Text(
                                   tourData!['tourName'] ?? 'No Name',
                                   style: const TextStyle(
                                     color: Colors.black,
-                                    fontSize: 22,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     shadows: [
                                       Shadow(

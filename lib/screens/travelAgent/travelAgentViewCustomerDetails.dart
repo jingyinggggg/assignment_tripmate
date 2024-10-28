@@ -369,6 +369,18 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                 ),
                                 textAlign: TextAlign.justify,
                               ),
+                              if(tourBookingData!['bookingStatus'] == 2)...[
+                                SizedBox(height: 10,),
+                                Text(
+                                  "Cancel Reason: ${tourBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
                               SizedBox(height: 20),
                               Container(
                                 alignment: Alignment.topCenter,
@@ -530,6 +542,18 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
 
                             if(carBookingData != null && carData != null) ...[
                               carComponent(data: carBookingData!, carData: carData!),
+                              if(carBookingData!['bookingStatus'] == 2)...[
+                                SizedBox(height: 10,),
+                                Text(
+                                  "Cancel Reason: ${carBookingData!['cancelReason'] ?? "N/A" }",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold
+                                  ),
+                                  textAlign: TextAlign.justify,
+                                ),
+                              ],
                               SizedBox(height: 20),
                               Container(
                                 alignment: Alignment.topCenter,
@@ -692,74 +716,103 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                   ],
                                 ),
                                 SizedBox(height: 20),
-                                if(carBookingData!['isCheckCarCondition'] == 0)
+                                if (carBookingData!['isCheckCarCondition'] == 0)
                                   Container(
-                                    width: double.infinity,
                                     height: 50,
-                                      child: TextButton(
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: const Text("Confirmation"),
-                                                content: Text(
-                                                  "Please ensure that the car's condition has been thoroughly checked before submitting the request to the admin for refunding the deposit to the user.",
-                                                  textAlign: TextAlign.justify,
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Close the dialog
-                                                    },
-                                                    style: TextButton.styleFrom(
-                                                      backgroundColor: primaryColor, // Set the background color
-                                                      foregroundColor: Colors.white, // Set the text color
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-                                                      ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: TextButton(
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: const Text("Confirmation"),
+                                                    content: const Text(
+                                                      "Please ensure that the car's condition has been thoroughly checked before submitting the request to the admin for refunding the deposit to the user.",
+                                                      textAlign: TextAlign.justify,
                                                     ),
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      Navigator.of(context).pop(); // Close the dialog
-                                                      requestRefund(carBookingData!['bookingID']);
-                                                    },
-                                                    style: TextButton.styleFrom(
-                                                      backgroundColor: primaryColor, // Set the background color
-                                                      foregroundColor: Colors.white, // Set the text color
-                                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.circular(8), // Optional: rounded corners
+                                                    actions: <Widget>[
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog
+                                                        },
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                        ),
+                                                        child: const Text("Cancel"),
                                                       ),
-                                                    ),
-                                                    child: const Text("Submit"),
-                                                  ),
-                                                ],
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the dialog
+                                                          requestRefund(carBookingData!['bookingID']);
+                                                        },
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                        ),
+                                                        child: const Text("Submit"),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
                                               );
                                             },
-                                          );
-                                        }, 
-                                        child: isSubmittingRefundRequest
-                                          ? CircularProgressIndicator(color: Colors.white)
-                                          : Text(
-                                              "Submit Refund Request",
+                                            child: isSubmittingRefundRequest
+                                                ? const CircularProgressIndicator(color: Colors.white)
+                                                : const Text(
+                                                    "Car Check Approve",
+                                                    style: TextStyle(
+                                                      fontSize: defaultLabelFontSize,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: primaryColor,
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8), // Optional space between buttons
+                                        Expanded(
+                                          child: TextButton(
+                                            onPressed: () {
+                                              // Add logic for reject refund request here
+                                              // rejectRefund(carBookingData!['bookingID']);
+                                            },
+                                            child: const Text(
+                                              "Car Check Reject",
                                               style: TextStyle(
-                                                fontSize: 18,
+                                                fontSize: defaultLabelFontSize,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                        style: TextButton.styleFrom(
-                                          backgroundColor: primaryColor,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10), // Set the button radius to 0
+                                            style: TextButton.styleFrom(
+                                              backgroundColor: Colors.red, // Use a different color for reject button
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      )
-                                    )
+                                      ],
+                                    ),
+                                  )
+
                               ]
                             ]
                           ]
