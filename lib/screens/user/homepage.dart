@@ -1,10 +1,12 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
+import 'package:assignment_tripmate/screens/user/carRentalDetails.dart';
 import 'package:assignment_tripmate/screens/user/carRentalHomepage.dart';
 import 'package:assignment_tripmate/screens/user/itinerary.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
 import 'package:assignment_tripmate/screens/user/languageTranslator.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyHomepage.dart';
 import 'package:assignment_tripmate/screens/user/viewCity.dart';
 import 'package:assignment_tripmate/screens/user/viewCountry.dart';
@@ -73,9 +75,6 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
 
       // Take the first 5 entries after shuffling
       countryList = allCountries.take(5).toList();
-
-      // Optional: print fetched country data for debugging
-      print("Fetched Random Countries: $countryList");
     } catch (e) {
       print("Error fetching countries: $e");
     } finally {
@@ -104,9 +103,6 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
 
       // Take the first 5 entries after shuffling
       carRentalList = allCar.take(5).toList();
-
-      // Optional: print fetched country data for debugging
-      print("Fetched Random Car Rental Package: $carRentalList");
     } catch (e) {
       print("Error fetching Car Rental Package: $e");
     } finally {
@@ -152,9 +148,6 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
 
       // Wait for all user details to be fetched
       List<Map<String, dynamic>> buddiesWithUserDetails = await Future.wait(userFutures);
-
-      // Optional: print fetched buddies for debugging
-      print("Fetched Random Local Buddies: $buddiesWithUserDetails");
 
       // Assign the combined list to a state variable for use in your UI
       localBuddyList = buddiesWithUserDetails; // Define localBuddyList in your state
@@ -448,15 +441,16 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                           child: GestureDetector(
                             onTap: () {
                               // Navigate to the view screen
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => ViewCityScreen(
-                              //       userId: widget.userId,
-                              //       countryName: country['name'],
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CarRentalDetailsScreen(
+                                    userId: widget.userId, 
+                                    carId: carRental['carID'], 
+                                    fromAppLink: "false"
+                                  )
+                                ),
+                              );
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -555,15 +549,16 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                           child: GestureDetector(
                             onTap: () {
                               // Navigate to the view screen
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => ViewCityScreen(
-                              //       userId: widget.userId,
-                              //       countryName: country['name'],
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LocalBuddyDetailsScreen(
+                                    userId: widget.userId,
+                                    localBuddyId: localBuddy['localBuddyID'],
+                                    fromAppLink: "false",
+                                  ),
+                                ),
+                              );
                             },
                             child: Container(
                               // padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),

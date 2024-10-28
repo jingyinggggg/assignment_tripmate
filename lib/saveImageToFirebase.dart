@@ -533,5 +533,4 @@ class StoreData {
 
     return resp;
   }
-
 }
