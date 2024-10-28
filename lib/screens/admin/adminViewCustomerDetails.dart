@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:http/http.dart' as http;
 
 class AdminViewCustomerDetailsScreen extends StatefulWidget {
   final String userId;
@@ -52,8 +53,11 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
   bool isOpenInvoice = false;
   bool isOpenRefundInvoice = false;
   bool isOpenDepositRefundInvoice = false;
+  bool isOpenProofFile = false;
   bool isRefunding = false;
+  bool isGenerating = false;
   Map<String, dynamic>? custData;
+  Map<String, dynamic>? companyData;
   Map<String, dynamic>? tourData;
   Map<String, dynamic>? carData;
   Map<String, dynamic>? localBuddyData;
@@ -110,6 +114,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
 
       if(tourSnapshot.exists){
         Map<String, dynamic>? data = tourSnapshot.data() as  Map<String, dynamic>?;
+        
         setState(() {
           tourBookingData = data;
         });
@@ -169,51 +174,114 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     }
   }
 
-  Future<void>_fetchTourDetails() async {
+  Future<void> _fetchTourDetails() async {
     setState(() {
-      isFetchingTour = true;
+      isFetchingTour = true; // Set loading state
     });
-    try{
+
+    try {
       DocumentReference tourRef = FirebaseFirestore.instance.collection('tourPackage').doc(widget.tourID);
       DocumentSnapshot tourSnapshot = await tourRef.get();
 
-      if(tourSnapshot.exists){
-        Map<String, dynamic>? data = tourSnapshot.data() as  Map<String, dynamic>?;
+      if (tourSnapshot.exists) {
+        Map<String, dynamic>? data = tourSnapshot.data() as Map<String, dynamic>?;
+
+        print('Tour data retrieved: $data'); // Debugging statement for tour data
+
+        if (data != null) {
+          DocumentReference companyRef = FirebaseFirestore.instance.collection('travelAgent').doc(data['agentID']);
+          DocumentSnapshot companySnapshot = await companyRef.get();
+
+          if (companySnapshot.exists) {
+            Map<String, dynamic>? companyData = companySnapshot.data() as Map<String, dynamic>?;
+
+            if (companyData != null) {
+
+              // Store the company data
+              setState(() {
+                this.companyData = companyData; // Ensure you're using 'this' for clarity
+              });
+            } 
+          } 
+        } 
+
         setState(() {
-          tourData = data;
+          this.tourData = data; // Store the tour data
         });
+      } else {
+        print('Tour document does not exist'); // Debugging for tour document existence
       }
-    } catch(e){
-      print('Error fetch tour data: $e');
-    } finally{
+    } catch (e) {
+    } finally {
       setState(() {
-        isFetchingTour = false;
+        isFetchingTour = false; // Reset loading state
       });
     }
   }
 
-  Future<void>_fetchCarDetails() async {
+
+  Future<void> _fetchCarDetails() async {
     setState(() {
-      isFetchingCar = true;
+      isFetchingCar = true; // Set loading state
     });
-    try{
+
+    try {
       DocumentReference carRef = FirebaseFirestore.instance.collection('car_rental').doc(widget.carRentalID);
       DocumentSnapshot carSnapshot = await carRef.get();
 
-      if(carSnapshot.exists){
-        Map<String, dynamic>? data = carSnapshot.data() as  Map<String, dynamic>?;
+      if (carSnapshot.exists) {
+        Map<String, dynamic>? data = carSnapshot.data() as Map<String, dynamic>?;
+
+        print('Car data retrieved: $data'); // Debugging statement for car data
+
+        // Check if data is null
+        if (data == null) {
+          print('Car data is null');
+          return; // Exit early if data is null
+        }
+
+        // Retrieve the agencyID safely
+        String? agencyID = data['agencyID'];
+        if (agencyID == null) {
+          print('Agency ID is null'); // Log if agencyID is missing
+          return; // Exit early if agencyID is null
+        }
+
+        DocumentReference companyRef = FirebaseFirestore.instance.collection('travelAgent').doc(agencyID);
+        DocumentSnapshot companySnapshot = await companyRef.get();
+
+        if (companySnapshot.exists) {
+          Map<String, dynamic>? companyData = companySnapshot.data() as Map<String, dynamic>?;
+
+          print('Company data retrieved: $companyData'); // Debugging statement for company data
+
+          // Check if companyData is null
+          if (companyData != null) {
+            setState(() {
+              this.companyData = companyData; // Ensure you're using 'this' for clarity
+            });
+          } else {
+            print('Company data is null');
+          }
+        } else {
+          print('Company document does not exist');
+        }
+
         setState(() {
-          carData = data;
+          carData = data; // Store the car data
         });
+      } else {
+        print('Car document does not exist'); // Debugging for car document existence
       }
-    } catch(e){
-      print('Error fetch car data: $e');
-    } finally{
+    } catch (e) {
+      print('Error fetching car data: $e'); // Log any errors
+    } finally {
       setState(() {
-        isFetchingCar = false;
+        isFetchingCar = false; // Reset loading state
       });
     }
   }
+
 
   Future<void>_fetchLocalBuddyDetails() async {
     setState(() {
@@ -272,6 +340,29 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     } catch (e) {
       // Handle errors
       print("Error downloading or opening the file: $e");
+    }
+  }
+
+  Future<void> downloadAndOpenImageFromUrl(String url) async {
+    // Fetch the image from the URL
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      // If the server returns an OK response, display the image
+      final bytes = response.bodyBytes;
+
+      // Display the image in a new screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PhotoView(
+            imageProvider: MemoryImage(bytes),
+            heroAttributes: const PhotoViewHeroAttributes(tag: "image"),
+          ),
+        ),
+      );
+    } else {
+      // Handle the error case
+      throw Exception('Failed to load image');
     }
   }
 
@@ -425,6 +516,317 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     );
   }
 
+//   void generateTourDepositInvoice() {
+//   // Show a confirmation dialog first
+//   showDialog(
+//     context: context,
+//     builder: (BuildContext context) {
+//       return AlertDialog(
+//         title: Text('Confirm Invoice Generation'),
+//         content: Text('Are you sure you want to generate the deposit invoice?'),
+//         actions: <Widget>[
+//           TextButton(
+//             child: Text('Cancel'),
+//             onPressed: () {
+//               Navigator.of(context).pop(); // Close the dialog
+//             },
+//           ),
+//           TextButton(
+//             child: Text('Confirm'),
+//             onPressed: () async {
+//               // Close the confirmation dialog
+//               Navigator.of(context).pop(); // Close confirmation dialog
+              
+//               // Now proceed with generating the invoice
+//               await _generateInvoice(); // Call the method to generate the invoice
+//             },
+//           ),
+//         ],
+//       );
+//     },
+//   );
+// }
+
+  Future<void> _generateDepositTourInvoice() async {
+    setState(() {
+      isGenerating = true; // Set generating state
+    });
+
+    try {
+      showLoadingDialog(context, "Generating Invoice...");
+      final date = DateTime.now();
+      final invoice = Invoice(
+        supplier: Supplier(
+          name: companyData!['companyName'],
+          address: companyData!['companyAddress'],
+        ),
+        customer: Customer(
+          name: custData!['name'],
+          address: custData!['address'],
+        ),
+        info: InvoiceInfo(
+          date: date,
+          description: "You have paid the deposit. Below is the invoice summary:",
+          number: '${DateTime.now().year}-${widget.tourBookingID}',
+        ),
+        items: [
+          InvoiceItem(
+            description: "Deposit for ${tourData!['tourName']} - (${tourBookingData!['travelDate']})",
+            quantity: 1,
+            unitPrice: 1000,
+            total: 1000,
+          ),
+        ],
+      );
+
+      // Generate the invoice
+      await generateInvoice(widget.tourBookingID!, invoice, "Tour Package", "tourBooking", "deposit", true, false, false);
+
+      // After the operation is done, hide the loading dialog
+      Navigator.of(context).pop(); // Close loading dialog
+
+      // Open the generated PDF invoice
+      String pdfUrl = "link_to_generated_pdf"; // Update with your PDF URL logic
+      String fileName = "Deposit_Invoice_${widget.tourBookingID}.pdf"; // Set the filename
+      await downloadAndOpenPdfFromUrl(pdfUrl, fileName); // Function to download and open PDF
+
+      // Optionally, refresh the page/state after opening the PDF
+      setState(() {
+        isGenerating = false; // Reset generating state
+      });
+
+      // Navigate back to customer details
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminViewCustomerDetailsScreen(
+            userId: widget.userId,
+            customerId: widget.customerId,
+            tourBookingID: widget.tourBookingID,
+            tourID: widget.tourID,
+          ),
+        ),
+      );
+
+    } catch (e) {
+      setState(() {
+        isGenerating = false; // Reset generating state in case of error
+      });
+      
+      // Show failure dialog
+      showCustomDialog(
+        context: context,
+        title: "Failed",
+        content: "Something went wrong! Please try again...",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    }
+  }
+
+  Future<void> _generateCarInvoice() async {
+    setState(() {
+      isGenerating = true; // Set generating state
+    });
+
+    try {
+      List<DateTime> bookingDates = (carBookingData!['bookingDate'] as List<dynamic>)
+      .map((date) => (date as Timestamp).toDate())
+      .toList();
+
+      showLoadingDialog(context, "Generating Invoice...");
+      final date = DateTime.now();
+      final invoice = Invoice(
+        supplier: Supplier(
+          name: companyData!['companyName'],
+          address: companyData!['companyAddress'],
+        ),
+        customer: Customer(
+          name: custData!['name'],
+          address: custData!['address'],
+        ),
+        info: InvoiceInfo(
+          date: date,
+          description: "You have paid the bill. Below is the invoice summary:",
+          number: '${DateTime.now().year}-${widget.carRentalBookingID}',
+        ),
+        items: [
+          InvoiceItem(
+            description: "Deposit (Refundable)",
+            quantity: 1,
+            unitPrice: 300,
+            total: 300,
+          ),
+          InvoiceItem(
+            description: "${carData!['carModel']} - (${bookingDates.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')}))",
+            // description: "${_carRental!.carModel} (${dateFormat.format(selectedBookingDates)})",
+            quantity: carBookingData!['totalDays'],
+            unitPrice: ((carBookingData!['totalPrice'] - 300) / carBookingData!['bookingDate'].length).toInt(),
+            total: carBookingData!['totalPrice'] - 300,
+          ),
+        ],
+      );
+
+      // Generate the invoice
+      await generateInvoice(widget.carRentalBookingID!, invoice, "Car Rental", "carRentalBooking", "invoice", false, false, false);
+
+      // After the operation is done, hide the loading dialog
+      Navigator.of(context).pop(); // Close loading dialog
+
+      // // Open the generated PDF invoice
+      // String pdfUrl = "link_to_generated_pdf"; // Update with your PDF URL logic
+      // String fileName = "Deposit_Invoice_${widget.tourBookingID}.pdf"; // Set the filename
+      // await downloadAndOpenPdfFromUrl(pdfUrl, fileName); // Function to download and open PDF
+
+      // Optionally, refresh the page/state after opening the PDF
+      setState(() {
+        isGenerating = false; // Reset generating state
+      });
+
+      // Navigate back to customer details
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminViewCustomerDetailsScreen(
+            userId: widget.userId,
+            customerId: widget.customerId,
+            carRentalBookingID: widget.carRentalBookingID,
+            carRentalID: widget.carRentalID,
+          ),
+        ),
+      );
+
+    } catch (e) {
+      setState(() {
+        isGenerating = false; // Reset generating state in case of error
+      });
+      
+      // Show failure dialog
+      showCustomDialog(
+        context: context,
+        title: "Failed",
+        content: "Something went wrong! Please try again...",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    }
+  }
+
+  Future<void> _generateLocalBuddyInvoice() async {
+    setState(() {
+      isGenerating = true; // Set generating state
+    });
+
+    try {
+      List<DateTime> bookingDates = (localBuddyBookingData!['bookingDate'] as List<dynamic>)
+      .map((date) => (date as Timestamp).toDate())
+      .toList();
+
+      showLoadingDialog(context, "Generating Invoice...");
+      final date = DateTime.now();
+      final invoice = Invoice(
+        supplier: Supplier(
+          name: "Admin",
+          address: "admin@tripmate.com",
+        ),
+        customer: Customer(
+          name: custData!['name'],
+          address: custData!['address'],
+        ),
+        info: InvoiceInfo(
+          date: date,
+          description: "You have paid the bill. Below is the invoice summary:",
+          number: '${DateTime.now().year}-${widget.localBuddyBookingID}',
+        ),
+        items: [
+          InvoiceItem(
+            description: "Local Buddy: ${localBuddyData!['localBuddyName']} - (${bookingDates.map((date) => DateFormat('dd/MM/yyyy').format(date)).join(', ')})",
+            quantity: localBuddyBookingData!['totalDays'],
+            unitPrice: ((localBuddyBookingData!['totalPrice']) / localBuddyBookingData!['bookingDate'].length).toInt(),
+            total:  localBuddyBookingData!['totalPrice'] ?? 0.0,
+          ),
+        ],
+      );
+
+      // Generate the invoice
+      await generateInvoice(widget.localBuddyBookingID!, invoice, "Local Buddy", "localBuddyBooking", "invoice", false, false, false);
+
+      // After the operation is done, hide the loading dialog
+      Navigator.of(context).pop(); // Close loading dialog
+
+      // Optionally, refresh the page/state after opening the PDF
+      setState(() {
+        isGenerating = false; // Reset generating state
+      });
+
+      // Navigate back to customer details
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminViewCustomerDetailsScreen(
+            userId: widget.userId,
+            customerId: widget.customerId,
+            localBuddyBookingID: widget.localBuddyBookingID,
+            localBuddyID: widget.localBuddyID,
+          ),
+        ),
+      );
+
+    } catch (e) {
+      setState(() {
+        isGenerating = false; // Reset generating state in case of error
+      });
+      
+      // Show failure dialog
+      showCustomDialog(
+        context: context,
+        title: "Failed",
+        content: "Something went wrong! Please try again...",
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      );
+    }
+  }
+
+  void showConfirmationDialog(String type) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirm Action"),
+          content: Text("Are you sure you want to generate the invoice?"),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: Text("Confirm"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close confirmation dialog
+              
+                if(type == "Tour"){
+                  // Now proceed with generating the invoice
+                 _generateDepositTourInvoice(); // Call the original function
+                } else if (type == 'Car'){
+                  _generateCarInvoice();
+                } else {
+                  _generateLocalBuddyInvoice();
+                }
+                
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -555,6 +957,75 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
+                              ),
+                              SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 90,
+                                    child: Text(
+                                      "Transfer Proof",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    ":",
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  if(tourBookingData!['transferProof'] != null)
+                                    isOpenProofFile
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenProofFile = true; // Update the loading state
+                                          });
+                                          String url = tourBookingData!['transferProof'];
+                                          await downloadAndOpenImageFromUrl(url);
+                                          setState(() {
+                                            isOpenProofFile = false; // Update the state when done
+                                          });
+                                        }, 
+                                        child:Text(
+                                          "View Transfer Proof Receipt",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
+                                          shape: RoundedRectangleBorder(
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                        ),
+                                      )
+                                    )
+                                  else
+                                    Text(
+                                      "N/A",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                ],
                               ),
                               SizedBox(height: 20),
                               Row(
@@ -698,6 +1169,31 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                               )
                             ],
 
+                            if(tourBookingData != null && tourBookingData!['transferProof'] != null && tourBookingData!['depositInvoice'] == null)...[
+                              SizedBox(height: 20),
+                              Container(
+                                width: double.infinity,
+                                height: 50,
+                                child: TextButton(
+                                  child: Text(
+                                    "Generate Deposit Invoice",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onPressed: isGenerating ? null : () => showConfirmationDialog("Tour"),// Disable if generating
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                )
+                              )
+                            ],
+
                             if(carBookingData != null && carData != null) ...[
                               carComponent(data: carBookingData!, carData: carData!),
                               SizedBox(height: 20),
@@ -718,6 +1214,75 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
+                              ),
+                              SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    child: Text(
+                                      "Transfer Proof",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    ":",
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  if(carBookingData!['transferProof'] != null)
+                                    isOpenProofFile
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenProofFile = true; // Update the loading state
+                                          });
+                                          String url = carBookingData!['transferProof'];
+                                          await downloadAndOpenImageFromUrl(url);
+                                          setState(() {
+                                            isOpenProofFile = false; // Update the state when done
+                                          });
+                                        }, 
+                                        child:Text(
+                                          "View Transfer Proof Receipt",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
+                                          shape: RoundedRectangleBorder(
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                        ),
+                                      )
+                                    )
+                                  else
+                                    Text(
+                                      "N/A",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                ],
                               ),
                               SizedBox(height: 20),
                               Row(
@@ -765,7 +1330,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                           });
                                         }, 
                                         child:Text(
-                                          "View Deposit Invoice",
+                                          "View Invoice",
                                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -789,6 +1354,31 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                     ),
                                 ],
                               ),
+
+                              if(carBookingData != null && carBookingData!['transferProof'] != null && carBookingData!['invoice'] == null)...[
+                                SizedBox(height: 20),
+                                Container(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: TextButton(
+                                    child: Text(
+                                      "Generate Invoice",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    onPressed: isGenerating ? null : () => showConfirmationDialog("Car"), // Disable if generating
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  )
+                                )
+                              ],
                               SizedBox(height: 20),
                               if (carBookingData!['refundInvoice'] != null)
                                 Row(
@@ -1111,7 +1701,76 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                               Row(
                                 children: [
                                   Container(
-                                    width: 50,
+                                    width: 100,
+                                    child: Text(
+                                      "Transfer Proof",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    ":",
+                                    style: TextStyle(
+                                      fontSize: defaultFontSize,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                  SizedBox(width: 5),
+                                  if(localBuddyBookingData!['transferProof'] != null)
+                                    isOpenProofFile
+                                    ? SizedBox(
+                                        width: 20.0,
+                                        height: 20.0,
+                                        child: CircularProgressIndicator(color: primaryColor),
+                                      ) 
+                                    : SizedBox(
+                                      height: 35,
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          setState(() {
+                                            isOpenProofFile = true; // Update the loading state
+                                          });
+                                          String url = localBuddyBookingData!['transferProof'];
+                                          await downloadAndOpenImageFromUrl(url);
+                                          setState(() {
+                                            isOpenProofFile = false; // Update the state when done
+                                          });
+                                        }, 
+                                        child:Text(
+                                          "View Transfer Proof Receipt",
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,  
+                                          foregroundColor: primaryColor,  
+                                          shape: RoundedRectangleBorder(
+                                            side: BorderSide(color: primaryColor, width: 2),
+                                            borderRadius: BorderRadius.circular(10)
+                                          ),
+                                        ),
+                                      )
+                                    )
+                                  else
+                                    Text(
+                                      "N/A",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 100,
                                     child: Text(
                                       "Invoice",
                                       style: TextStyle(
@@ -1153,7 +1812,7 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                           });
                                         }, 
                                         child:Text(
-                                          "View Deposit Invoice",
+                                          "View Invoice",
                                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -1178,11 +1837,35 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                 ],
                               ),
                               SizedBox(height: 20),
+                              if(localBuddyBookingData != null && localBuddyBookingData!['transferProof'] != null && localBuddyBookingData!['invoice'] == null)...[
+                                SizedBox(height: 20),
+                                Container(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: TextButton(
+                                    child: Text(
+                                      "Generate Invoice",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    onPressed: isGenerating ? null : () => showConfirmationDialog("Local Buddy"), // Disable if generating
+                                    style: TextButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  )
+                                )
+                              ],
                               if(localBuddyBookingData!['refundInvoice'] != null)
                                 Row(
                                   children: [
                                     Container(
-                                      width: 50,
+                                      width: 100,
                                       child: Text(
                                         "Refund",
                                         style: TextStyle(
