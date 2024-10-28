@@ -133,14 +133,18 @@ class _createBookingScreenState extends State<createBookingScreen> {
     List<DateTime> maintenanceDates = [];
 
     for (var doc in snapshot.docs) {
-      DateTime startDate = (doc['carMaintenanceStartDate'] as Timestamp).toDate();
-      DateTime endDate = (doc['carMaintenanceEndDate'] as Timestamp).toDate();
+      List<dynamic> maintenanceDatesArray = doc['carMaintenanceDate'];
+      // DateTime startDate = (doc['carMaintenanceStartDate'] as Timestamp).toDate();
+      // DateTime endDate = (doc['carMaintenanceEndDate'] as Timestamp).toDate();
 
       // Generate all dates in the range and add them to the list
-      for (DateTime date = startDate; 
-          !date.isAfter(endDate);
-          date = date.add(Duration(days: 1))) {
-        maintenanceDates.add(date);
+      // for (DateTime date = startDate; 
+      //     !date.isAfter(endDate);
+      //     date = date.add(Duration(days: 1))) {
+      //   maintenanceDates.add(date);
+      // }
+      for (var date in maintenanceDatesArray) {
+        maintenanceDates.add((date as Timestamp).toDate());
       }
     }
 

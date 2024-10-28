@@ -25,15 +25,18 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
   bool _isDataInitialized = false;
   bool isFetchingCarMaintenance = false;
   List<String> carStatus = ['Reserved', 'Maintenance'];
-  List<Map<String, dynamic>> _carMaintenanceData = [];
+  // List<Map<String, dynamic>> _carMaintenanceData = [];
   List<DateTime> _maintenanceDates = [];
+  Map<String, List<DateTime>> groupedMaintenanceDates = {};
   List<DateTime> _carRentalBookingDates = [];
+  List<DateTime> selectedMaintenanceDates = [];
+  final dateFormat = DateFormat('dd/MM/yyyy'); 
 
   @override
   void initState() {
     super.initState();
     _fetchCarData();
-    _fetchCarMaintenanceData();
+    // _fetchCarMaintenanceData();
     _fetchMaintenanceDates();
     _fetchCarRentalBookingDates();
   }
@@ -42,32 +45,38 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('car_maintenance')
         .where('carID', isEqualTo: widget.carId)
+        .orderBy(FieldPath.documentId, descending: true)
         .get();
 
+    // Map to group dates by maintenance ID
+    Map<String, List<DateTime>> maintenanceDatesMap = {};
     List<DateTime> maintenanceDates = [];
 
     for (var doc in snapshot.docs) {
-      DateTime startDate = (doc['carMaintenanceStartDate'] as Timestamp).toDate();
-      DateTime endDate = (doc['carMaintenanceEndDate'] as Timestamp).toDate();
+      String maintenanceId = doc['carMaintenanceID']; // Assuming each document has a unique ID for maintenance
+      List<dynamic> maintenanceDatesArray = doc['carMaintenanceDate'];
 
-      // Generate all dates in the range and add them to the list
-      for (DateTime date = startDate; 
-          !date.isAfter(endDate);
-          date = date.add(Duration(days: 1))) {
-        maintenanceDates.add(date);
+      for (var date in maintenanceDatesArray) {
+        DateTime dateTime = (date as Timestamp).toDate();
+
+        // Add to the grouped map
+        if (!maintenanceDatesMap.containsKey(maintenanceId)) {
+          maintenanceDatesMap[maintenanceId] = [];
+        }
+        maintenanceDatesMap[maintenanceId]!.add(dateTime);
+
+        // Add to the list of all maintenance dates
+        maintenanceDates.add(dateTime);
       }
     }
 
     setState(() {
-      _maintenanceDates = maintenanceDates; // Set the fetched dates
-      _normalizeDates(_maintenanceDates); // Normalize the dates to remove duplicates
+      groupedMaintenanceDates = maintenanceDatesMap; // Set grouped dates by ID
+      _maintenanceDates = maintenanceDates;           // Set all fetched dates
+      _normalizeDates(_maintenanceDates);             // Normalize if needed
     });
-
-    // Optional: Check the contents of _maintenanceDates
-    for (var date in _maintenanceDates) {
-      print("Maintenance Date Fetched: ${date}"); // Outputs the dates in the format you expect
-    }
   }
+
 
   Future<void> _fetchCarRentalBookingDates() async {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
@@ -91,11 +100,6 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
       _carRentalBookingDates = carRentalBookingDates; // Set the fetched dates
       _normalizeDates(_carRentalBookingDates); // Normalize dates if needed
     });
-
-    // Optional: Print the fetched booking dates
-    for (var date in _carRentalBookingDates) {
-      print("Car Rental Booking Date Fetched: ${date}");
-    }
   }
 
   // This function normalizes the maintenance dates
@@ -136,109 +140,6 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
     }
   }
 
-  Future<void> _fetchCarMaintenanceData() async {
-    setState(() {
-      isFetchingCarMaintenance = true;
-    });
-
-    try {
-      // Reference to the car maintenance collection, filtered by the car ID
-      CollectionReference carMainRef = FirebaseFirestore.instance.collection('car_maintenance');
-      
-      // Fetch maintenance records for the current car, ordered by document ID
-      QuerySnapshot carMainSnapshot = await carMainRef
-          .where('carID', isEqualTo: widget.carId)
-          .orderBy(FieldPath.documentId, descending: true) // Order by document ID
-          .get();
-
-      // Date formatter for the desired format
-      final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
-
-      for(var data in carMainSnapshot.docs){
-        // Convert Firestore Timestamps to DateTime
-        DateTime startDate = (data['carMaintenanceStartDate'] as Timestamp).toDate();
-        DateTime endDate = (data['carMaintenanceEndDate'] as Timestamp).toDate();
-
-        // Format the dates
-        String formattedStartDate = dateFormat.format(startDate);
-        String formattedEndDate = dateFormat.format(endDate);
-
-        // String startDate = data['carMaintenanceStartDate'];
-        // String endDate = data['carMaintenanceEndDate'];
-
-        setState(() {
-          _carMaintenanceData.add({
-            'startDate': formattedStartDate,
-            'endDate': formattedEndDate
-          });
-        });
-      }
-
-      setState(() {
-        isFetchingCarMaintenance = false;
-      });
-
-    } catch (e) {
-      setState(() {
-        isFetchingCarMaintenance = false;
-      });
-      print("Error fetching car maintenance data: $e");
-
-      // Show error message to the user
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching car maintenance data')),
-      );
-    }
-  }
-
-
-  // Method to show date picker
-  Future<void> _selectStartDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedStartDate ?? DateTime.now(),
-      firstDate: DateTime.now(), // Disable past dates
-      lastDate: DateTime(2101),
-      builder: (BuildContext context, Widget? child) {
-        return ScrollConfiguration(
-          behavior: ScrollBehavior(),
-          child: child!,
-        );
-      },
-    );
-
-    if (pickedDate != null && pickedDate != _selectedStartDate) {
-      setState(() {
-        _selectedStartDate = pickedDate;
-        // Reset the end date if the new start date is after the current end date
-        if (_selectedEndDate != null && _selectedEndDate!.isBefore(_selectedStartDate!)) {
-          _selectedEndDate = null;
-        }
-      });
-    }
-  }
-
-  Future<void> _selectEndDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedEndDate ?? _selectedStartDate ?? DateTime.now(),
-      firstDate: _selectedStartDate ?? DateTime.now(), // Disable dates before the start date
-      lastDate: DateTime(2101),
-      builder: (BuildContext context, Widget? child) {
-        return ScrollConfiguration(
-          behavior: ScrollBehavior(),
-          child: child!,
-        );
-      },
-    );
-
-    if (pickedDate != null && pickedDate != _selectedEndDate) {
-      setState(() {
-        _selectedEndDate = pickedDate;
-      });
-    }
-  }
-
   Future<void> _submitCarMaintenance() async {
     // Check if the required fields are not null
     if (_selectedStartDate == null || _selectedEndDate == null || _selectedCarStatus == null || _selectedCarStatus!.isEmpty) {
@@ -269,8 +170,9 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
       // Save the car maintenance data to Firestore
       await FirebaseFirestore.instance.collection('car_maintenance').doc(carMaintenanceID).set({
         'carMaintenanceID': carMaintenanceID,
-        'carMaintenanceStartDate': _selectedStartDate,
-        'carMaintenanceEndDate': _selectedEndDate,
+        'carMaintenanceDate': selectedMaintenanceDates,
+        // 'carMaintenanceStartDate': _selectedStartDate,
+        // 'carMaintenanceEndDate': _selectedEndDate,
         'carStatus': _selectedCarStatus,
         'carID': widget.carId
       });
@@ -459,70 +361,132 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
                       ),
 
                       SizedBox(height: 20),
-                      Text(
-                        "Car Maintenance History",
-                        style: TextStyle(
-                          fontSize: defaultLabelFontSize,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black
+                      if(groupedMaintenanceDates.isNotEmpty)...[
+                        Text(
+                          "Car Maintenance History",
+                          style: TextStyle(
+                            fontSize: defaultLabelFontSize,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 10,),
-                      SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(color: Colors.white),
-                              child: Table(
-                                border: TableBorder.all(color: primaryColor, width: 1.5),
-                                columnWidths: {
-                                  0: FixedColumnWidth(40), // Width for the "No" column
-                                  1: FixedColumnWidth(150), // Width for the "Start Date" column
-                                  2: FixedColumnWidth(150), // Width for the "End Date" column
-                                },
-                                children: [
-                                  TableRow(
-                                    decoration: BoxDecoration(color: Colors.grey.shade300),
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text('No', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold),),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text('Start Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Text('End Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                  for (int index = 0; index < _carMaintenanceData.length; index++)
+                        SizedBox(height: 10,),
+                        SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(color: Colors.white),
+                                child: Table(
+                                  border: TableBorder.all(color: primaryColor, width: 1.5),
+                                  columnWidths: {
+                                    0: FixedColumnWidth(40), // Width for the "No" column
+                                    1: FixedColumnWidth(300), // Width for the "Maintenance Date" column
+                                  },
+                                  children: [
                                     TableRow(
+                                      decoration: BoxDecoration(color: Colors.grey.shade300),
                                       children: [
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
-                                          child: Text('${index + 1}', textAlign: TextAlign.center),
+                                          child: Text('No', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
-                                          child: Text(_carMaintenanceData[index]['startDate'] ?? '', textAlign: TextAlign.center),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(_carMaintenanceData[index]['endDate'] ?? '', textAlign: TextAlign.center),
+                                          child: Text('Maintenance Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                                         ),
                                       ],
                                     ),
-                                ],
+                                    for (int index = 0; index < groupedMaintenanceDates.length; index++)
+                                      TableRow(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text('${index + 1}', textAlign: TextAlign.center),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              groupedMaintenanceDates.values.elementAt(index)
+                                                  .map((date) => dateFormat.format(date))
+                                                  .join(', '), // Join dates with a comma
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
+                            ],
+                          ),
+                        )
+                      ]
+                      // Text(
+                      //   "Car Maintenance History",
+                      //   style: TextStyle(
+                      //     fontSize: defaultLabelFontSize,
+                      //     fontWeight: FontWeight.w600,
+                      //     color: Colors.black
+                      //   ),
+                      // ),
+                      // SizedBox(height: 10,),
+                      // SingleChildScrollView(
+                      //   child: Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     children: [
+                      //       Container(
+                      //         width: double.infinity,
+                      //         decoration: BoxDecoration(color: Colors.white),
+                      //         child: Table(
+                      //           border: TableBorder.all(color: primaryColor, width: 1.5),
+                      //           columnWidths: {
+                      //             0: FixedColumnWidth(40), // Width for the "No" column
+                      //             1: FixedColumnWidth(150), // Width for the "Start Date" column
+                      //             2: FixedColumnWidth(150), // Width for the "End Date" column
+                      //           },
+                      //           children: [
+                      //             TableRow(
+                      //               decoration: BoxDecoration(color: Colors.grey.shade300),
+                      //               children: [
+                      //                 Padding(
+                      //                   padding: const EdgeInsets.all(8.0),
+                      //                   child: Text('No', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold),),
+                      //                 ),
+                      //                 Padding(
+                      //                   padding: const EdgeInsets.all(8.0),
+                      //                   child: Text('Start Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                      //                 ),
+                      //                 Padding(
+                      //                   padding: const EdgeInsets.all(8.0),
+                      //                   child: Text('End Date', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                      //                 ),
+                      //               ],
+                      //             ),
+                      //             for (int index = 0; index < _carMaintenanceData.length; index++)
+                      //               TableRow(
+                      //                 children: [
+                      //                   Padding(
+                      //                     padding: const EdgeInsets.all(8.0),
+                      //                     child: Text('${index + 1}', textAlign: TextAlign.center),
+                      //                   ),
+                      //                   Padding(
+                      //                     padding: const EdgeInsets.all(8.0),
+                      //                     child: Text(_carMaintenanceData[index]['startDate'] ?? '', textAlign: TextAlign.center),
+                      //                   ),
+                      //                   Padding(
+                      //                     padding: const EdgeInsets.all(8.0),
+                      //                     child: Text(_carMaintenanceData[index]['endDate'] ?? '', textAlign: TextAlign.center),
+                      //                   ),
+                      //                 ],
+                      //               ),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
@@ -837,8 +801,36 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
               controller: controller,
               onDateSelected: (DateTime selectedDate) {
                 if (isEndDate) {
-                  _selectedEndDate = selectedDate;
+                  _selectedEndDate = selectedDate; 
+                  if(_selectedStartDate != null && _selectedEndDate != null){
+                    int totalDays = _selectedEndDate!.difference(_selectedStartDate!).inDays + 1;
 
+                    List<DateTime> dateRange = List.generate(
+                      totalDays,
+                      (index) => _selectedStartDate!.add(Duration(days: index)),
+                    );
+
+                    List<DateTime> validBookingDates = [];
+                    for (DateTime date in dateRange) {
+                      if (!_maintenanceDates.contains(date) && !_carRentalBookingDates.contains(date)) {
+                        validBookingDates.add(date);
+                      }
+                    }
+
+                    setState(() {
+                      selectedMaintenanceDates = validBookingDates;
+                    });
+
+                    // Format valid booking dates as "dd/MM/yyyy" and join them into a single string
+                    final dateFormat = DateFormat('dd/MM/yyyy');
+                    String selectedBookingDateString = selectedMaintenanceDates.map((date) => dateFormat.format(date)).join(', ');
+
+                    print("Selected maintenance dates: $selectedMaintenanceDates");
+                    print("Selected maintenance dates string: $selectedBookingDateString");
+                  }
+                  
+                } else {
+                  _selectedStartDate = selectedDate;
                   // Clear end date controller and reset end date
                   _endDateController.text = '';
                   _selectedEndDate = null;
