@@ -74,6 +74,20 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
     });
   }
 
+  Future<void> deleteCarRental(String carID) async {
+    try {
+      // Reference to the car_rental collection
+      CollectionReference carRef = FirebaseFirestore.instance.collection('car_rental');
+
+      // Delete the car document with the specified carID
+      await carRef.doc(carID).delete();
+      print("Car package deleted successfully");
+    } catch (e) {
+      print('Error deleting car package: $e');
+      throw Exception("Failed to delete car package");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -260,7 +274,21 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
               Container(
                 width: 35, // Set a specific width to reduce space
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    try {
+                      await deleteCarRental(carList.carID);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Car package deleted successfully")),
+                      );
+
+                      // Refresh the list after deletion
+                      fetchCarList();
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Failed to delete car package")),
+                      );
+                    }
+                  },
                   icon: Icon(Icons.delete),
                   iconSize: 20,
                   color: Colors.grey.shade600,

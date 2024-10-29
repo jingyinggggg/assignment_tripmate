@@ -145,10 +145,6 @@ class _LocalBuddyViewAppointmentScreenState extends State<LocalBuddyViewAppointm
                     color: cellAppointments != null && cellAppointments.isNotEmpty 
                         ? primaryColor.withOpacity(0.2) 
                         : Colors.transparent,
-                    // border: isToday? Border.all(color: primaryColor, width: 2) : null, // Border for each cell
-                    // borderRadius: BorderRadius.circular(4),
-                    // shape: isToday ? BoxShape.circle : BoxShape.rectangle,
-                    // color: cellAppointments != null ? primaryColor.withOpacity(0.2) : Colors.transparent,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,

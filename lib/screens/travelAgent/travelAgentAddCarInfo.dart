@@ -143,10 +143,19 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
 
       // Generate car ID and save data
       final snapshot = await firestore.collection('car_rental').get();
-      final carID = 'CAR${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      List<String> carIDs = [];
+
+      for (var doc in snapshot.docs) {
+        carIDs.add(doc['carID']); // Assuming the document ID is the country ID
+      }
+
+      String newCarID = _generateNewCarID(carIDs);
+
+      // final carID = 'CAR${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
       String resp = await StoreData().saveCarRentalData(
-        carID: carID, 
+        carID: newCarID, 
         carModel: _carNameController.text, 
         carType: selectedCarType!, 
         transmission: selectedTransmission!, 
@@ -203,6 +212,19 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
         isLoading = false;
       });
     }
+  }
+
+  String _generateNewCarID(List<String> existingIDs) {
+    // Extract numeric parts from existing IDs and convert to integers
+    List<int> numericIDs = existingIDs
+        .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+        .toList();
+
+    // Find the highest ID
+    int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+    // Generate new ID
+    return 'CAR${(maxID + 1).toString().padLeft(4, '0')}';
   }
 
 

@@ -26,7 +26,7 @@ class _ViewCountryScreenState extends State<ViewCountryScreen> {
     });
   }
 
-    Future<void> fetchCountryList() async {
+  Future<void> fetchCountryList() async {
     try {
       // Reference to the countries collection in Firestore
       CollectionReference countriesRef = FirebaseFirestore.instance.collection('countries');
