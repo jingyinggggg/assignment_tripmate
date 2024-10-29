@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyViewAppointment.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -179,6 +180,25 @@ class _LocalBuddyViewAppointmentDetailsScreenState extends State<LocalBuddyViewA
             );
           },
         ),
+        actions: [
+          Container(
+            width: 45,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatDetailsScreen(userId: widget.userId, receiverUserId: custData!['id']))
+                );
+              },
+              icon: ImageIcon(
+                AssetImage('images/chat.png'),
+                color: Colors.white,
+                size: 21,
+              ),
+              tooltip: "Chat with customer",
+            )
+          ),
+        ],
       ),
       body: isFetchingCustomerDetails || isFetchingLocalBuddy
         ? Center(child: CircularProgressIndicator(color: primaryColor))

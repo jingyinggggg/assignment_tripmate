@@ -4,6 +4,7 @@ import 'package:assignment_tripmate/chat_service.dart';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
 
 class ChatDetailsScreen extends StatefulWidget {
   final String userId;
@@ -39,10 +40,35 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
         senderName!,
         widget.receiverUserId,
         receiverName!,
-        _messageController.text
+        encryptText(_messageController.text)
       );
       _messageController.clear();
     }
+  }
+
+  String encryptText(String text) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    final encrypted = encrypter.encrypt(text, iv: iv);
+    // Combine IV and encrypted text with a delimiter
+    return "${iv.base64}:${encrypted.base64}";
+  }
+
+  String decryptText(String encryptedText) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final parts = encryptedText.split(':'); // Split to get IV and encrypted data
+
+    if (parts.length != 2) {
+      throw ArgumentError("Invalid encrypted format"); // Check for expected format
+    }
+
+    final iv = encrypt.IV.fromBase64(parts[0]); // Retrieve the original IV
+    final encryptedData = encrypt.Encrypted.fromBase64(parts[1]);
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    return encrypter.decrypt(encryptedData, iv: iv); // Decrypt using original IV
   }
 
   Future<void> fetchSenderDetails() async {
@@ -277,7 +303,7 @@ class _ChatDetailsScreenState extends State<ChatDetailsScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 5),
-              ChatBubble(message: data['message']), // Chat bubble
+              ChatBubble(message: decryptText( data['message'])), // Chat bubble
             ],
           ),
           if (isSender) SizedBox(width: 10), // Add space between bubble and profile

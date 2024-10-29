@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/login.dart';
+import 'package:bcrypt/bcrypt.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 // import 'package:firebase_auth/firebase_auth';
@@ -28,6 +29,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool confirmNewPasswordVisible = true;
   bool isLoading = false;
 
+  // Hash the password using bcrypt
+  String hashPassword(String password) {
+    return BCrypt.hashpw(password, BCrypt.gensalt());
+  }
+
+  // Verify the password against the hashed password
+  bool verifyPassword(String password, String storedHash) {
+    return BCrypt.checkpw(password, storedHash);
+  }
+
   Future<void> _resetPassword() async {
     setState(() {
       isLoading = true; // Start loading
@@ -37,7 +48,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     String newPassword = newPasswordController.text;
     String confirmNewPassword = confirmNewPasswordController.text;
 
-    // Validate the password (at least 6 characters and 1 special character)
+    // Validate the password (at least 8 characters and 1 special character)
     bool isValidPassword(String password) {
       final passwordRegex = RegExp(r'^(?=.*?[#?!@$%^&*-]).{8,}$');
       return passwordRegex.hasMatch(password);
@@ -73,6 +84,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
 
       try {
+         String newHashedPassword = hashPassword(newPassword);
+
         // Check 'users' collection first
         QuerySnapshot userQuery = await FirebaseFirestore.instance
             .collection('users')
@@ -87,13 +100,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           await FirebaseFirestore.instance
               .collection('users')
               .doc(userDoc.id)
-              .update({'password': newPassword});
+              .update({'password': newHashedPassword});
 
           _showDialog(
             title: 'Success',
             content: 'Password updated successfully!',
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        const LoginScreen()),
+              );
             },
           );
         } else {
@@ -111,7 +129,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             await FirebaseFirestore.instance
                 .collection('travelAgent')
                 .doc(TADoc.id)
-                .update({'password': newPassword});
+                .update({'password': newHashedPassword});
 
             _showDialog(
               title: 'Success',

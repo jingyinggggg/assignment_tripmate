@@ -4,6 +4,7 @@ import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -29,6 +30,21 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
     setState(() {
       _foundedMessageList = _MessageList;
     });
+  }
+
+  String decryptText(String encryptedText) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final parts = encryptedText.split(':'); // Split to get IV and encrypted data
+
+    if (parts.length != 2) {
+      throw ArgumentError("Invalid encrypted format"); // Check for expected format
+    }
+
+    final iv = encrypt.IV.fromBase64(parts[0]); // Retrieve the original IV
+    final encryptedData = encrypt.Encrypted.fromBase64(parts[1]);
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    return encrypter.decrypt(encryptedData, iv: iv); // Decrypt using original IV
   }
 
   Future<void> fetchMessageList() async {
@@ -94,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> with AutomaticKeepAliveClientMi
                   receiverName,
                   receiverProfile,
                   otherUserId,
-                  messageDoc['message'] ?? '', // Retrieve the message content, use empty string if null
+                  decryptText(messageDoc['message']), // Retrieve the message content, use empty string if null
                   messageDoc['timestamp'] as Timestamp? ?? Timestamp.now(),
                   isSenderCurrentUser
                 ),
