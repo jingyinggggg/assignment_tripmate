@@ -126,16 +126,27 @@ class StoreData {
     required String country, 
     required String countryID, 
     required Uint8List file,
+    required int type,
   }) async{
     String resp = "Some Error Occurred";
     try{
       String fileName = "$country.jpg"; 
       String imageURL = await uploadImageToStorage("countries/$country/$fileName", file);
-      await _firestore.collection("countries").doc(country).set({
-        'name': country,
-        'countryID': countryID,
-        'countryImage': imageURL
-      });
+
+      if(type == 0){
+        await _firestore.collection("countries").doc(country).set({
+          'name': country,
+          'countryID': countryID,
+          'countryImage': imageURL
+        });
+      } else{
+        await _firestore.collection("countries").doc(country).update({
+          'name': country,
+          'countryID': countryID,
+          'countryImage': imageURL
+        });
+      }
+      
       resp = "Success";
     } catch(err){
       resp = err.toString();
@@ -148,16 +159,26 @@ class StoreData {
     required String city, 
     required String cityID, 
     required Uint8List file,
+    required int type,
   }) async{
     String resp = "Some Error Occurred";
     try{
       String fileName = "$city.jpg"; 
       String imageURL = await uploadImageToStorage("countries/$country/$fileName", file);
-      await _firestore.collection("countries").doc(country).collection("cities").doc(city).set({
-        'city_name': city,
-        'cityID': cityID,
-        'cityImage': imageURL
-      });
+
+      if(type == 0){
+        await _firestore.collection("countries").doc(country).collection("cities").doc(city).set({
+          'city_name': city,
+          'cityID': cityID,
+          'cityImage': imageURL
+        });
+      } else{
+        await _firestore.collection("countries").doc(country).collection("cities").doc(city).update({
+          'city_name': city,
+          'cityID': cityID,
+          'cityImage': imageURL
+        });
+      }
       resp = "Success";
     } catch(err){
       resp = err.toString();

@@ -9,8 +9,9 @@ class AdminViewTourListScreen extends StatefulWidget {
   final String userId;
   final String countryName;
   final String cityName;
+  final String countryId;
 
-  const AdminViewTourListScreen({super.key, required this.userId, required this.countryName, required this.cityName});
+  const AdminViewTourListScreen({super.key, required this.userId, required this.countryName, required this.cityName, required this.countryId});
 
   @override
   State<AdminViewTourListScreen> createState() => _AdminViewTourListScreenState();
@@ -86,7 +87,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.countryName,))
+              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.countryName, countryId: widget.countryId,))
             );
           },
         ),
@@ -222,7 +223,7 @@ class _AdminViewTourListScreenState extends State<AdminViewTourListScreen> {
             // Handle edit button action
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => AdminTourPackageDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourPackage.tourID))
+              MaterialPageRoute(builder: (context) => AdminTourPackageDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tourPackage.tourID, countryId: widget.countryId,))
             );
           },
           icon: const Icon(Icons.remove_red_eye),

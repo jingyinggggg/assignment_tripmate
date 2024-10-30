@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/addCity.dart';
 import 'package:assignment_tripmate/screens/admin/adminViewTourList.dart';
+import 'package:assignment_tripmate/screens/admin/editCity.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,8 +9,9 @@ import 'package:flutter/material.dart';
 class AdminManageCityListScreen extends StatefulWidget {
   final String userId;
   final String countryName;
+  final String countryId;
 
-  const AdminManageCityListScreen({super.key, required this.userId, required this.countryName});
+  const AdminManageCityListScreen({super.key, required this.userId, required this.countryName, required this.countryId});
 
   @override
   State<AdminManageCityListScreen> createState() => _AdminManageCityListScreenState();
@@ -63,6 +65,99 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
       _foundedCity = _cityList.where((city) => city.cityName.toUpperCase().contains(search.toUpperCase())).toList();
     });
   }
+
+  void _confirmDeleteCity(City city) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete City'),
+          content: Text('Are you sure you want to delete "${city.cityName}"?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteCity(city.cityID);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteCity(String cityId) async {
+    try {
+      // First, find the country document that matches the provided country ID
+      QuerySnapshot countrySnapshot = await FirebaseFirestore.instance
+          .collection('countries')
+          .where('countryID', isEqualTo: widget.countryId) // Assuming widget.countryId is the ID you're looking for
+          .get();
+
+      // Check if any country documents were found
+      if (countrySnapshot.docs.isNotEmpty) {
+        // Get the document reference of the first matching country
+        DocumentReference countryRef = countrySnapshot.docs.first.reference;
+
+        // Reference to the country's cities collection
+        CollectionReference citiesRef = countryRef.collection('cities');
+
+        // Query to find the city document with the provided city ID
+        QuerySnapshot citySnapshot = await citiesRef.where('cityID', isEqualTo: cityId).get();
+
+        // Debug: Log the number of documents found
+        print('Number of cities found: ${citySnapshot.docs.length}');
+
+        // Check if any city documents were found
+        if (citySnapshot.docs.isNotEmpty) {
+          // Get the document reference of the first matching city
+          DocumentReference cityRef = citySnapshot.docs.first.reference;
+
+          // Debug: Log the document ID being deleted
+          print('Deleting city document with ID: ${cityRef.id}');
+
+          // Delete the city document from Firestore
+          await cityRef.delete();
+
+          setState(() {
+            // Remove the city from the list
+            _cityList.removeWhere((city) => city.cityID == cityId); // Ensure you adjust this based on your City model
+            _foundedCity.removeWhere((city) => city.cityID == cityId); // Adjust if needed
+            hasCity = _foundedCity.isNotEmpty;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('City with ID $cityId has been deleted.')),
+          );
+        } else {
+          // Handle case where no city was found
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No city found with ID $cityId.')),
+          );
+        }
+      } else {
+        // Handle case where no country was found
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No country found with ID ${widget.countryId}.')),
+        );
+      }
+    } catch (e) {
+      // Debug: Log the error for more information
+      print('Error deleting city: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete city with ID $cityId.')),
+      );
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +234,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => AdminAddCityScreen(userId: widget.userId, country: widget.countryName))
+                          MaterialPageRoute(builder: (context) => AdminAddCityScreen(userId: widget.userId, country: widget.countryName, countryId: widget.countryId,))
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -231,27 +326,62 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: (){
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminViewTourListScreen(userId: widget.userId, countryName: widget.countryName, cityName: city.cityName,))
-                  );
-                }, 
-                icon: Icon(Icons.remove_red_eye),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 30,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AdminViewTourListScreen(
+                          userId: widget.userId,
+                          countryName: widget.countryName,
+                          cityName: city.cityName,
+                          countryId: widget.countryId,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.remove_red_eye),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                ),
               ),
-              IconButton(
-                onPressed: (){},
-                icon: Icon(Icons.edit_document),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 30,
+                child: IconButton(
+                onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AdminEditCityScreen(
+                          userId: widget.userId,
+                          country: widget.countryName,
+                          cityName: city.cityName,
+                          countryId: widget.countryId,
+                          cityId: city.cityID,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.edit_document),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Container(
+                width: 30,
+                child: IconButton(
+                  onPressed: () => _confirmDeleteCity(city),
+                  icon: Icon(Icons.delete, color: Colors.grey.shade600),
+                  iconSize: 20,
+                ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
+
 }

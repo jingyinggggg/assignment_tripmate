@@ -144,13 +144,11 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
       // Generate car ID and save data
       final snapshot = await firestore.collection('car_rental').get();
 
-      List<String> carIDs = [];
+      List<String> existingCarIDs = snapshot.docs
+        .map((doc) => doc.data()['carID'] as String) // Extract cityID field
+        .toList();
 
-      for (var doc in snapshot.docs) {
-        carIDs.add(doc['carID']); // Assuming the document ID is the country ID
-      }
-
-      String newCarID = _generateNewCarID(carIDs);
+      String newCarID = _generateNewCarID(existingCarIDs);
 
       // final carID = 'CAR${(snapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
@@ -214,17 +212,33 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
     }
   }
 
+  // String _generateNewCarID(List<String> existingIDs) {
+  //   // Extract numeric parts from existing IDs and convert to integers
+  //   List<int> numericIDs = existingIDs
+  //       .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+  //       .toList();
+
+  //   // Find the highest ID
+  //   int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+  //   // Generate new ID
+  //   return 'CAR${(maxID + 1).toString().padLeft(4, '0')}';
+  // }
+
   String _generateNewCarID(List<String> existingIDs) {
     // Extract numeric parts from existing IDs and convert to integers
     List<int> numericIDs = existingIDs
-        .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+        .map((id) {
+          final match = RegExp(r'CAR(\d{4})').firstMatch(id);
+          return match != null ? int.parse(match.group(1)!) : 0; // Convert "CTJAPANxxxx" to xxxx
+        })
         .toList();
 
     // Find the highest ID
     int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
 
     // Generate new ID
-    return 'CAR${(maxID + 1).toString().padLeft(4, '0')}';
+    return 'CAR${(maxID + 1).toString().padLeft(4, '0')}'; // Ensure it has leading zeros
   }
 
 

@@ -12,13 +12,15 @@ class AdminTourPackageDetailsScreen extends StatefulWidget {
   final String countryName;
   final String cityName;
   final String tourID;
+  final String countryId;
 
   const AdminTourPackageDetailsScreen({
     super.key,
     required this.userId,
     required this.countryName,
     required this.cityName,
-    required this.tourID,
+    required this.tourID, 
+    required this.countryId,
   });
 
   @override
@@ -135,6 +137,7 @@ class _AdminTourPackageDetailsScreenState extends State<AdminTourPackageDetailsS
                   userId: widget.userId,
                   countryName: widget.countryName,
                   cityName: widget.cityName,
+                  countryId: widget.countryId,
                 ),
               ),
             );

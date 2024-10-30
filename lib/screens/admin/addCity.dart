@@ -8,8 +8,9 @@ import 'package:flutter/material.dart';
 class AdminAddCityScreen extends StatefulWidget {
   final String userId;
   final String country;
+  final String countryId;
 
-  const AdminAddCityScreen({super.key, required this.userId, required this.country});
+  const AdminAddCityScreen({super.key, required this.userId, required this.country, required this.countryId});
 
   @override
   State<AdminAddCityScreen> createState() => _AdminAddCityScreenState();
@@ -60,7 +61,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
           onPressed: () {
             Navigator.push(
               context, 
-              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country))
+              MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country, countryId: widget.countryId,))
             );
           },
         ),
@@ -338,11 +339,17 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
           .get();
 
       List<String> existingCityIDs = citiesSnapshot.docs
-          .map((doc) => doc.id) // Extract city IDs
-          .toList();
+        .map((doc) => doc.data()['cityID'] as String) // Extract cityID field
+        .toList();
+
+      // Debug: Log the existing city IDs
+      print('Existing City IDs: $existingCityIDs');
 
       // Generate new city ID using the existing IDs
       final newCityID = _generateNewCityID(existingCityIDs);
+
+      // Debug: Log the newly generated city ID
+      print('Generated New City ID: $newCityID');
 
       // Save the city data
       String resp = await StoreData().saveCityData(
@@ -350,6 +357,7 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         city: _cityNameController.text,
         cityID: newCityID, // Use the generated ID
         file: _image!,
+        type: 0,
       );
 
       // Show success dialog
@@ -359,8 +367,8 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
         onPressed: () {
           Navigator.of(context).pop(); // Close the success dialog
           Navigator.push(
-            context, 
-            MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country))
+            context,
+            MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: widget.country, countryId: widget.countryId,)),
           );
         },
       );
@@ -383,14 +391,18 @@ class _AdminAddCityScreenState extends State<AdminAddCityScreen> {
   String _generateNewCityID(List<String> existingIDs) {
     // Extract numeric parts from existing IDs and convert to integers
     List<int> numericIDs = existingIDs
-        .map((id) => int.tryParse(id.substring(2)) ?? 0) // Convert "CTxxxx" to xxxx
+        .map((id) {
+          // Ensure the ID is in the expected format "CTJAPANxxxx"
+          final match = RegExp(r'CTJAPAN(\d{4})').firstMatch(id);
+          return match != null ? int.parse(match.group(1)!) : 0; // Convert "CTJAPANxxxx" to xxxx
+        })
         .toList();
 
     // Find the highest ID
     int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
 
     // Generate new ID
-    return 'CT${widget.country}${(maxID + 1).toString().padLeft(4, '0')}';
+    return 'CTJAPAN${(maxID + 1).toString().padLeft(4, '0')}'; // Ensure it has leading zeros
   }
 
 

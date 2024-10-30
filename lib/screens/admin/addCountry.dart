@@ -330,21 +330,21 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
       final countriesSnapshot = await FirebaseFirestore.instance.collection('countries').get();
 
       // List to hold country IDs
-      List<String> countryIDs = [];
+      // List<String> countryIDs = [];
 
-      // Iterate through the documents to extract country IDs
-      for (var doc in countriesSnapshot.docs) {
-        countryIDs.add(doc['countryID']); // Assuming the document ID is the country ID
-      }
+      List<String> existingCountryIDs = countriesSnapshot.docs
+        .map((doc) => doc.data()['countryID'] as String) // Extract cityID field
+        .toList();
 
       // Generate new country ID
-      String newCountryID = _generateNewCountryID(countryIDs);
+      String newCountryID = _generateNewCountryID(existingCountryIDs);
 
       // Save the country data
       String resp = await StoreData().saveCountryData(
         country: _countryNameController.text,
         countryID: newCountryID, // Use the generated ID
         file: _image!,
+        type: 0
       );
 
       // Show success dialog
@@ -375,18 +375,20 @@ class _AdminAddCountryScreenState extends State<AdminAddCountryScreen> {
     }
   }
 
-  // Function to generate a new country ID
   String _generateNewCountryID(List<String> existingIDs) {
     // Extract numeric parts from existing IDs and convert to integers
     List<int> numericIDs = existingIDs
-        .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+        .map((id) {
+          final match = RegExp(r'C(\d{4})').firstMatch(id);
+          return match != null ? int.parse(match.group(1)!) : 0; // Convert "CTJAPANxxxx" to xxxx
+        })
         .toList();
 
     // Find the highest ID
     int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
 
     // Generate new ID
-    return 'C${(maxID + 1).toString().padLeft(4, '0')}';
+    return 'C${(maxID + 1).toString().padLeft(4, '0')}'; // Ensure it has leading zeros
   }
 
   void _showDialog({

@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/admin/addCountry.dart';
+import 'package:assignment_tripmate/screens/admin/editCountry.dart';
 import 'package:assignment_tripmate/screens/admin/homepage.dart';
 import 'package:assignment_tripmate/screens/admin/manageCityList.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -29,13 +30,8 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
 
   Future<void> fetchCountryList() async {
     try {
-      // Reference to the countries collection in Firestore
       CollectionReference countriesRef = FirebaseFirestore.instance.collection('countries');
-
-      // Fetch the documents from the countries collection
       QuerySnapshot querySnapshot = await countriesRef.get();
-
-      // Convert each document into a Country object and add to _countryList
       _countryList = querySnapshot.docs.map((doc) {
         return Country(
           doc['name'],
@@ -44,12 +40,10 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
         );
       }).toList();
 
-      // Update _foundedCountry
       setState(() {
         _foundedCountry = _countryList;
       });
     } catch (e) {
-      // Handle any errors
       print('Error fetching country list: $e');
     }
   }
@@ -62,6 +56,73 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           .toList();
     });
   }
+
+  // Method to show confirmation dialog before deletion
+  Future<void> confirmDeleteCountry(String countryID) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirm Delete"),
+          content: Text("Are you sure you want to delete this country?"),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                deleteCountry(countryID); // Call delete method
+              },
+              child: Text("Delete", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to delete a country
+  Future<void> deleteCountry(String countryID) async {
+    try {
+      // Query to find the document with the matching countryID field
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('countries')
+          .where('countryID', isEqualTo: countryID)
+          .limit(1) // Limit to one result as we expect unique countryIDs
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // Get the document ID of the matching document
+        String docId = snapshot.docs.first.id;
+
+        // Delete the document by its document ID
+        await FirebaseFirestore.instance.collection('countries').doc(docId).delete();
+
+        setState(() {
+          _countryList.removeWhere((country) => country.countryID == countryID);
+          _foundedCountry = _countryList;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Country deleted successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Country not found')),
+        );
+      }
+    } catch (e) {
+      print('Error deleting country: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete country')),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,24 +162,23 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      // fillColor: Color.fromARGB(255, 218, 232, 243),
                       contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                       prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Set the border color to black
+                        borderSide: BorderSide(color: Colors.blueGrey, width: 2),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.blueGrey, width: 2), // Black border when not focused
+                        borderSide: BorderSide(color: Colors.blueGrey, width: 2),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Color(0xFF467BA1), width: 2), // Black border when focused
+                        borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.red, width: 2), // Red border for error state
+                        borderSide: BorderSide(color: Colors.red, width: 2),
                       ),
                       hintText: "Search country...",
                       hintStyle: TextStyle(
@@ -131,9 +191,9 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(right: 10.0), // Adds padding to the right
+                padding: const EdgeInsets.only(right: 10.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end, // Aligns the button to the rightmost side
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     ElevatedButton(
                       onPressed: () {
@@ -143,9 +203,9 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF467BA1), // Button background color
+                        backgroundColor: Color(0xFF467BA1),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10), // Rounded corners
+                          borderRadius: BorderRadius.circular(10),
                           side: BorderSide(color: Color(0xFF467BA1), width: 2),
                         ),
                       ),
@@ -182,7 +242,6 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      // color: Colors.white,
       padding: EdgeInsets.only(bottom: 15, top: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -200,7 +259,7 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
                   ),
                 ),
               ),
-              SizedBox(width: 20), // Spacing between image and text
+              SizedBox(width: 20),
               Text(
                 country.countryName,
                 style: TextStyle(
@@ -215,29 +274,49 @@ class _AdminManageCountryListScreenState extends State<AdminManageCountryListScr
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                onPressed: (){
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName))
-                  );
-                }, 
-                icon: Icon(Icons.remove_red_eye),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 30,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => AdminManageCityListScreen(userId: widget.userId, countryName: country.countryName, countryId: country.countryID,))
+                    );
+                  }, 
+                  icon: Icon(Icons.remove_red_eye),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                ),
               ),
-              IconButton(
-                onPressed: (){}, 
-                icon: Icon(Icons.edit_document),
-                iconSize: 20,
-                color: Colors.grey.shade600,
+              Container(
+                width: 30,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => AdminEditCountryScreen(userId: widget.userId, countryName: country.countryName, countryId: country.countryID))
+                    );
+                  }, 
+                  icon: Icon(Icons.edit),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                ),
               ),
+              Container(
+                width: 30,
+                child: IconButton(
+                  onPressed: () {
+                    confirmDeleteCountry(country.countryID);
+                  }, 
+                  icon: Icon(Icons.delete),
+                  iconSize: 20,
+                  color: Colors.grey.shade600,
+                ),
+              )
             ],
           ),
         ],
       ),
     );
   }
-
 }
-

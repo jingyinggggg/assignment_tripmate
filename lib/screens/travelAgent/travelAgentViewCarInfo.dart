@@ -275,18 +275,46 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
                 width: 35, // Set a specific width to reduce space
                 child: IconButton(
                   onPressed: () async {
-                    try {
-                      await deleteCarRental(carList.carID);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Car package deleted successfully")),
-                      );
+                    // Show confirmation dialog
+                    bool? confirmed = await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("Confirm Delete"),
+                          content: Text("Are you sure you want to delete this car package?"),
+                          actions: <Widget>[
+                            TextButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop(false); // Return false when cancelled
+                              },
+                            ),
+                            TextButton(
+                              child: Text("Delete"),
+                              onPressed: () {
+                                Navigator.of(context).pop(true); // Return true when confirmed
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
 
-                      // Refresh the list after deletion
-                      fetchCarList();
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Failed to delete car package")),
-                      );
+                    // If confirmed, proceed to delete
+                    if (confirmed == true) {
+                      try {
+                        await deleteCarRental(carList.carID);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Car package deleted successfully")),
+                        );
+
+                        // Refresh the list after deletion
+                        fetchCarList();
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Failed to delete car package")),
+                        );
+                      }
                     }
                   },
                   icon: Icon(Icons.delete),
@@ -296,6 +324,7 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
                   padding: EdgeInsets.zero,
                 ),
               ),
+
             ],
           )
 

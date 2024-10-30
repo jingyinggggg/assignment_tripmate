@@ -162,14 +162,18 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
     try {
       // Get the count of existing car maintenance records
       final cmSnapshot = await FirebaseFirestore.instance.collection('car_maintenance').get();
-      final cmCount = cmSnapshot.size;
 
-      // Generate new car maintenance ID
-      final carMaintenanceID = 'CM${(cmCount + 1).toString().padLeft(4, '0')}';
+      List<String> carMIDs = [];
+
+      for (var doc in cmSnapshot.docs) {
+        carMIDs.add(doc['carID']); // Assuming the document ID is the country ID
+      }
+
+      String newCarMID = _generateNewCarMID(carMIDs);
 
       // Save the car maintenance data to Firestore
-      await FirebaseFirestore.instance.collection('car_maintenance').doc(carMaintenanceID).set({
-        'carMaintenanceID': carMaintenanceID,
+      await FirebaseFirestore.instance.collection('car_maintenance').doc(newCarMID).set({
+        'carMaintenanceID': newCarMID,
         'carMaintenanceDate': selectedMaintenanceDates,
         // 'carMaintenanceStartDate': _selectedStartDate,
         // 'carMaintenanceEndDate': _selectedEndDate,
@@ -208,6 +212,19 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
         isUpdating = false; // Reset the loading state
       });
     }
+  }
+
+  String _generateNewCarMID(List<String> existingIDs) {
+    // Extract numeric parts from existing IDs and convert to integers
+    List<int> numericIDs = existingIDs
+        .map((id) => int.tryParse(id.substring(1)) ?? 0) // Convert "Cxxxx" to xxxx
+        .toList();
+
+    // Find the highest ID
+    int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+    // Generate new ID
+    return 'CM${(maxID + 1).toString().padLeft(4, '0')}';
   }
 
   @override
