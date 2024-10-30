@@ -81,6 +81,11 @@ class _TravelAgentViewCarListingScreenState extends State<TravelAgentViewCarList
 
       // Delete the car document with the specified carID
       await carRef.doc(carID).delete();
+
+      setState(() {
+        _carList.removeWhere((carList) => carList.carID == carID);
+        _foundedCar.removeWhere((carList) => carList.carID == carID);
+      });
       print("Car package deleted successfully");
     } catch (e) {
       print('Error deleting car package: $e');

@@ -128,7 +128,7 @@ class _AdminManageCityListScreenState extends State<AdminManageCityListScreen> {
 
           setState(() {
             // Remove the city from the list
-            _cityList.removeWhere((city) => city.cityID == cityId); // Ensure you adjust this based on your City model
+            _cityList.removeWhere((city) => city.cityID == cityId); 
             _foundedCity.removeWhere((city) => city.cityID == cityId); // Adjust if needed
             hasCity = _foundedCity.isNotEmpty;
           });

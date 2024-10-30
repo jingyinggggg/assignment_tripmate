@@ -273,12 +273,12 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HelpCenterScreen(userId: widget.userId, isAdmin: true,)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',

@@ -256,9 +256,16 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
       onTap: (){
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (context) => ViewTourDetailsScreen(userId: widget.userId, countryName: widget.countryName, cityName: widget.cityName, tourID: tour.tourID, fromAppLink: 'false',))
+          MaterialPageRoute(builder: (context) => 
+            ViewTourDetailsScreen(
+              userId: widget.userId, 
+              countryName: widget.countryName, 
+              cityName: widget.cityName, 
+              tourID: tour.tourID, 
+              fromAppLink: 'false',
+            )
+          )
         );
-        // context.go('/viewTourDetails/${widget.userId}/${widget.countryName}/${widget.cityName}/${tour.tourID}');
       },
       child: Container(
         decoration: BoxDecoration(

@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/geminiAPI.dart';
+import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -143,7 +144,10 @@ class _AIItineraryScreenState extends State<AIItineraryScreen> {
           content: 'Itinerary saved successfully!',
           onPressed: () {
             Navigator.of(context).pop();
-            Navigator.pop(context);
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId, currentPageIndex: 1,))
+            );
           }
         );
       } catch (e) {
