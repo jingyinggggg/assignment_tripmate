@@ -271,15 +271,18 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>{
               ),
               child: Row(
                 children: [
-                  Text(
-                    q.title,
-                    style: TextStyle(
-                      color: Colors.black, // Changed to black for visibility
-                      fontSize: defaultLabelFontSize,
-                      fontWeight: FontWeight.w600,
+                  Expanded( // Wraps the Text widget with Expanded
+                    child: Text(
+                      q.title,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: defaultLabelFontSize,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis, // Adds ellipsis
+                      maxLines: 1, // Limits to one line
                     ),
                   ),
-                  Spacer(), // Pushes the icon to the bottom
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     color: Colors.black,
@@ -287,6 +290,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>{
                   ),
                 ],
               ),
+
             ),
           );
         },

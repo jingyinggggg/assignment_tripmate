@@ -176,6 +176,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
     QuerySnapshot snapshot = await FirebaseFirestore.instance
         .collection('carRentalBooking')
         .where('carID', isEqualTo: widget.carRentalID)
+        .where('bookingStatus', isEqualTo: 0)
         .get();
 
     List<DateTime> carRentalBookingDates = [];
