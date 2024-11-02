@@ -629,7 +629,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       showCustomDialog(
         context: context, 
         title: "Successful", 
-        content: "You have cancel the car rental booking successfully.", 
+        content: "You have cancel the car rental booking successfully. Please wait for admin to proceed your refund.", 
         onPressed: (){
           Navigator.push(
             context,
@@ -678,7 +678,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       showCustomDialog(
         context: context, 
         title: "Successful", 
-        content: "You have cancel the local buddy booking successfully.", 
+        content: "You have cancel the local buddy booking successfully. Please wait for admin to proceed your refund.", 
         onPressed: (){
           Navigator.push(
             context,
