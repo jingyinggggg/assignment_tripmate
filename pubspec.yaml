@@ -77,6 +77,7 @@ dependencies:
   fl_chart: ^0.69.0
   syncfusion_flutter_calendar: ^26.2.14
   encrypt: ^5.0.3
+  pie_chart: ^5.4.0
   # geolocator: ^13.0.1
   # flutter_google_places: ^0.3.0
   # google_maps_webservice: ^0.0.20
