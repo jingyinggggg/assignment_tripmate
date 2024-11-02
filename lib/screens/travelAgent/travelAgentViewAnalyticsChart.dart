@@ -39,7 +39,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
     _fetchCarRentalList();
   }
 
-    void _onYearChanged(int? newYear) {
+  void _onYearChanged(int? newYear) {
     if (newYear == null) return; // Handle null case if necessary
     setState(() {
       selectedYear = newYear;
@@ -272,8 +272,8 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
     return 25.0; // Default maximum
   }
 
-  Widget _buildLineChart(List<FlSpot> dataPoints, String chartTitle) {
-    double maxYValue = _getMaxYValue(tourBookingByMonth); // Use tour bookings to determine max Y value
+  Widget _buildLineChart(List<FlSpot> dataPoints, String chartTitle, Map<String, int> data) {
+    double maxYValue = _getMaxYValue(data); // Use tour bookings to determine max Y value
     return Column(
       children: [
         Text(
@@ -293,7 +293,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
                     showTitles: true,
                     interval: 1, // Show each month
                     getTitlesWidget: (value, _) {
-                      List<String> months = tourBookingByMonth.keys.toList();
+                      List<String> months = data.keys.toList();
                       return Padding(
                         padding: const EdgeInsets.only(top: 5), // Add some top padding
                         child: Text(months[value.toInt()], style: const TextStyle(color: Colors.black, fontSize: 10)),
@@ -462,7 +462,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
                 padding: const EdgeInsets.all(15.0),
                 child: ListView(
                   children: [
-                    _buildLineChart(_getDataPoints(tourBookingByMonth), "Total Tour Bookings"),
+                    _buildLineChart(_getDataPoints(tourBookingByMonth), "Total Tour Bookings", tourBookingByMonth),
                     const SizedBox(height: 10),
                     // Best Seller Tour Packages
                     Text(
@@ -520,7 +520,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
                 padding: const EdgeInsets.all(15.0),
                 child: ListView(
                   children: [
-                    _buildLineChart(_getDataPoints(carRentalBookingByMonth), "Total Car Rental Bookings"),
+                    _buildLineChart(_getDataPoints(carRentalBookingByMonth), "Total Car Rental Bookings", carRentalBookingByMonth),
                     const SizedBox(height: 10),
                     Text(
                       "Best Seller Car Rental Packages: ${getBestSellerCarRentals(filteredCarRentalBookingList).join(", ")}",

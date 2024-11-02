@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewAnalyticsMainpage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewAnalyticsChart.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -6,30 +7,35 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart' as pie;
 
-class TravelAgentViewAnalyticsChartDetailScreen extends StatefulWidget {
+class AdminViewAnalyticsChartDetailScreen extends StatefulWidget {
   final String userId;
   final String? tourID;
   final String? carID;
+  final String? localBuddyID;
+  final String? localBuddyName;
   final int year;
 
-  const TravelAgentViewAnalyticsChartDetailScreen({
+  const AdminViewAnalyticsChartDetailScreen({
     super.key,
     required this.userId,
     this.tourID,
     this.carID,
+    this.localBuddyID,
+    this.localBuddyName,
     required this.year,
   });
 
   @override
-  State<TravelAgentViewAnalyticsChartDetailScreen> createState() =>
-      _TravelAgentViewAnalyticsChartDetailScreenState();
+  State<AdminViewAnalyticsChartDetailScreen> createState() =>
+      _AdminViewAnalyticsChartDetailScreenState();
 }
 
-class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentViewAnalyticsChartDetailScreen> {
+class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalyticsChartDetailScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Map<String, int> tourBookingByMonth = {};
   Map<String, int> carRentalBookingByMonth = {};
-  
+  Map<String, int> localBuddyBookingByMonth = {};
+
   // New variable to store the name
   String? _entityName;
 
@@ -83,6 +89,31 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
               carRentalBookingByMonth[monthKey] = (carRentalBookingByMonth[monthKey] ?? 0) + 1;
 
               print('Car Booking for month: $monthKey, Count: ${carRentalBookingByMonth[monthKey]}');
+            }
+          }
+        }
+
+        return snapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            ...doc.data() as Map<String, dynamic>,
+          };
+        }).toList();
+      } else if(widget.localBuddyID != null){
+        QuerySnapshot snapshot = await _firestore
+            .collection('localBuddyBooking')
+            .where('localBuddyID', isEqualTo: widget.localBuddyID)
+            .get();
+
+        for (var doc in snapshot.docs) {
+          List<Timestamp>? bookingDates = List.from(doc['bookingDate'] ?? []);
+          if (bookingDates.isNotEmpty) {
+            DateTime bookingDate = bookingDates.first.toDate();
+            if (bookingDate.year == widget.year) {
+              String monthKey = DateFormat('MMM').format(bookingDate);
+              localBuddyBookingByMonth[monthKey] = (localBuddyBookingByMonth[monthKey] ?? 0) + 1;
+
+              print('Local Buddy Booking for month: $monthKey, Count: ${localBuddyBookingByMonth[monthKey]}');
             }
           }
         }
@@ -199,7 +230,7 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
           _entityName = doc['carModel']; // Assuming the name field exists
         });
       }
-    }
+    } 
   }
 
   @override
@@ -222,12 +253,12 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TravelAgentViewAnalyticsChartScreen(userId: widget.userId)),
+              MaterialPageRoute(builder: (context) => widget.localBuddyID != null ? AdminViewAnalyticsMainpageScreen(userId: widget.userId) : AdminViewAnalyticsMainpageScreen(userId: widget.userId)),
             );
           },
         ),
       ),
-      body: widget.tourID != null || widget.carID != null
+      body: widget.tourID != null || widget.carID != null || widget.localBuddyID != null
           ? FutureBuilder<List<Map<String, dynamic>>>(
               future: _fetchBookings(),
               builder: (context, snapshot) {
@@ -265,7 +296,9 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         child: Text(
-                          _entityName != null 
+                          widget.localBuddyName != null
+                          ? "Line Chart of ${widget.localBuddyName} in ${widget.year}"
+                          : _entityName != null 
                             ? "Line Chart of $_entityName in ${widget.year}" 
                             : "Line Chart",
                           style: TextStyle(
@@ -276,7 +309,7 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      _buildLineChart(_getDataPoints(widget.tourID != null ? tourBookingByMonth : carRentalBookingByMonth), widget.tourID != null ? tourBookingByMonth : carRentalBookingByMonth),
+                      _buildLineChart(_getDataPoints(widget.tourID != null ? tourBookingByMonth : widget.carID != null ? carRentalBookingByMonth : localBuddyBookingByMonth), widget.tourID != null ? tourBookingByMonth : widget.carID != null ? carRentalBookingByMonth : localBuddyBookingByMonth),
                       SizedBox(height: 10),
                       Divider(),
                       Padding(
@@ -371,4 +404,3 @@ class _TravelAgentViewAnalyticsChartDetailScreenState extends State<TravelAgentV
     );
   }
 }
-
