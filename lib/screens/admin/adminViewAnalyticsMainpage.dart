@@ -1,4 +1,5 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/admin/adminViewAnalyticsChart.dart";
 import "package:assignment_tripmate/screens/admin/adminViewAnalyticsDetailsChart.dart";
 import "package:assignment_tripmate/screens/admin/homepage.dart";
 import "package:assignment_tripmate/utils.dart";
@@ -24,15 +25,19 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
   Map<String, int> localBuddyBookingByMonth = {};
   bool isFetchingLocalBuddyBooking = false;
   bool isFetchingLocalBuddyList = false;
+  bool isFetchingAgencyList = false;
   int selectedYear = DateTime.now().year;
   List<AdminLocalBuddyBookingList> localBuddyList = [];
   List<AdminLocalBuddyBookingList> filteredLocalBuddyList = [];
+  List<Map<String, dynamic>> agencyList = [];
+  List<Map<String, dynamic>> filteredAgencyList = [];
 
   @override
   void initState() {
     super.initState();
     _initializeMonthlyData();
     _fetchLocalBuddyBookingList(selectedYear);
+    _fetchAgencyList();
     _fetchLocalBuddyList();
   }
 
@@ -42,6 +47,7 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
       selectedYear = newYear;
       _initializeMonthlyData();
       _fetchLocalBuddyBookingList(selectedYear);
+      _fetchAgencyList();
      _fetchLocalBuddyList();
     });
   }
@@ -49,6 +55,33 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
   void _initializeMonthlyData() {
     localBuddyBookingByMonth = {for (var i = 1; i <= 12; i++) DateFormat('MMM').format(DateTime(0, i)): 0};
   }
+
+  Future<void> _fetchAgencyList() async {
+    setState(() {
+      isFetchingAgencyList = true;
+    });
+    try {
+      CollectionReference agencyRef = FirebaseFirestore.instance.collection('travelAgent');
+      QuerySnapshot agencySnapshot = await agencyRef.where('accountApproved', isEqualTo: 1).get();
+
+      List<Map<String, dynamic>> agencyLists = agencySnapshot.docs.map((doc) {
+        return doc.data() as Map<String, dynamic>;
+      }).toList();
+
+      // Update your state with the agency list
+      setState(() {
+        agencyList = agencyLists;
+        filteredAgencyList = agencyList;
+      });
+    } catch (e) {
+      print("Error in fetching agency list: $e");
+    } finally {
+      setState(() {
+        isFetchingAgencyList = false;
+      });
+    }
+  }
+
 
   Future<void> _fetchLocalBuddyBookingList(int year) async {
     setState(() {
@@ -263,6 +296,15 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
     });
   }
 
+  void onAgencySearch(String value) {
+    setState(() {
+      filteredAgencyList = agencyList
+          .where((booking) =>
+              booking['companyName'].toUpperCase().contains(value.toUpperCase()))
+          .toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -335,14 +377,64 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
             ),
           ),
         ),
-        body: isFetchingLocalBuddyBooking || isFetchingLocalBuddyList
+        body: isFetchingLocalBuddyBooking || isFetchingLocalBuddyList || isFetchingAgencyList
         ? Center(child: CircularProgressIndicator(color: primaryColor))
         : TabBarView(
           children: [
-            Padding(
+            agencyList.isEmpty
+            ? Center(child: Text("No agency record in the system.", style: TextStyle(fontSize: defaultFontSize, color: Colors.black)))
+            : Padding(
               padding: EdgeInsets.all(15.0),
-              child: Text("N/A"),
-            
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 50,
+                    child: TextField(
+                      onChanged: (value) => onAgencySearch(value),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.blueGrey, width: 2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Color(0xFF467BA1), width: 2),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: Colors.red, width: 2),
+                        ),
+                        hintText: "Search agency name...",
+                        hintStyle: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredAgencyList.length,
+                      itemBuilder: (context, index) {
+                        return AgencyListComponent(agency: filteredAgencyList[index]);
+                      }
+                    )
+                  )
+                ],
+              ),
             ),
             Padding(
                 padding: const EdgeInsets.all(15.0),
@@ -404,6 +496,60 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
       )
     );    
   }
+
+  Widget AgencyListComponent({required Map<String, dynamic> agency}) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdminViewAnalyticsChartScreen(userId: widget.userId, agencyId: agency['id'])
+        ),
+      );
+    },
+    child: Container(
+      margin: EdgeInsets.only(bottom: 16.0),
+      padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 8,
+            spreadRadius: 2,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Agency ID: ${agency['companyID']}",
+            style: TextStyle(
+              fontSize: defaultFontSize,
+              color: Colors.black54,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            agency['companyName'] ?? "Agency Name",
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              fontSize: defaultLabelFontSize,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
 
   Widget BuddyBookingComponent({required AdminLocalBuddyBookingList buddyBooking}) {
     return GestureDetector(

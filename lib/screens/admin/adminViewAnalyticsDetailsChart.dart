@@ -1,6 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewAnalyticsChart.dart';
 import 'package:assignment_tripmate/screens/admin/adminViewAnalyticsMainpage.dart';
-import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewAnalyticsChart.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +9,7 @@ import 'package:pie_chart/pie_chart.dart' as pie;
 
 class AdminViewAnalyticsChartDetailScreen extends StatefulWidget {
   final String userId;
+  final String? agencyID;
   final String? tourID;
   final String? carID;
   final String? localBuddyID;
@@ -18,6 +19,7 @@ class AdminViewAnalyticsChartDetailScreen extends StatefulWidget {
   const AdminViewAnalyticsChartDetailScreen({
     super.key,
     required this.userId,
+    this.agencyID,
     this.tourID,
     this.carID,
     this.localBuddyID,
@@ -49,6 +51,7 @@ class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalytics
   void _initializeMonthlyData() {
     tourBookingByMonth = {for (var i = 1; i <= 12; i++) DateFormat('MMM').format(DateTime(0, i)): 0};
     carRentalBookingByMonth = {for (var i = 1; i <= 12; i++) DateFormat('MMM').format(DateTime(0, i)): 0};
+    localBuddyBookingByMonth = {for (var i = 1; i <= 12; i++) DateFormat('MMM').format(DateTime(0, i)): 0};
   }
 
   Future<List<Map<String, dynamic>>> _fetchBookings() async {
@@ -233,6 +236,26 @@ class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalytics
     } 
   }
 
+  void _showErrorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Error"),
+          content: Text("Agency ID is missing."),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,10 +274,26 @@ class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalytics
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => widget.localBuddyID != null ? AdminViewAnalyticsMainpageScreen(userId: widget.userId) : AdminViewAnalyticsMainpageScreen(userId: widget.userId)),
-            );
+            if (widget.localBuddyID != null) {
+              // Navigate to the main page if localBuddyID is not null
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AdminViewAnalyticsMainpageScreen(userId: widget.userId),
+                ),
+              );
+            } else if (widget.agencyID != null) {
+              // Navigate to the chart screen if agencyID is not null
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AdminViewAnalyticsChartScreen(userId: widget.userId, agencyId: widget.agencyID!),
+                ),
+              );
+            } else {
+              // Show the error dialog if agencyID is null
+              _showErrorDialog(context);
+            }
           },
         ),
       ),

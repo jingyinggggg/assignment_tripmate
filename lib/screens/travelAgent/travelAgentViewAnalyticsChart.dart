@@ -466,7 +466,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
                     const SizedBox(height: 10),
                     // Best Seller Tour Packages
                     Text(
-                      "Best Seller Tour Packages: ${getBestSellerTourPackages(filteredTourBookingList).join(", ")}",
+                      "Best Seller Tour Packages: ${getBestSellerTourPackages(tourBookingList).join(", ")}",
                       style: TextStyle(
                         color: Colors.black, 
                         fontSize: defaultFontSize, 
@@ -523,7 +523,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
                     _buildLineChart(_getDataPoints(carRentalBookingByMonth), "Total Car Rental Bookings", carRentalBookingByMonth),
                     const SizedBox(height: 10),
                     Text(
-                      "Best Seller Car Rental Packages: ${getBestSellerCarRentals(filteredCarRentalBookingList).join(", ")}",
+                      "Best Seller Car Rental Packages: ${getBestSellerCarRentals(carRentalBookingList).join(", ")}",
                       style: TextStyle(
                         color: Colors.black, 
                         fontSize: defaultFontSize, 
