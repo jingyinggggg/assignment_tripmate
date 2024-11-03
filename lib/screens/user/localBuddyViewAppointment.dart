@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/homepage.dart';
+import 'package:assignment_tripmate/screens/user/localBuddyViewAnalyticsChartDetails.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyViewAppointmentDetails.dart';
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -120,6 +121,21 @@ class _LocalBuddyViewAppointmentScreenState extends State<LocalBuddyViewAppointm
             );
           },
         ),
+        actions: [
+          Container(
+            width:40,
+            child: IconButton(
+              icon: Icon(Icons.analytics_outlined, color: Colors.white, size: 25,),
+              onPressed: (){
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => LocalBuddyViewAnalyticsChartDetailScreen(userId: widget.userId, localBuddyID: widget.localBuddyId))
+                );
+              },
+              tooltip: "Analytics Chart",
+            ),
+          )
+        ],
       ),
       body: isFetchLoading
           ? Center(child: CircularProgressIndicator())

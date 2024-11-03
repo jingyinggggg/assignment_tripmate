@@ -90,8 +90,6 @@ class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalytics
             if (bookingDate.year == widget.year) {
               String monthKey = DateFormat('MMM').format(bookingDate);
               carRentalBookingByMonth[monthKey] = (carRentalBookingByMonth[monthKey] ?? 0) + 1;
-
-              print('Car Booking for month: $monthKey, Count: ${carRentalBookingByMonth[monthKey]}');
             }
           }
         }
@@ -115,8 +113,6 @@ class _AdminViewAnalyticsChartDetailScreenState extends State<AdminViewAnalytics
             if (bookingDate.year == widget.year) {
               String monthKey = DateFormat('MMM').format(bookingDate);
               localBuddyBookingByMonth[monthKey] = (localBuddyBookingByMonth[monthKey] ?? 0) + 1;
-
-              print('Local Buddy Booking for month: $monthKey, Count: ${localBuddyBookingByMonth[monthKey]}');
             }
           }
         }

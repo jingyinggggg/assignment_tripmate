@@ -83,9 +83,6 @@ class _AdminViewAnalyticsChartScreenState extends State<AdminViewAnalyticsChartS
           if (bookingDate.year == year) {
             String monthKey = DateFormat('MMM').format(bookingDate); // e.g., Jan, Feb
             tourBookingByMonth[monthKey] = (tourBookingByMonth[monthKey] ?? 0) + 1;
-
-            // Print the month and the number of bookings for that month
-            print('Booking for month: $monthKey, Count: ${tourBookingByMonth[monthKey]}');
           }
         }
       }
@@ -135,8 +132,6 @@ class _AdminViewAnalyticsChartScreenState extends State<AdminViewAnalyticsChartS
             if (bookingDate.year == year) {
               String monthKey = DateFormat('MMM').format(bookingDate);
               carRentalBookingByMonth[monthKey] = (carRentalBookingByMonth[monthKey] ?? 0) + 1;
-
-              print('Car Booking for month: $monthKey, Count: ${carRentalBookingByMonth[monthKey]}');
             }
           }
         }

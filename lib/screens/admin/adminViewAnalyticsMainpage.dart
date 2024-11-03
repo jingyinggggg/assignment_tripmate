@@ -105,8 +105,6 @@ class _AdminViewAnalyticsMainpageScreenState extends State<AdminViewAnalyticsMai
           if (bookingDate.year == year) {
             String monthKey = DateFormat('MMM').format(bookingDate);
             localBuddyBookingByMonth[monthKey] = (localBuddyBookingByMonth[monthKey] ?? 0) + 1;
-
-            print('Local Buddy Booking for month: $monthKey, Count: ${localBuddyBookingByMonth[monthKey]}');
           }
         }
       }
