@@ -146,11 +146,15 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     return radiusOfEarth * c;
   }
 
-  void onSearch(String searchQuery) async {
+  Future<void> onSearch(String searchQuery) async {
     if (searchQuery.trim().isEmpty) {
-      // If the search query is empty, reset the list to the full list of local buddies
+      // Reset to full list if search query is empty and clear distances
       setState(() {
-        _foundedLocalBuddy = _localBuddyList; // Reset to full list
+        // Update _foundedLocalBuddy with the original list
+        _foundedLocalBuddy = _localBuddyList.map((localBuddy) {
+          localBuddy.distance = null; // Clear distance for display
+          return localBuddy;
+        }).toList();
       });
       return;
     }
@@ -170,6 +174,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
         double distance = calculateDistance(userLat, userLng, buddyLat, buddyLng);
 
         if (distance <= 50) {
+          localBuddy.distance = distance; // Store the distance
           filteredBuddies.add(localBuddy);
         }
       }
@@ -181,7 +186,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       print('Error during search: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -297,8 +301,14 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-          context, 
-          MaterialPageRoute(builder: (context) => LocalBuddyDetailsScreen(userId: widget.userId, localBuddyId: localBuddy.localBuddyID, fromAppLink: 'false'))
+          context,
+          MaterialPageRoute(
+            builder: (context) => LocalBuddyDetailsScreen(
+              userId: widget.userId,
+              localBuddyId: localBuddy.localBuddyID,
+              fromAppLink: 'false',
+            ),
+          ),
         );
       },
       child: Container(
@@ -326,20 +336,39 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        localBuddy.localBuddyName,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: defaultLabelFontSize,
-                          fontWeight: FontWeight.w700,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(0.5, 0.5),
-                              color: Colors.black87,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              localBuddy.localBuddyName,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: defaultLabelFontSize,
+                                fontWeight: FontWeight.w700,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0.5, 0.5),
+                                    color: Colors.black87,
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                          // Add the distance icon and text
+                          if (localBuddy.distance != null) ...[
+                            Icon(Icons.location_on, color: Colors.blue, size: 20,),
+                            SizedBox(width: 5), // Spacing between icon and text
+                            Text(
+                              '${localBuddy.distance!.toStringAsFixed(2)} km', // Display distance
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: defaultFontSize,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
-                        ),
-                        textAlign: TextAlign.left,
+                        ],
                       ),
                       Text(
                         'Live in: ${localBuddy.locationArea ?? ''}',
@@ -381,5 +410,6 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
       ),
     );
   }
+
 
 }

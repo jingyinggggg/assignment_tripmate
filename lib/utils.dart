@@ -295,8 +295,9 @@ class LocalBuddy{
   final String? languageSpoken;
   final String? locationAddress;
   final int? price;
+  double? distance;
 
-  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken, this.locationAddress, this.price});
+  LocalBuddy({required this.localBuddyID, required this.localBuddyName, required this.localBuddyImage, this.occupation, this.status, this.ranking, this.locationArea, this.languageSpoken, this.locationAddress, this.price, this.distance});
 
 }
 
