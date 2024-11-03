@@ -11,7 +11,6 @@ import 'package:assignment_tripmate/screens/user_sign_up.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -124,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => AdminHomepageScreen(userId: adminDoc.id)),
+                      builder: (context) => AdminHomepageScreen(userId: adminDoc['id'])),
                 );
               } else {
                 _showDialog(

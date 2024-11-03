@@ -562,6 +562,28 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           'cancelReason': cancelReason
         });
       
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userID}) has cancel the booking with booking id(${tourBookingID}). Please issue refund to the customer.",
+        'isRead': 0,
+        'type': "cancellation",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001"
+      });
+
+      final tpDoc = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
+
+      if (tpDoc.exists) {
+        String agentID = tpDoc.data()?['agentID'] ?? "";
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Customer(${widget.userID}) has cancel the booking with booking id(${tourBookingID}).",
+          'isRead': 0,
+          'type': "cancellation",
+          'timestamp': DateTime.now(),
+          'receiverID': agentID
+        });
+      }
+      
       final tourPackageDoc = await FirebaseFirestore.instance.collection('tourPackage').doc(tourID).get();
 
       if (tourPackageDoc.exists) {
@@ -613,46 +635,84 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void>cancelCarBooking(String carBookingID, String cancelReason) async{
+  Future<void> cancelCarBooking(String carBookingID, String cancelReason) async {
     setState(() {
       isCancelCarRentalBooking = true;
     });
-    try{
+    
+    try {
+      // Step 1: Update the booking status and add cancellation reason
       await FirebaseFirestore.instance
-        .collection('carRentalBooking')
-        .doc(carBookingID)
-        .update({
-          'bookingStatus': 2,
-          'cancelReason': cancelReason
-        });
+          .collection('carRentalBooking')
+          .doc(carBookingID)
+          .update({
+            'bookingStatus': 2,
+            'cancelReason': cancelReason,
+          });
 
+      // Step 2: Retrieve carID from carRentalBooking
+      final carBookingDoc = await FirebaseFirestore.instance
+          .collection('carRentalBooking')
+          .doc(carBookingID)
+          .get();
+
+      if (carBookingDoc.exists) {
+        String carID = carBookingDoc.data()?['carID'] ?? "";
+
+        // Step 3: Retrieve agentID from car_rental collection using carID
+        final carDoc = await FirebaseFirestore.instance.collection('car_rental').doc(carID).get();
+
+        if (carDoc.exists) {
+          String agentID = carDoc.data()?['agencyID'] ?? "";
+
+          await FirebaseFirestore.instance.collection('notification').doc().set({
+            'content': "Customer(${widget.userID}) has cancelled the car rental booking with booking id(${carBookingID}).",
+            'isRead': 0,
+            'type': "cancellation",
+            'timestamp': DateTime.now(),
+            'receiverID': agentID,
+          });
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userID}) has cancelled the booking with booking id(${carBookingID}). Please issue a refund to the customer.",
+        'isRead': 0,
+        'type': "cancellation",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001",  
+      });
+
+      // Step 6: Show success dialog
       showCustomDialog(
         context: context, 
         title: "Successful", 
-        content: "You have cancel the car rental booking successfully. Please wait for admin to proceed your refund.", 
-        onPressed: (){
+        content: "You have cancelled the car rental booking successfully. Please wait for admin to proceed with your refund.", 
+        onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3))
           );
-        }
+        },
       );
 
-    }catch(e){
+    } catch (e) {
+      // Show failure dialog
       showCustomDialog(
         context: context, 
         title: "Failed", 
         content: "Something went wrong! Please try again...", 
-        onPressed: (){
+        onPressed: () {
           Navigator.pop(context);
-        }
+        },
       );
-    }finally{
+    } finally {
       setState(() {
         isCancelCarRentalBooking = false;
       });
     }
   }
+
 
   Future<void>cancelLocalBuddyBooking(String localBuddyBookingID, String cancelReason, String bankName, String accountName, String accountNumber) async{
     setState(() {
@@ -674,6 +734,38 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           'accountName': encryptedAccountName,
           'accountNumber': encryptedAccountNumber,
         });
+      
+      final localBuddyBookingDoc = await FirebaseFirestore.instance
+          .collection('localBuddyBooking')
+          .doc(localBuddyBookingID)
+          .get();
+
+      if (localBuddyBookingDoc.exists) {
+        String localBuddyID = localBuddyBookingDoc.data()?['localBuddyID'] ?? "";
+
+        // Step 3: Retrieve agentID from car_rental collection using carID
+        final lbDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(localBuddyID).get();
+
+        if (lbDoc.exists) {
+          String userID = lbDoc.data()?['userID'] ?? "";
+
+          await FirebaseFirestore.instance.collection('notification').doc().set({
+            'content': "Customer(${widget.userID}) has cancelled the your local buddy slot with booking id(${localBuddyBookingID}).",
+            'isRead': 0,
+            'type': "cancellation",
+            'timestamp': DateTime.now(),
+            'receiverID': userID,
+          });
+        }
+      }
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userID}) has cancelled the booking with booking id(${localBuddyBookingID}). Please issue a refund to the customer.",
+        'isRead': 0,
+        'type': "cancellation",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001",  
+      });
 
       showCustomDialog(
         context: context, 
@@ -721,6 +813,14 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         .update({
           'fullyPaid' : 1,
           'balanceTransferProof': uploadedProof!
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Customer(${widget.userID}) has make full payment for the car rental package with booking id (${tourBookingID}). Please generate invoice for the customer.",
+          'isRead': 0,
+          'type': "invoice",
+          'timestamp': DateTime.now(),
+          'receiverID': "A1001"
         });
 
       }

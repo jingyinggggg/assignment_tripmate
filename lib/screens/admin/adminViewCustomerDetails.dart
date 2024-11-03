@@ -528,16 +528,43 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
     });
     try{
       if(type == "Car Rental"){
+        if(_transferProof != null){
+          uploadedProof = await uploadImageToStorage("invoice/Car Rental/${custData!['id']}/$bookingID/refundTransferProof", _transferProof!);
+
+        }
+
         await FirebaseFirestore.instance.collection('carRentalBooking').doc(bookingID).update({
           'isRefund': isDepositRefund ? 0 : 1,
-          'isRefundDeposit': isDepositRefund ? 1 : 0
+          'isRefundDeposit': isDepositRefund ? 1 : 0,
+          'refundTransferProof': uploadedProof!
         });
         setState(() {
-            carBookingData!['isRefundDeposit'] = isDepositRefund;
-          });
+          carBookingData!['isRefundDeposit'] = isDepositRefund;
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Admin has issued your deposit refund for booking id ($bookingID).",
+          'isRead': 0,
+          'type': "invoice",
+          'timestamp': DateTime.now(),
+          'receiverID': custData!['id']
+        });
       } else{
+        if(_transferProof != null){
+          uploadedProof = await uploadImageToStorage("invoice/Local Buddy/${custData!['id']}/$bookingID/refundTransferProof", _transferProof!);
+
+        }
         await FirebaseFirestore.instance.collection('localBuddyBooking').doc(bookingID).update({
-          'isRefund': 1
+          'isRefund': 1,
+          'refundTransferProof': uploadedProof
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Admin has issued your refund for booking id ($bookingID).",
+          'isRead': 0,
+          'type': "invoice",
+          'timestamp': DateTime.now(),
+          'receiverID': custData!['id']
         });
       }
 
@@ -769,6 +796,14 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       // Generate the invoice
       await generateInvoice(widget.tourBookingID!, invoice, "Tour Package", "tourBooking", "deposit", true, false, false);
 
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Admin has generated your invoice for booking id (${widget.tourBookingID}).",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': custData!['id']
+      });
+
       // After the operation is done, hide the loading dialog
       Navigator.of(context).pop(); // Close loading dialog
 
@@ -841,6 +876,14 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
 
       // Generate the invoice
       await generateInvoice(widget.tourBookingID!, invoice, "Tour Package", "tourBooking", "balance_payment", false, false, false);
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Admin has generated your invoice for booking id (${widget.tourBookingID}).",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': custData!['id']
+      });
 
       // After the operation is done, hide the loading dialog
       Navigator.of(context).pop(); // Close loading dialog
@@ -926,6 +969,14 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
       // Generate the invoice
       await generateInvoice(widget.carRentalBookingID!, invoice, "Car Rental", "carRentalBooking", "invoice", false, false, false);
 
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Admin has generated your invoice for booking id (${widget.carRentalBookingID}).",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': custData!['id']
+      });
+
       // After the operation is done, hide the loading dialog
       Navigator.of(context).pop(); // Close loading dialog
 
@@ -1007,6 +1058,14 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
 
       // Generate the invoice
       await generateInvoice(widget.localBuddyBookingID!, invoice, "Local Buddy", "localBuddyBooking", "invoice", false, false, false);
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Admin has generated your invoice for booking id (${widget.localBuddyBookingID}).",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': custData!['id']
+      });
 
       // After the operation is done, hide the loading dialog
       Navigator.of(context).pop(); // Close loading dialog

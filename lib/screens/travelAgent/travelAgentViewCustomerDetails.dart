@@ -210,6 +210,14 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
         'isCheckCarCondition' : 1
       });
 
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Travel Agent(${widget.userId}) has submitted the refund request for issue deposit refund. Please issue deposit refund to the customer.",
+        'isRead': 0,
+        'type': "refund",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001"
+      });
+
       showCustomDialog(
         context: context, 
         title: 'Submit Successful', 

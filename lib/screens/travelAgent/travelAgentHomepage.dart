@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
+import 'package:assignment_tripmate/screens/notification.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentAccountPage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewAnalyticsChart.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewBookingList.dart';
@@ -23,6 +24,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
   int currentAccountStatus = 0;
   String? rejectReason;
   bool isFetchingStatus = false;
+  bool hasNoti = false;
 
   final List<String> _screenTitles = [
     "Tripmate",
@@ -33,6 +35,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchNotificationCount();
     _fetchAccountStatus();
   }
 
@@ -64,6 +67,29 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
         isFetchingStatus = false;
       });
       print('Error fetching account status: $e');
+    }
+  }
+
+  Future<void> _fetchNotificationCount() async {
+    try {
+      // Query the notification collection for documents where receiverID matches widget.userID
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notification')
+          .where('receiverID', isEqualTo: widget.userId)
+          .get();
+      
+      print("Documents fetched: ${querySnapshot.docs.length}");
+
+      // Check if there are any documents in the result
+      setState(() {
+        hasNoti = querySnapshot.docs.isNotEmpty;
+      });
+    } catch (e) {
+      // Handle errors if needed
+      print("Error fetching notification count: $e");
+      setState(() {
+        hasNoti = false;
+      });
     }
   }
 
@@ -219,6 +245,33 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
           fontSize: 20,
         ),
         automaticallyImplyLeading: false,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId))
+                  );
+                },
+              ),
+              if (hasNoti)
+                Positioned(
+                  right:14,
+                  top:12,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
       bottomNavigationBar: AdminCustomBottomNavBar(
         currentIndex: currentPageIndex,

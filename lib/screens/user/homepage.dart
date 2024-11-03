@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/constants.dart';
+import 'package:assignment_tripmate/screens/notification.dart';
 import 'package:assignment_tripmate/screens/user/accountPage.dart';
 import 'package:assignment_tripmate/screens/user/bookings.dart';
 import 'package:assignment_tripmate/screens/user/carRentalDetails.dart';
@@ -29,6 +30,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
   bool isFetchingCountry = false;
   bool isFecthingCarRental = false;
   bool isFecthingLocalBuddy = false;
+  bool hasNoti = false;
   List<Map<String, dynamic>> countryList = [];
   List<Map<String, dynamic>> carRentalList = [];
   List<Map<String, dynamic>> localBuddyList = [];
@@ -45,6 +47,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
   void initState() {
     super.initState();
     currentPageIndex = widget.currentPageIndex ?? 0;
+    _fetchNotificationCount();
     fetchRandomCountries();
     fetchRandomCarRentalPackage();
     fetchRandomLocalBuddies();
@@ -157,6 +160,29 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
     } finally {
       setState(() {
         isFecthingLocalBuddy = false; // Update the loading state
+      });
+    }
+  }
+
+  Future<void> _fetchNotificationCount() async {
+    try {
+      // Query the notification collection for documents where receiverID matches widget.userID
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notification')
+          .where('receiverID', isEqualTo: widget.userId)
+          .get();
+      
+      print("Documents fetched: ${querySnapshot.docs.length}");
+
+      // Check if there are any documents in the result
+      setState(() {
+        hasNoti = querySnapshot.docs.isNotEmpty;
+      });
+    } catch (e) {
+      // Handle errors if needed
+      print("Error fetching notification count: $e");
+      setState(() {
+        hasNoti = false;
       });
     }
   }
@@ -673,6 +699,33 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
           fontSize: 20,
         ),
         automaticallyImplyLeading: false,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white),
+                onPressed: () {
+                  Navigator.push(
+                    context, 
+                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId))
+                  );
+                },
+              ),
+              if (hasNoti)
+                Positioned(
+                  right:14,
+                  top:12,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: currentPageIndex,

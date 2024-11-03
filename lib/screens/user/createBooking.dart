@@ -538,6 +538,22 @@ class _createBookingScreenState extends State<createBookingScreen> {
           'bookingCreateTime': DateTime.now(),
           'transferProof': uploadedProof!,
         });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Customer(${widget.userId}) has booked the tour package with id (${widget.tourID}).",
+          'isRead': 0,
+          'type': "booking",
+          'timestamp': DateTime.now(),
+          'receiverID': _companyData['id']
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Customer(${widget.userId}) has make payment for the tour package with id (${widget.tourID}). Please generate invoice for the customer.",
+          'isRead': 0,
+          'type': "invoice",
+          'timestamp': DateTime.now(),
+          'receiverID': "A1001"
+        });
       }
 
       // Get the current availability of the tour package
@@ -699,6 +715,22 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'accountNumber': encryptedAccountNumber,
       });
 
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userId}) has booked the car rental package with id (${widget.carRentalID}).",
+        'isRead': 0,
+        'type': "booking",
+        'timestamp': DateTime.now(),
+        'receiverID': _companyData['id']
+      });
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userId}) has make payment for the car rental package with id (${widget.carRentalID}). Please generate invoice for the customer.",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001"
+      });
+
       // Show success dialog
       showCustomDialog(
         context: context, 
@@ -824,6 +856,28 @@ class _createBookingScreenState extends State<createBookingScreen> {
         'isRefund': 0,
         'bookingCreateTime': DateTime.now(),
         'transferProof': uploadedProof!,
+      });
+
+      final lbDoc = await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyID).get();
+
+      if(lbDoc.exists){
+        String lbUserID = lbDoc.data()?['userID'] ?? "";
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Customer(${widget.userId}) has booked your local buddy slot with booking id ($id)).",
+          'isRead': 0,
+          'type': "booking",
+          'timestamp': DateTime.now(),
+          'receiverID': lbUserID
+        });
+      }
+
+      await FirebaseFirestore.instance.collection('notification').doc().set({
+        'content': "Customer(${widget.userId}) has make payment for the local buddy package with id (${widget.localBuddyID}). Please generate invoice for the customer.",
+        'isRead': 0,
+        'type': "invoice",
+        'timestamp': DateTime.now(),
+        'receiverID': "A1001"
       });
 
       // Show success dialog
