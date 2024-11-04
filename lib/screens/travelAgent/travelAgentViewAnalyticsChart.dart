@@ -82,9 +82,6 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
           if (bookingDate.year == year) {
             String monthKey = DateFormat('MMM').format(bookingDate); // e.g., Jan, Feb
             tourBookingByMonth[monthKey] = (tourBookingByMonth[monthKey] ?? 0) + 1;
-
-            // Print the month and the number of bookings for that month
-            print('Booking for month: $monthKey, Count: ${tourBookingByMonth[monthKey]}');
           }
         }
       }
@@ -134,8 +131,6 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
             if (bookingDate.year == year) {
               String monthKey = DateFormat('MMM').format(bookingDate);
               carRentalBookingByMonth[monthKey] = (carRentalBookingByMonth[monthKey] ?? 0) + 1;
-
-              print('Car Booking for month: $monthKey, Count: ${carRentalBookingByMonth[monthKey]}');
             }
           }
         }
@@ -273,7 +268,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
   }
 
   Widget _buildLineChart(List<FlSpot> dataPoints, String chartTitle, Map<String, int> data) {
-    double maxYValue = _getMaxYValue(data); // Use tour bookings to determine max Y value
+    double maxYValue = _getMaxYValue(data); 
     return Column(
       children: [
         Text(

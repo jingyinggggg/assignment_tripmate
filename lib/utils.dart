@@ -280,8 +280,9 @@ class CarList{
   final String? agencyContact;
   final String? pickUpLocation;
   final String? dropOffLocation;
+  double? distance;
 
-  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation, this.dropOffLocation});
+  CarList(this.carID, this.carModel, {this.carImage, this.carType, this.fuel, this.transmission, this.seat, this.price, this.agentID, this.agencyName, this.agencyContact, this.pickUpLocation, this.dropOffLocation, this.distance});
 }
 
 class LocalBuddy{

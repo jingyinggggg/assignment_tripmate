@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyDetails.dart';
-import 'package:geocoding/geocoding.dart';
-// import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:assignment_tripmate/screens/user/localBuddyBottomNavigationBar.dart';
