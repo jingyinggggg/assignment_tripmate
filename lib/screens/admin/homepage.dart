@@ -4,6 +4,7 @@ import 'package:assignment_tripmate/screens/admin/adminViewBookingListMainpage.d
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
 import 'package:assignment_tripmate/screens/admin/manageCarList.dart';
 import 'package:assignment_tripmate/screens/admin/manageCountryList.dart';
+import 'package:assignment_tripmate/screens/admin/manageUserList.dart';
 import 'package:assignment_tripmate/screens/admin/registrationRequest.dart';
 import 'package:assignment_tripmate/screens/notification.dart';
 import 'package:assignment_tripmate/screens/user/chatPage.dart';
@@ -82,7 +83,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                   mainAxisSpacing: 25,  // Vertical spacing between buttons
                   childAspectRatio: 1, // Buttons will be square
                 ),
-                itemCount: 5, // Total number of menu buttons
+                itemCount: 6, // Total number of menu buttons
                 itemBuilder: (context, index) {
                   final menuItems = [
                     {
@@ -141,6 +142,18 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => AdminViewAnalyticsMainpageScreen(userId: widget.userId),
+                          ),
+                        );
+                      },
+                    },
+                    {
+                      'icon': 'images/user-list.png',
+                      'label': 'User List',
+                      'onPressed': () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AdminManageUserListScreen(userId: widget.userId),
                           ),
                         );
                       },

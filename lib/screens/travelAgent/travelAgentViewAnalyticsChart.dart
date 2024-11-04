@@ -362,7 +362,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
     // Collect all tour names with the maximum booking number
     return tourBookings
         .where((tour) => tour.totalBookingNumber == maxBookings)
-        .map((tour) => tour.tourName) // Replace 'tourName' with the actual property for the tour name
+        .map((tour) => tour.tourName) 
         .toList();
   }
 
@@ -375,7 +375,7 @@ class _TravelAgentViewAnalyticsChartScreenState extends State<TravelAgentViewAna
     // Collect all car rental names with the maximum booking number
     return carRentals
         .where((car) => car.totalBookingNumber == maxBookings)
-        .map((car) => car.carName) // Replace 'carName' with the actual property for the car rental name
+        .map((car) => car.carName) 
         .toList();
   }
 

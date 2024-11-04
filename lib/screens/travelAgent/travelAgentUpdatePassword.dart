@@ -246,77 +246,79 @@ class _TravelAgentUpdatePasswordScreenState extends State<TravelAgentUpdatePassw
           },
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            _passwordTextField(
-              controller: currentPasswordController,
-              hintText: "Enter your current password",
-              labelText: "Current Password",
-              obscureText: currentPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  currentPasswordVisible = !currentPasswordVisible;
-                });
-              },
-              isVisible: currentPasswordVisible,
-            ),
-            const SizedBox(height: 20),
-            _passwordTextField(
-              controller: newPasswordController,
-              hintText: "Enter your new password",
-              labelText: "New Password",
-              obscureText: newPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  newPasswordVisible = !newPasswordVisible;
-                });
-              },
-              isVisible: newPasswordVisible,
-            ),
-            const SizedBox(height: 20),
-            _passwordTextField(
-              controller: confirmNewPasswordController,
-              hintText: "Enter your new password again",
-              labelText: "Confirm New Password",
-              obscureText: confirmNewPasswordVisible,
-              onVisibilityToggle: () {
-                setState(() {
-                  confirmNewPasswordVisible = !confirmNewPasswordVisible;
-                });
-              },
-              isVisible: confirmNewPasswordVisible,
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: isLoading ? null : _updatePassword,
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text(
-                      'Update Password',
-                      style: TextStyle(
-                        color: Colors.white,
+      body: SingleChildScrollView(
+        child:Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10, top: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              _passwordTextField(
+                controller: currentPasswordController,
+                hintText: "Enter your current password",
+                labelText: "Current Password",
+                obscureText: currentPasswordVisible,
+                onVisibilityToggle: () {
+                  setState(() {
+                    currentPasswordVisible = !currentPasswordVisible;
+                  });
+                },
+                isVisible: currentPasswordVisible,
+              ),
+              const SizedBox(height: 20),
+              _passwordTextField(
+                controller: newPasswordController,
+                hintText: "Enter your new password",
+                labelText: "New Password",
+                obscureText: newPasswordVisible,
+                onVisibilityToggle: () {
+                  setState(() {
+                    newPasswordVisible = !newPasswordVisible;
+                  });
+                },
+                isVisible: newPasswordVisible,
+              ),
+              const SizedBox(height: 20),
+              _passwordTextField(
+                controller: confirmNewPasswordController,
+                hintText: "Enter your new password again",
+                labelText: "Confirm New Password",
+                obscureText: confirmNewPasswordVisible,
+                onVisibilityToggle: () {
+                  setState(() {
+                    confirmNewPasswordVisible = !confirmNewPasswordVisible;
+                  });
+                },
+                isVisible: confirmNewPasswordVisible,
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: isLoading ? null : _updatePassword,
+                child: isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text(
+                        'Update Password',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF467BA1),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                textStyle: const TextStyle(
-                  fontSize: 18,
-                  fontFamily: 'Inika',
-                  fontWeight: FontWeight.bold,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF467BA1),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  textStyle: const TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Inika',
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      )
     );
   }
 }
