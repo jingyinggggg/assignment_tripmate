@@ -1,5 +1,7 @@
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentProfile.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentRevenue.dart';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentReviewMainpage.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentSettingScreen.dart';
 import 'package:assignment_tripmate/screens/user/helpCenter.dart';
 import 'package:flutter/material.dart';
@@ -214,12 +216,12 @@ class _TravelAgentAccountScreenState extends State<TravelAgentAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      TravelAgentViewReviewMainpageScreen(userId: widget.userId)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -260,36 +262,36 @@ class _TravelAgentAccountScreenState extends State<TravelAgentAccountScreen> {
                   //     ],
                   //   ),
                   // ),
-                  // Positioned(
-                  //   top: screenHeight * 0.55,
-                  //   left: screenWidth * 0.12,
-                  //   child: Column(
-                  //     children: [
-                  //       const Text(
-                  //         "Agenda",
-                  //         style: TextStyle(
-                  //             fontWeight: FontWeight.w900,
-                  //             color: Colors.black,
-                  //             fontSize: 14),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           // Navigator.push(
-                  //           //   context,
-                  //           //   MaterialPageRoute(
-                  //           //       builder: (context) =>
-                  //           //           const SettingScreen()),
-                  //           // );
-                  //         },
-                  //         child: Image.asset(
-                  //           'images/location-pin.png',
-                  //           width: screenWidth * 0.1,
-                  //           height: screenWidth * 0.1,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
+                  Positioned(
+                    top: screenHeight * 0.55,
+                    left: screenWidth * 0.12,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Revenue",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              fontSize: 14),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      TravelAgentRevenueScreen(userId: widget.userId)),
+                            );
+                          },
+                          child: Image.asset(
+                            'images/location-pin.png',
+                            width: screenWidth * 0.1,
+                            height: screenWidth * 0.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   Positioned(
                     top: screenHeight * 0.6,
                     left: screenWidth * 0.35,

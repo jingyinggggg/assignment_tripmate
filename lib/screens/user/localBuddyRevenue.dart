@@ -1,7 +1,4 @@
 import "package:assignment_tripmate/constants.dart";
-import "package:assignment_tripmate/screens/user/accountPage.dart";
-import "package:assignment_tripmate/screens/user/homepage.dart";
-import "package:assignment_tripmate/screens/user/localBuddyViewAppointment.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
