@@ -55,10 +55,12 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   final TextEditingController _accountNameController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
 
-
   @override
   void initState(){
     super.initState();
+    _updateTourBookingStatusForPastDates();
+    _updateCarBookingStatusForPastDates();
+    _updateLocalBuddyBookingStatusForPastDates();
     _fetchUserData();
     _fetchTourBooking();
     _fetchCarRentalBooking();
@@ -96,6 +98,232 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       }
     } catch(e){
       print("Error fetching user data: $e");
+    }
+  }
+
+  Future<void> _updateTourBookingStatusForPastDates() async {
+    try {
+      CollectionReference tourBookingRef = FirebaseFirestore.instance.collection('tourBooking');
+      CollectionReference tourRef = FirebaseFirestore.instance.collection('tourPackage');
+      CollectionReference revenueRef = FirebaseFirestore.instance.collection('revenue');
+      DateTime today = DateTime.now();
+
+      QuerySnapshot snapshot = await tourBookingRef
+          .where('userID', isEqualTo: widget.userID)
+          .where('bookingStatus', isEqualTo: 0) // Assuming 0 is 'upcoming'
+          .get();
+
+      for (var doc in snapshot.docs) {
+        String dateRange = doc['travelDate'] as String; // Assuming date range is stored as a string
+        List<String> dates = dateRange.split(' - '); // Split the range by ' - '
+        DateTime endDate = DateFormat('d/M/yyyy').parse(dates[1]); // Parse the end date
+
+        // Check if the end date has passed
+        if (endDate.isBefore(today)) {
+          await tourBookingRef.doc(doc.id).update({'bookingStatus': 1}); // Set to completed status
+          print('Updated tour booking status to completed for booking ID: ${doc.id}');
+
+          String tourID = doc['tourID'];
+          DocumentSnapshot tourDoc = await tourRef.doc(tourID).get();
+
+          if (tourDoc.exists) {
+            String travelAgentID = tourDoc['agentID'];
+            print('Retrieved travelAgentID: $travelAgentID for tourID: $tourID');
+
+            // Check if a revenue document already exists for the travelAgentID
+            QuerySnapshot revenueSnapshot = await revenueRef.where('id', isEqualTo: travelAgentID).get();
+
+            DocumentReference revenueDocRef;
+
+            if (revenueSnapshot.docs.isNotEmpty) {
+              // Use the existing document if found
+              revenueDocRef = revenueSnapshot.docs.first.reference;
+              print('Using existing revenue document for travelAgentID: $travelAgentID');
+            } else {
+              // Create a new document if none exists
+              revenueDocRef = revenueRef.doc();
+              await revenueDocRef.set({
+                'id': travelAgentID // Save travelAgentID as a field
+              });
+              print('Created new revenue document for travelAgentID: $travelAgentID');
+            }
+
+            double totalPrice = doc['totalPrice'];
+
+            // Generate a new ID for the profit entry
+            String profitID = revenueDocRef.collection('profit').doc().id; // Generate a new ID for profit entry
+
+            // Create the profit entry in the subcollection
+            await revenueDocRef.collection('profit').doc(profitID).set({
+              'profitID': profitID,
+              'profit': totalPrice,
+              'type': "tour",
+              'isWithdraw': 0,
+              'withdrawalID': null,
+              'timestamp': DateTime.now()
+            });
+
+            print('Stored tour profit entry for travel agent: $travelAgentID with profitID: $profitID');
+          } else {
+            print('No tour details found for tourID: $tourID');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error updating booking status: $e');
+    }
+  }
+
+  Future<void> _updateCarBookingStatusForPastDates() async {
+    try {
+      CollectionReference carBookingRef = FirebaseFirestore.instance.collection('carRentalBooking');
+      CollectionReference carRentalRef = FirebaseFirestore.instance.collection('car_rental');
+      CollectionReference revenueRef = FirebaseFirestore.instance.collection('revenue');
+      DateTime today = DateTime.now();
+
+      QuerySnapshot snapshot = await carBookingRef
+        .where('userID', isEqualTo: widget.userID)
+        .where('bookingStatus', isEqualTo: 0)
+        .get();
+
+      for (var doc in snapshot.docs) {
+        List<dynamic> bookingDates = doc['bookingDate']; // Assume bookingDate is a list of Timestamps
+
+        if (bookingDates.isNotEmpty) {
+          // Get the last date in the list and convert it to DateTime
+          Timestamp lastTimestamp = bookingDates.last;
+          DateTime endDate = lastTimestamp.toDate();
+
+          // Check if the end date has passed
+          if (endDate.isBefore(today)) {
+            await carBookingRef.doc(doc.id).update({'bookingStatus': 1}); // Set to completed status
+            print('Updated car booking status to completed for booking ID: ${doc.id}');
+
+            // Retrieve the travelAgentID from the car_rental collection using carID
+            String carID = doc['carID'];
+            DocumentSnapshot carDoc = await carRentalRef.doc(carID).get();
+
+            if (carDoc.exists) {
+              String travelAgentID = carDoc['agencyID'];
+              print('Retrieved travelAgentID: $travelAgentID for carID: $carID');
+
+              // Send notification to travel agent
+              await FirebaseFirestore.instance.collection('notification').doc().set({
+                'content': "Car rental booking (${doc.id}) has completed. Please check the car condition and submit deposit refund request.",
+                'isRead': 0,
+                'type': "refund",
+                'timestamp': DateTime.now(),
+                'receiverID': travelAgentID
+              });
+
+              // Check if a revenue document already exists for the travelAgentID
+              QuerySnapshot revenueSnapshot = await revenueRef.where('id', isEqualTo: travelAgentID).get();
+
+              DocumentReference revenueDocRef;
+
+              if (revenueSnapshot.docs.isNotEmpty) {
+                // Use the existing document if found
+                revenueDocRef = revenueSnapshot.docs.first.reference;
+                print('Using existing revenue document for travelAgentID: $travelAgentID');
+              } else {
+                // Create a new document if none exists
+                revenueDocRef = revenueRef.doc();
+                await revenueDocRef.set({
+                  'id': travelAgentID // Save travelAgentID as a field
+                });
+                print('Created new revenue document for travelAgentID: $travelAgentID');
+              }
+
+              // Store revenue for the travel agent
+              String profitID = revenueDocRef.collection('profit').doc().id; // Generate a new ID for profit entry
+              double totalPrice = doc['totalPrice'] - 300; // Adjust total price as needed
+
+              await revenueDocRef.collection('profit').doc(profitID).set({
+                'profitID': profitID,
+                'profit': totalPrice,
+                'type': "carRental",
+                'isWithdraw': 0,
+                'withdrawalID': null,
+                'timestamp': DateTime.now()
+              });
+
+              print('Stored car rental profit entry for travel agent: $travelAgentID with profitID: $profitID');
+            } else {
+              print('No car details found for carID: $carID');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error updating car booking status: $e');
+    }
+  }
+
+  Future<void> _updateLocalBuddyBookingStatusForPastDates() async {
+    try {
+      CollectionReference buddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
+      CollectionReference revenueRef = FirebaseFirestore.instance.collection('revenue');
+      DateTime today = DateTime.now();
+
+      QuerySnapshot snapshot = await buddyBookingRef
+        .where('userID', isEqualTo: widget.userID)
+        .where('bookingStatus', isEqualTo: 0)
+        .get();
+
+      for (var doc in snapshot.docs) {
+        List<dynamic> bookingDates = doc['bookingDate']; // Assume bookingDate is a list of Timestamps
+
+        if (bookingDates.isNotEmpty) {
+          // Get the last date in the list and convert it to DateTime
+          Timestamp lastTimestamp = bookingDates.last;
+          DateTime endDate = lastTimestamp.toDate();
+
+          // Check if the end date has passed
+          if (endDate.isBefore(today)) {
+            await buddyBookingRef.doc(doc.id).update({'bookingStatus': 1}); // Set to completed status
+            print('Updated buddy booking status to completed for booking ID: ${doc.id}');
+
+            String localBuddyID = doc['localBuddyID'];
+            print('Local Buddy ID: $localBuddyID'); // Check the actual ID value
+
+            // Check if the document with the given localBuddyID exists
+            QuerySnapshot revenueSnapshot = await revenueRef.where('id', isEqualTo: localBuddyID).get();
+
+            DocumentReference revenueDocRef;
+
+            if (revenueSnapshot.docs.isNotEmpty) {
+              // Use existing document
+              revenueDocRef = revenueSnapshot.docs.first.reference;
+              print('Using existing revenue document for localBuddyID: $localBuddyID');
+            } else {
+              // Create a new document if it doesn't exist
+              revenueDocRef = revenueRef.doc();
+              await revenueDocRef.set({
+                'id': localBuddyID // Save localBuddyID as a field
+              });
+              print('Created new revenue document for localBuddyID: $localBuddyID');
+            }
+
+            // Generate a new ID for profit entry
+            String profitID = revenueDocRef.collection('profit').doc().id; 
+            double totalPrice = doc['totalPrice']; 
+
+            // Store profit entry in the profit subcollection
+            await revenueDocRef.collection('profit').doc(profitID).set({
+              'profitID': profitID,
+              'profit': totalPrice,
+              'type': "buddy",
+              'isWithdraw': 0,
+              'withdrawalID': null,
+              'timestamp': DateTime.now()
+            });
+
+            print('Stored profit entry for local buddy: $localBuddyID with profitID: $profitID');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error updating buddy booking status: $e');
     }
   }
 
