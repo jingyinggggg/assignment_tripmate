@@ -47,6 +47,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   TextEditingController _cancelTourBookingController = TextEditingController();
   TextEditingController _cancelCarRentalBookingController = TextEditingController();
   TextEditingController _cancelLocalBookingController = TextEditingController();
+  TextEditingController _reviewTourBookingController = TextEditingController();
+  TextEditingController _reviewCarRentalBookingController = TextEditingController();
+  TextEditingController _reviewLocalBookingController = TextEditingController();
   bool isSelectingImage = false;
   Uint8List? _transferProof;
   String? uploadedProof;
@@ -2172,7 +2175,102 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                           SizedBox(
                             height: 30, // Set the button height
                             child: TextButton(
-                              onPressed: (){}, 
+                              onPressed: (){
+                                showDialog(
+                                  context: context, 
+                                  builder: (BuildContext context){
+                                    return AlertDialog(
+                                      title: Text('Review'),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Please write a review for the services:', style: TextStyle(fontSize: defaultFontSize, color: Colors.black, fontWeight: FontWeight.w500),),
+                                          TextField(
+                                            controller: _reviewTourBookingController,
+                                            maxLines: 5,
+                                            decoration: InputDecoration(
+                                              hintText: "Describe about the services or experience...",
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(color: primaryColor)
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          child: Text('Cancel'),
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            if (_reviewTourBookingController.text.trim().isEmpty) {
+                                              // Show error dialog if reason is empty
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text('Error'),
+                                                    content: Text('Review cannot be empty.'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the error dialog
+                                                        },
+                                                        child: Text('OK'),
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            } else {
+                                              // Proceed with cancelation if reason is provided
+                                              // Navigator.of(context).pop(); // Close the main dialog
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = true;
+                                              // });
+                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = false;
+                                              // });
+                                              // Navigator.pop(context);
+                                            }
+                                          },
+                                          child: isCancelCarRentalBooking
+                                          ? SizedBox(
+                                            width: 10,
+                                            height: 10,
+                                            child: CircularProgressIndicator(color: Colors.white,),
+                                          )
+                                          : Text('Submit'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  });
+                              }, 
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.symmetric(horizontal: 8.0),
                                 backgroundColor: Colors.white,
@@ -2567,7 +2665,102 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         ? SizedBox(
                           height: 30, // Set the button height
                           child: TextButton(
-                            onPressed: () {}, 
+                            onPressed: () {
+                              showDialog(
+                                  context: context, 
+                                  builder: (BuildContext context){
+                                    return AlertDialog(
+                                      title: Text('Review'),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Please write a review for the services:', style: TextStyle(fontSize: defaultFontSize, color: Colors.black, fontWeight: FontWeight.w500),),
+                                          TextField(
+                                            controller: _reviewCarRentalBookingController,
+                                            maxLines: 5,
+                                            decoration: InputDecoration(
+                                              hintText: "Describe about the services or experience...",
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(color: primaryColor)
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          child: Text('Cancel'),
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            if (_reviewCarRentalBookingController.text.trim().isEmpty) {
+                                              // Show error dialog if reason is empty
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text('Error'),
+                                                    content: Text('Review cannot be empty.'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the error dialog
+                                                        },
+                                                        child: Text('OK'),
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            } else {
+                                              // Proceed with cancelation if reason is provided
+                                              // Navigator.of(context).pop(); // Close the main dialog
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = true;
+                                              // });
+                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = false;
+                                              // });
+                                              // Navigator.pop(context);
+                                            }
+                                          },
+                                          child: isCancelCarRentalBooking
+                                          ? SizedBox(
+                                            width: 10,
+                                            height: 10,
+                                            child: CircularProgressIndicator(color: Colors.white,),
+                                          )
+                                          : Text('Submit'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            }, 
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.symmetric(horizontal: 8.0),
                               backgroundColor: Colors.white,
@@ -3057,7 +3250,102 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         ? SizedBox(
                           height: 30, // Set the button height
                           child: TextButton(
-                            onPressed: () {}, 
+                            onPressed: () {
+                              showDialog(
+                                context: context, 
+                                  builder: (BuildContext context){
+                                    return AlertDialog(
+                                      title: Text('Review'),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Please write a review for the services:', style: TextStyle(fontSize: defaultFontSize, color: Colors.black, fontWeight: FontWeight.w500),),
+                                          TextField(
+                                            controller: _reviewLocalBookingController,
+                                            maxLines: 5,
+                                            decoration: InputDecoration(
+                                              hintText: "Describe about the services or experience...",
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide(color: primaryColor)
+                                              ),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          },
+                                          child: Text('Cancel'),
+                                          style: TextButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            if (_reviewLocalBookingController.text.trim().isEmpty) {
+                                              // Show error dialog if reason is empty
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: Text('Error'),
+                                                    content: Text('Review cannot be empty.'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop(); // Close the error dialog
+                                                        },
+                                                        child: Text('OK'),
+                                                        style: TextButton.styleFrom(
+                                                          backgroundColor: primaryColor,
+                                                          foregroundColor: Colors.white,
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            } else {
+                                              // Proceed with cancelation if reason is provided
+                                              // Navigator.of(context).pop(); // Close the main dialog
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = true;
+                                              // });
+                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
+                                              // setState(() {
+                                              //   isCancelCarRentalBooking = false;
+                                              // });
+                                              // Navigator.pop(context);
+                                            }
+                                          },
+                                          child: isCancelCarRentalBooking
+                                          ? SizedBox(
+                                            width: 10,
+                                            height: 10,
+                                            child: CircularProgressIndicator(color: Colors.white,),
+                                          )
+                                          : Text('Submit'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: primaryColor,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            }, 
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.symmetric(horizontal: 8.0),
                               backgroundColor: Colors.white,
