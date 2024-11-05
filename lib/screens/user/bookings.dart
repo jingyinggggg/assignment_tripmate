@@ -146,13 +146,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
             }
           }
         }
-        setState(() {
-          _tourBookingUpcoming = tourBookings;
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingUpcoming = tourBookings;
+          });
+        }
       } else {
-        setState(() {
-          _tourBookingCompleted = [];
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingCompleted = [];
+          });
+        }
       }
 
       CollectionReference comTourBookingRef = FirebaseFirestore.instance.collection('tourBooking');
@@ -196,13 +200,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           }
         }
 
-        setState(() {
-          _tourBookingCompleted = comTourBookings;
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingCompleted = comTourBookings;
+          });
+        }
       } else {
-        setState(() {
-          _tourBookingCompleted = [];
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingCompleted = [];
+          });
+        }
       }
 
       CollectionReference canTourBookingRef = FirebaseFirestore.instance.collection('tourBooking');
@@ -246,13 +254,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           }
         }
 
-        setState(() {
-          _tourBookingCanceled = canTourBookings;
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingCanceled = canTourBookings;
+          });
+        }
       } else {
-        setState(() {
-          _tourBookingCanceled = [];
-        });
+        if(mounted){
+          setState(() {
+            _tourBookingCanceled = [];
+          });
+        }
       }
 
       setState(() {
@@ -303,15 +315,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           }
         }
 
-        // Update state with the list of upcoming bookings
-        setState(() {
-          _carRentalBookingUpcoming = upCarRentalBookings;
-        });
+        if(mounted){
+          setState(() {
+            _carRentalBookingUpcoming = upCarRentalBookings;
+          });
+        }
       } else {
-        // If no results found, set _tourBookingUpcoming to an empty list
-        setState(() {
-          _carRentalBookingUpcoming = [];
-        });
+        if(mounted){
+           setState(() {
+            _carRentalBookingUpcoming = [];
+          });
+        }
       }
 
       CollectionReference comCarRentalBookingRef = FirebaseFirestore.instance.collection('carRentalBooking');
@@ -343,13 +357,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           }
         }
 
-        setState(() {
-          _carRentalBookingCompleted = comCarRentalBookings;
-        });
+        if(mounted){
+          setState(() {
+            _carRentalBookingCompleted = comCarRentalBookings;
+          });
+        }
       } else {
-        setState(() {
-          _carRentalBookingCompleted = [];
-        });
+        if(mounted){
+          setState(() {
+            _carRentalBookingCompleted = [];
+          });
+        }
       }
 
       CollectionReference canCarRentalBookingRef = FirebaseFirestore.instance.collection('carRentalBooking');
@@ -381,14 +399,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           }
         }
 
-        setState(() {
-          _carRentalBookingCanceled = canCarRentalBookings;
-        });
+        if(mounted){
+          setState(() {
+            _carRentalBookingCanceled = canCarRentalBookings;
+          });
+        }
       } else {
-        // If no results found, set _tourBookingUpcoming to an empty list
-        setState(() {
-          _carRentalBookingCanceled = [];
-        });
+        if(mounted){
+          setState(() {
+            _carRentalBookingCanceled = [];
+          });
+        }
       }
 
       setState(() {
@@ -443,13 +464,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
           upLocalBuddyBookings.add(localBuddyBooks);
         }
-        setState(() {
-          _localBuddyBookingUpcoming = upLocalBuddyBookings;
-        });
+        if(mounted){
+          setState(() {
+            _localBuddyBookingUpcoming = upLocalBuddyBookings;
+          });
+        }
       } else {
-        setState(() {
-          _localBuddyBookingUpcoming = [];
-        });
+        if(mounted){
+          setState(() {
+            _localBuddyBookingUpcoming = [];
+          });
+        }
       }
 
       CollectionReference comLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
@@ -486,13 +511,19 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
           comLocalBuddyBookings.add(comlocalBuddyBooks);
         }
-        setState(() {
-          _localBuddyBookingCompleted = comLocalBuddyBookings;
-        });
+        if(mounted){
+          setState(() {
+            _localBuddyBookingCompleted = comLocalBuddyBookings;
+          });
+        }
+        
       } else {
-        setState(() {
-          _localBuddyBookingCompleted = [];
-        });
+        if(mounted){
+          setState(() {
+            _localBuddyBookingCompleted = [];
+          });
+        }
+       
       }
 
       CollectionReference canLocalBuddyBookingRef = FirebaseFirestore.instance.collection('localBuddyBooking');
@@ -529,13 +560,19 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
           canLocalBuddyBookings.add(canlocalBuddyBooks);
         }
-        setState(() {
-          _localBuddyBookingCanceled = canLocalBuddyBookings;
-        });
+
+        if(mounted){
+          setState(() {
+            _localBuddyBookingCanceled = canLocalBuddyBookings;
+          });
+        }
+        
       } else {
-        setState(() {
-          _localBuddyBookingCanceled = [];
-        });
+        if(mounted){
+          setState(() {
+            _localBuddyBookingCanceled = [];
+          });
+        }
       }
 
       setState(() {

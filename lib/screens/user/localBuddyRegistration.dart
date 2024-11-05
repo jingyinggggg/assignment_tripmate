@@ -126,7 +126,12 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
 
       // Generate localBuddyID
       final usersSnapshot = await FirebaseFirestore.instance.collection('localBuddy').get();
-      final localBuddyID = 'LB${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      List<String> existingIDs = usersSnapshot.docs
+        .map((doc) => doc.data()['localBuddyID'] as String) // Extract cityID field
+        .toList();
+      
+      String localBuddyID = _generateNewID(existingIDs);
 
       // Check if previous experience is entered (null or empty check)
       String? previousExperience;
@@ -196,6 +201,22 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
         isLoading = false;
       });
     }
+  }
+
+  String _generateNewID(List<String> existingIDs) {
+    // Extract numeric parts from existing IDs and convert to integers
+    List<int> numericIDs = existingIDs
+        .map((id) {
+          final match = RegExp(r'LB(\d{4})').firstMatch(id);
+          return match != null ? int.parse(match.group(1)!) : 0; // Convert "CTJAPANxxxx" to xxxx
+        })
+        .toList();
+
+    // Find the highest ID
+    int maxID = numericIDs.isNotEmpty ? numericIDs.reduce((a, b) => a > b ? a : b) : 0;
+
+    // Generate new ID
+    return 'LB${(maxID + 1).toString().padLeft(4, '0')}'; // Ensure it has leading zeros
   }
 
   Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {

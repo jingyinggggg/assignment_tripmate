@@ -36,15 +36,16 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
       // Get the reference to the 'travelAgent' collection
       CollectionReference taRef = FirebaseFirestore.instance.collection('travelAgent');
       
-      // Query where 'accountApproved' is equal to 0
+      // Query where 'accountApproved' is equal to 0 or 3
       QuerySnapshot querySnapshot = await taRef.where('accountApproved', whereIn: [0, 3]).get();
       
       _TAList = querySnapshot.docs.map((doc) {
+        // Use default values if any field is null
         return TravelAgent(
-          doc['name'], 
-          doc['companyName'], 
-          doc['id'],
-          doc['profileImage']
+          doc['name'] ?? 'Unnamed Agent', 
+          doc['companyName'] ?? 'No Company', 
+          doc['id'] ?? 'No ID',
+          doc['profileImage'] ?? 'default_image_url_here' // Provide a default image URL if needed
         );
       }).toList();
 
@@ -54,12 +55,13 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
 
     } catch (e) {
       print("Error fetching travel agents list: $e");
-    } finally{
+    } finally {
       setState(() {
         isFetchTravelAgentList = false;
       });
     }
   }
+
 
   Future<void> fetchLocalBuddyList() async {
     setState(() {
@@ -223,7 +225,7 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
     ); 
   } 
 
-  Widget TAComponent({required TravelAgent travelAgent}){
+  Widget TAComponent({required TravelAgent travelAgent}) {
     return Container(
       padding: EdgeInsets.only(top: 10, bottom: 10),
       child: Row(
@@ -243,7 +245,10 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                 ),
                 child: CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(travelAgent.image),
+                  backgroundColor: Colors.white,
+                  backgroundImage: travelAgent.image != "default_image_url_here"
+                    ? NetworkImage(travelAgent.image) 
+                    : AssetImage("images/profile.png") as ImageProvider,
                 ),
               ),
               SizedBox(width: 15),
@@ -251,14 +256,14 @@ class _RegistrationRequesrScreenState extends State<RegistrationRequestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(travelAgent.name, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
-                  SizedBox(height: 5,),
+                  SizedBox(height: 5),
                   Text("Agency: " + travelAgent.companyName, style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 12))
                 ],
-              )
+              ),
             ],
           ),
           IconButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.push(
                 context, 
                 MaterialPageRoute(builder: (context) => AdminManageRegistrationRequestScreen(userId: widget.userId, TAId: travelAgent.id))

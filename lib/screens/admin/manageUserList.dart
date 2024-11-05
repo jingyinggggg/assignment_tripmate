@@ -175,18 +175,42 @@ class _AdminManageUserListScreenState extends State<AdminManageUserListScreen> {
 
   Future<void> _deleteUser(String userId, String collection) async {
     try {
+      // Delete the user from the specified collection
       await FirebaseFirestore.instance.collection(collection).doc(userId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User deleted successfully.')));
-      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User deleted successfully.')),
+      );
+
+      // Check if the deleted user is a local buddy if the collection is 'users'
+      if (collection == 'users') {
+        // Query to check if there's a local buddy with userID matching the userId
+        final localBuddySnapshot = await FirebaseFirestore.instance
+            .collection('localBuddy')
+            .where('userID', isEqualTo: userId)
+            .get();
+
+        if (localBuddySnapshot.docs.isNotEmpty) {
+          for (var doc in localBuddySnapshot.docs) {
+            await doc.reference.delete();
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Associated local buddy deleted successfully.')),
+          );
+        }
+      }
+
+      // Update local lists in the UI
       setState(() {
         if (collection == 'users') {
           userList.removeWhere((user) => user['id'] == userId);
           foundedUserList = userList;
+          localBuddyList.removeWhere((buddy) => buddy['localBuddyUserID'] == userId);
+          foundedLocalBuddyList = localBuddyList;
         } else if (collection == 'travelAgent') {
           travelAgentList.removeWhere((agent) => agent['id'] == userId);
           foundedTravelAgentList = travelAgentList;
         } else if (collection == 'localBuddy') {
-          localBuddyList.removeWhere((buddy) => buddy['localBuddyUserID'] == userId);
+          localBuddyList.removeWhere((buddy) => buddy['localBuddyID'] == userId);
           foundedLocalBuddyList = localBuddyList;
         }
       });
@@ -201,6 +225,7 @@ class _AdminManageUserListScreenState extends State<AdminManageUserListScreen> {
       );
     }
   }
+
 
 
   @override
@@ -333,7 +358,33 @@ class _AdminManageUserListScreenState extends State<AdminManageUserListScreen> {
                   IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
-                      // Handle delete functionality here
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Delete User'),
+                            content: Text('Are you sure you want to delete user (${type == "lb" ? item['localBuddyName'] ?? 'No Name' : item['name'] ?? 'No Name'})?'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('Cancel'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: Text('Delete', style: TextStyle(color: Colors.red)),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  _deleteUser(
+                                    type == "lb" ? item['localBuddyID'] : item['id'], 
+                                    type == "lb" ? "localBuddy" : type == "user" ? "users" : "travelAgent"
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
                     },
                   ),
                 ],

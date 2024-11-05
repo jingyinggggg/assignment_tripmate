@@ -594,9 +594,11 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 color: Color(0xFFCBE7EA).withOpacity(0.5),
                                 image: DecorationImage(
-                                  image: NetworkImage(localBuddy['profileImage']),
-                                  fit: BoxFit.cover
-                                )
+                                  image: localBuddy['profileImage'] != null 
+                                      ? NetworkImage(localBuddy['profileImage']) 
+                                      : AssetImage('images/profile.png'), // Placeholder image
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                               child: Stack(
                                 children: [
@@ -613,7 +615,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              localBuddy['userName'],
+                                              localBuddy['userName'] ?? "No Name",
                                               style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: defaultFontSize,
