@@ -48,6 +48,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('notification')
           .where('receiverID', isEqualTo: widget.userId)
+          .where('isRead', isEqualTo: 0)
           .get();
       
       print("Documents fetched: ${querySnapshot.docs.length}");
@@ -83,7 +84,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                   mainAxisSpacing: 25,  // Vertical spacing between buttons
                   childAspectRatio: 1, // Buttons will be square
                 ),
-                itemCount: 6, // Total number of menu buttons
+                itemCount: 7, // Total number of menu buttons
                 itemBuilder: (context, index) {
                   final menuItems = [
                     {
@@ -147,6 +148,18 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                       },
                     },
                     {
+                      'icon': 'images/withdrawal.png',
+                      'label': 'Withdrawal Request',
+                      'onPressed': () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AdminManageUserListScreen(userId: widget.userId),
+                          ),
+                        );
+                      },
+                    },
+                    {
                       'icon': 'images/user-list.png',
                       'label': 'User List',
                       'onPressed': () {
@@ -196,7 +209,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId, isAdmin: true,))
                   );
                 },
               ),

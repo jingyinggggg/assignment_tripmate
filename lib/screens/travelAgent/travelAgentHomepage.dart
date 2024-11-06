@@ -76,6 +76,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('notification')
           .where('receiverID', isEqualTo: widget.userId)
+          .where('isRead', isEqualTo: 0)
           .get();
       
       print("Documents fetched: ${querySnapshot.docs.length}");
@@ -253,7 +254,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId, isTA: true))
                   );
                 },
               ),

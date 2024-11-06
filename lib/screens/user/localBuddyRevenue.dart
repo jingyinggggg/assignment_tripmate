@@ -3,6 +3,7 @@ import "package:cloud_firestore/cloud_firestore.dart";
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
 import "package:intl/intl.dart";
+import 'package:encrypt/encrypt.dart' as encrypt;
 
 class LocalBuddyRevenueScreen extends StatefulWidget {
   final String userId;
@@ -27,6 +28,11 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
   int selectedYear = DateTime.now().year;
   bool isAmountVisible = true; 
   bool isLoading = false; // Track loading state
+  bool isSubmitting = false;
+  List<Map<String, dynamic>> withdrawalHistory = [];
+  final TextEditingController _bankNameController = TextEditingController();
+  final TextEditingController _accountNameController = TextEditingController();
+  final TextEditingController _accountNumberController = TextEditingController();
 
   @override
   void initState() {
@@ -95,6 +101,385 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
     } finally {
       setState(() {
         isLoading = false; 
+      });
+    }
+  }
+
+  Future<void> _updateBankDetails() async{
+    try{
+      // Encrypt bank details
+      final encryptedBankName = encryptText(_bankNameController.text);
+      final encryptedAccountName = encryptText(_accountNameController.text);
+      final encryptedAccountNumber = encryptText(_accountNumberController.text);
+
+      await FirebaseFirestore.instance.collection('localBuddy').doc(widget.localBuddyID).update({
+        'bankName': encryptedBankName,
+        'accountName': encryptedAccountName,
+        'accountNumber': encryptedAccountNumber
+      });
+
+      await _submitWithdrawRequest();
+
+    }catch(e){
+
+    }
+  }
+
+  Future<void> _fetchWithdrawalHistory() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('revenue')
+          .where('id', isEqualTo: widget.localBuddyID)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        DocumentSnapshot revenueDoc = snapshot.docs.first;
+
+        // Clear the list before adding new data
+        withdrawalHistory.clear();
+
+        QuerySnapshot withdrawalSnapshot = await FirebaseFirestore.instance
+          .collection('revenue')
+          .doc(revenueDoc.id)
+          .collection('withdrawal')
+          .orderBy('timestamp', descending: true) // Sort by timestamp in descending order
+          .get();
+
+        setState(() {
+          withdrawalHistory = withdrawalSnapshot.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList();
+        });
+      } else {
+        print("No revenue document found for the user.");
+      }
+    } catch (e) {
+      print("Error fetching withdrawal history: $e");
+    }
+  }
+
+  String encryptText(String text) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    final encrypted = encrypter.encrypt(text, iv: iv);
+    // Combine IV and encrypted text with a delimiter
+    return "${iv.base64}:${encrypted.base64}";
+  }
+
+  Future<void> _handleWithdraw() async {
+    String? userBankAccount = await _checkBankAccount();
+
+    if (userBankAccount == null) {
+      // Show bank details input dialog
+      await _showBankDetailsInputDialog();
+    } else {
+      // Show confirmation dialog
+      bool? confirm = await _showConfirmationDialog();
+      if (confirm == true) {
+        // Proceed with withdrawal action
+        await _submitWithdrawRequest();
+      }
+    }
+  }
+
+  Future<String?> _checkBankAccount() async {
+    var snapshot = await FirebaseFirestore.instance
+        .collection('localBuddy')
+        .doc(widget.localBuddyID)
+        .get();
+
+    if (snapshot.exists && snapshot.data() != null) {
+      return snapshot.data()!['bankName']; // Adjust field name based on your database
+    }
+    return null; // No bank account found
+  }
+
+  Future<void> _showBankDetailsInputDialog() async{
+    await showDialog(
+      context: context, 
+      builder: (BuildContext context){
+        return AlertDialog(
+          title: Text('Bank Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Please enter your bank details before submit withdrawal request:",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: defaultFontSize),
+                ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _bankNameController,
+                    decoration: InputDecoration(
+                      labelText: "Bank Name",
+                      hintText: "Bank Name",
+                      labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                      ),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _accountNameController,
+                    decoration: InputDecoration(
+                      labelText: "Account Name",
+                      hintText: "Account Name",
+                      labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                      ),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _accountNumberController,
+                    decoration: InputDecoration(
+                      labelText: "Account Number",
+                      hintText: "Account Number",
+                      labelStyle: TextStyle(color: Colors.black, fontSize: defaultLabelFontSize),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color(0xFF467BA1),
+                          width: 2.5,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFF467BA1), width: 2.5),
+                      ),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500, fontSize: defaultFontSize),
+                    keyboardType: TextInputType.number,
+                  ),
+              ],
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_bankNameController.text.trim().isEmpty && _accountNameController.text.trim().isEmpty && _accountNumberController.text.trim().isEmpty) {
+                  // Show error dialog if reason is empty
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Error'),
+                        content: Text('Please make sure you have filled in all required field.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close the error dialog
+                            },
+                            child: Text('OK'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                } else {
+                  Navigator.pop(context);
+                  await _updateBankDetails();
+                }
+              },
+              child: isSubmitting
+              ? SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(color: Colors.white,),
+              )
+              : Text('Submit'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+          );
+      }
+    );
+  }
+
+  Future<bool?> _showConfirmationDialog() async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Withdrawal'),
+          content: Text('Are you sure you want to proceed with the withdrawal?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Confirm'),
+              style: TextButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitWithdrawRequest() async {
+    setState(() {
+      isSubmitting = true;
+    });
+
+    // Generate a unique withdrawal ID
+    String withdrawalID = DateTime.now().millisecondsSinceEpoch.toString();
+
+    try {
+      // Query to find the specific revenue document where `id` matches `widget.userId`
+      QuerySnapshot revenueSnapshot = await FirebaseFirestore.instance
+          .collection('revenue')
+          .where('id', isEqualTo: widget.localBuddyID)
+          .get();
+
+      if (revenueSnapshot.docs.isNotEmpty) {
+        // Get the document reference of the matched revenue document
+        DocumentReference revenueDocRef = revenueSnapshot.docs.first.reference;
+
+        // Fetch the profit subcollection to update documents with `isWithdraw = 0`
+        QuerySnapshot profitSnapshot = await revenueDocRef
+            .collection('profit')
+            .where('isWithdraw', isEqualTo: 0)
+            .get();
+
+        // Batch to update all waiting withdraw documents
+        WriteBatch batch = FirebaseFirestore.instance.batch();
+
+        for (var profitDoc in profitSnapshot.docs) {
+          DocumentReference profitRef = profitDoc.reference;
+
+          // Update each document with `isWithdraw = 1` and set the `withdrawalID`
+          batch.update(profitRef, {
+            'isWithdraw': 1,
+            'withdrawalID': withdrawalID,
+          });
+        }
+
+        // Commit the batch to update all waiting withdraw documents at once
+        await batch.commit();
+
+        // Add a new document in the `withdrawal` subcollection with withdrawal details
+        await revenueDocRef.collection('withdrawal').doc(withdrawalID).set({
+          'withdrawalID': withdrawalID,
+          'amount': totalWaitingWithdraw,
+          'status': 'pending', // Set as 'pending' initially
+          'timestamp': Timestamp.now(),
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Local Buddy (${widget.localBuddyID}) has submitted a withdrawal request. Please issue the withdrawal transaction.",
+          'isRead': 0,
+          'type': "withdraw",
+          'timestamp': DateTime.now(),
+          'receiverID': "A1001"
+        });
+
+        print('Withdrawal request submitted successfully with ID: $withdrawalID');
+
+        showCustomDialog(
+          context: context, 
+          title: "Success", 
+          content: "You have submitted the withdrawal request successfully. Please wait for admin to issue your withdrawal request.", 
+          onPressed: (){
+            Navigator.pop(context);
+            _fetchWithdrawalHistory();
+          }
+        );
+        
+        // Clear `waitingWithdraw` list and reset the total waiting amount after successful submission
+        setState(() {
+          waitingWithdraw.clear();
+          totalWaitingWithdraw = 0.0;
+        });
+      } else {
+        print('No revenue document found for userId: ${widget.userId}');
+      }
+
+    } catch (e) {
+      print('Error submitting withdrawal request: $e');
+    } finally {
+      setState(() {
+        isSubmitting = false;
       });
     }
   }
@@ -179,10 +564,10 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                                 children: [
                                   Text(
                                     isAmountVisible
-                                        ? "RM${totalWaitingWithdraw.toStringAsFixed(2)}"
+                                        ? "RM ${totalWaitingWithdraw.toStringAsFixed(2)}"
                                         : "RM ****",
                                     style: TextStyle(
-                                      fontSize: 24,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black,
                                     ),
@@ -191,7 +576,7 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                                     icon: Icon(
                                       isAmountVisible ? Icons.visibility_off : Icons.visibility,
                                       color: Colors.black,
-                                      size: 25,
+                                      size: 18,
                                     ),
                                     onPressed: () {
                                       setState(() {
@@ -204,14 +589,38 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                               ElevatedButton(
                                 onPressed: () {
                                   // Handle withdraw action
+                                  if(waitingWithdraw.isEmpty){
+                                    showCustomDialog(
+                                      context: context, 
+                                      title: "Error", 
+                                      content: "No revenue pending to withdraw currently.", 
+                                      onPressed: (){
+                                        Navigator.pop(context);
+                                      }
+                                    );
+                                  } else{
+                                    _handleWithdraw();
+                                  }
                                 },
-                                child: const Text("Withdraw"),
+                                child: isSubmitting
+                                ? SizedBox(
+                                    width: 10,
+                                    height: 10,
+                                    child: CircularProgressIndicator(color: Colors.white,),
+                                  )
+                                : Text(
+                                    "Withdraw", 
+                                    style:TextStyle(
+                                      fontWeight: FontWeight.bold, 
+                                      fontSize: defaultFontSize
+                                    )
+                                  ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primaryColor,
                                   foregroundColor: Colors.white,
+                                  minimumSize: Size(40, 35),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)
-                                  )
+                                      borderRadius: BorderRadius.circular(10)),
                                 ),
                               ),
                             ],
@@ -304,6 +713,65 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Withdrawal History",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        // Check if withdrawal history data is available
+                        withdrawalHistory.isNotEmpty
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: withdrawalHistory.length,
+                                itemBuilder: (context, index) {
+                                  var historyItem = withdrawalHistory[index];
+                                  return Card(
+                                    elevation: 4,
+                                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: ListTile(
+                                      tileColor: Colors.white,
+                                      title: Text(
+                                        'RM ${historyItem['amount'].toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
+                                      subtitle: Text(
+                                        'Date: ${DateFormat('yyyy-MM-dd').format(historyItem['timestamp'].toDate())}\nID: ${historyItem['withdrawalID']}',
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                      trailing: Icon(
+                                        historyItem['status'] == "pending" ? Icons.pending_actions : Icons.check,
+                                        color: historyItem['status'] == "pending" ? Colors.orange : Colors.green,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Text(
+                                  "No withdrawal history available",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                      ]
+                    )
+                  )
                 ],
               ),
             ),

@@ -1,11 +1,24 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/admin/homepage.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart";
+import "package:assignment_tripmate/screens/user/homepage.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
+  final bool isUser;
+  final bool isTA;
+  final bool isAdmin;
 
-  const NotificationScreen({super.key, required this.userId});
+  const NotificationScreen({
+    super.key, 
+    required this.userId,
+    this.isUser = false,
+    this.isTA = false,
+    this.isAdmin = false
+    }
+  );
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -74,7 +87,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            if(widget.isUser){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => UserHomepageScreen(userId: widget.userId)
+                )
+              );
+            } else if (widget.isTA){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => TravelAgentHomepageScreen(userId: widget.userId)
+                )
+              );
+            } else if (widget.isAdmin){
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (context) => AdminHomepageScreen(userId: widget.userId)
+                )
+              );
+            }
           },
         ),
       ),
@@ -107,6 +141,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
             break;
           case 'invoice':
             imageAsset = 'images/invoice.png';
+            break;
+          case 'withdraw':
+            imageAsset = 'images/cash-withdrawal.png';
             break;
           default:
             imageAsset = 'images/default-image.png';

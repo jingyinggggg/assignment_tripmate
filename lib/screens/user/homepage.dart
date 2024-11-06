@@ -170,6 +170,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('notification')
           .where('receiverID', isEqualTo: widget.userId)
+          .where('isRead', isEqualTo: 0)
           .get();
       
       print("Documents fetched: ${querySnapshot.docs.length}");
@@ -709,7 +710,7 @@ class _UserHomepageScreenState extends State<UserHomepageScreen> {
                 onPressed: () {
                   Navigator.push(
                     context, 
-                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId))
+                    MaterialPageRoute(builder: (context) => NotificationScreen(userId: widget.userId, isUser: true,))
                   );
                 },
               ),
