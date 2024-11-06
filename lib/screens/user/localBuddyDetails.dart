@@ -30,12 +30,15 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
   // String? locationArea;
   bool isLoading = false;
   bool isFavorited = false;
+  bool isFetching = false;
+  List<Map<String, dynamic>> reviewData = [];
 
   @override
   void initState() {
     super.initState();
     _fetchLocalBuddyData();
     _checkIfFavorited();
+    _fetchReview();
   }
 
   Future<void> _checkIfFavorited() async {
@@ -122,39 +125,59 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
     }
   }
 
-  // Future<Map<String, String>> _getLocationAreaAndCountry(String address) async {
-  //   final String apiKeys = apiKey; // Replace with your API key
-  //   final String url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$address&key=$apiKeys';
+  Future<void> _fetchReview() async {
+    setState(() {
+      isFetching = true;
+    });
 
-  //   final response = await http.get(Uri.parse(url));
+    try {
+      // Fetch reviews where packageID equals the widget.localBuddyId
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('review')
+          .where('packageID', isEqualTo: widget.localBuddyId)
+          .get();
 
-  //   if (response.statusCode == 200) {
-  //     final data = json.decode(response.body);
+      if (snapshot.docs.isNotEmpty) {
+        // Iterate over each review document
+        for (var doc in snapshot.docs) {
+          // Get userID from the review document
+          String userID = doc['userID'];
 
-  //     if (data['results'].isNotEmpty) {
-  //       final addressComponents = data['results'][0]['address_components'];
+          // Fetch the user data from the 'users' collection based on userID
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userID)
+              .get();
 
-  //       String country = '';
-  //       String area = '';
+          if (userDoc.exists) {
+            // Extract user details (assuming the fields exist)
+            String userName = userDoc['name'] ?? 'Unknown';  // Provide default if the field doesn't exist
+            String userProfile = userDoc['profileImage'] ?? '';  // Provide default if the field doesn't exist
 
-  //       for (var component in addressComponents) {
-  //         List<String> types = List<String>.from(component['types']);
-  //         if (types.contains('country')) {
-  //           country = component['long_name'];
-  //         } else if (types.contains('administrative_area_level_1') || types.contains('locality')) {
-  //           area = component['long_name'];
-  //         }
-  //       }
+            // Prepare the data to be added to the reviewData list
+            Map<String, dynamic> reviewEntry = {
+              'content': doc.data(),  // Store the review data
+              'userName': userName,
+              'userProfile': userProfile,
+            };
 
-  //       return {'country': country, 'area': area};
-  //     } else {
-  //       return {'country': '', 'area': ''};
-  //     }
-  //   } else {
-  //     print('Error fetching location data: ${response.statusCode}');
-  //     return {'country': '', 'area': ''};
-  //   }
-  // }
+            // Add the combined data (review + user details) to the list
+            reviewData.add(reviewEntry);
+          }
+        }
+      }
+
+      // Now you can use reviewData list for displaying or processing further
+      print('Review data: $reviewData');
+    } catch (e) {
+      print("Error fetching reviews: $e");
+    } finally {
+      setState(() {
+        isFetching = false;
+      });
+    }
+  }
+
 
   // Method to build a row with an icon and text
   Widget _buildInfoRow(IconData? icon, Image? image, String text, Color? color) {
@@ -378,6 +401,7 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                   ],
                   if (localBuddyData != null) ...[
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
                           padding: EdgeInsets.all(15),
@@ -462,6 +486,102 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
                             ],
                           )
                         ),
+                        SizedBox(height: 10),
+                        Padding(
+                          padding: EdgeInsets.only(left: 15, right: 15),
+                          child: Text(
+                            "Reviews",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: defaultLabelFontSize
+                            ),
+                            textAlign: TextAlign.justify,
+                          )
+                        ),
+                        SizedBox(height: 10),
+                        reviewData.isNotEmpty
+                        ? ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: reviewData.length,
+                          itemBuilder: (context, index){
+                            var docData = reviewData[index];
+
+                            return Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(15),
+                              margin: EdgeInsets.only(left: 15, right: 15, bottom: 15),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: primaryColor, width: 1.5),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Color(0xFF467BA1),
+                                        width: 2.0,
+                                      ),
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 25,
+                                      backgroundColor: Colors.white,
+                                      backgroundImage: docData['userProfile'] != null
+                                          ? NetworkImage(docData['userProfile'])
+                                          : AssetImage("images/profile.png") as ImageProvider,
+                                    ),
+                                  ),
+                                  SizedBox(width: 15),
+                                  Expanded( // Use Expanded to avoid overflow
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          docData['userName'],
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: defaultFontSize,
+                                          ),
+                                        ),
+                                        SizedBox(height: 5),
+                                        Text(
+                                          docData['content']['review'],
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                          overflow: TextOverflow.visible, // Handle long text
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          
+                          )
+                        : Padding(
+                            padding: EdgeInsets.only(left: 15, right: 15, bottom: 15),
+                            child: Text(
+                              "Selected local buddy does not have any reviews yet.",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                                fontSize: defaultFontSize
+                              ),
+                              textAlign: TextAlign.center,
+                            )
+                          ),
                       ],
                     )
                   ] else ...[

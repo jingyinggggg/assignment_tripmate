@@ -311,7 +311,7 @@ class itinerary{
   itinerary(this.title, this.content, this.itineraryID, this.image);
 }
 
-class tourBooking{
+class tourBooking {
   final String tourBookingID;
   final String tourID;
   late String tourName;
@@ -323,6 +323,7 @@ class tourBooking{
   final double totalPrice;
   final int pax;
   final int bookingStatus;
+  final int? isReviewSubmitted;
 
   tourBooking({
     required this.tourBookingID, 
@@ -331,12 +332,14 @@ class tourBooking{
     required this.travelDate, 
     required this.totalPrice, 
     required this.pax,
-    required this.bookingStatus
+    required this.bookingStatus,
+    this.isReviewSubmitted,
   });
 
-  factory tourBooking.fromFirestore(DocumentSnapshot doc){
+  factory tourBooking.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+    // Create the tourBooking object
     tourBooking tourbooking = tourBooking(
       tourBookingID: doc.id, 
       tourID: data['tourID'],
@@ -344,9 +347,11 @@ class tourBooking{
       travelDate: data['travelDate'], 
       totalPrice: data['totalPrice'], 
       pax: data['numberOfPeople'],
-      bookingStatus: data['bookingStatus']
+      bookingStatus: data['bookingStatus'],
+      isReviewSubmitted: data.containsKey('reviewSubmitted') ? data['reviewSubmitted'] : null, // Check if reviewSubmitted exists
     );
 
+    // Assign other fields
     tourbooking.tourName = data['tourName'] ?? '';
     tourbooking.tourImage = data['tourCover'] ?? '';
     tourbooking.agencyName = data['agencyName'] ?? '';
@@ -355,6 +360,7 @@ class tourBooking{
     return tourbooking;
   }
 }
+
 
 class carRentalBooking {
   final String carRentalBookingID;
@@ -366,6 +372,7 @@ class carRentalBooking {
   final int bookingStatus;
   final int isRefund;
   final int? isDepositRefund;
+  final int? isReviewSubmitted;
 
   carRentalBooking({
     required this.carRentalBookingID,
@@ -375,6 +382,7 @@ class carRentalBooking {
     required this.bookingStatus,
     required this.isRefund,
     required this.isDepositRefund,
+    this.isReviewSubmitted,
   });
 
   factory carRentalBooking.fromFirestore(DocumentSnapshot doc) {
@@ -393,6 +401,7 @@ class carRentalBooking {
       bookingStatus: data['bookingStatus'],
       isRefund: data['isRefund'],
       isDepositRefund: data['isRefundDeposit'],
+      isReviewSubmitted: data.containsKey('reviewSubmitted') ? data['reviewSubmitted'] : null, // Check if reviewSubmitted exists
     );
 
     carRentalBookings.carName = data['carModel'] ?? '';
@@ -412,6 +421,7 @@ class localBuddyBooking{
   final double totalPrice;
   final int bookingStatus;
   final int isRefund;
+  final int? isReviewSubmitted;
 
   localBuddyBooking({
     required this.localBuddyBookingID, 
@@ -419,7 +429,8 @@ class localBuddyBooking{
     required this.bookingDate, 
     required this.totalPrice, 
     required this.bookingStatus,
-    required this.isRefund
+    required this.isRefund,
+    this.isReviewSubmitted,
   });
 
   factory localBuddyBooking.fromFirestore(DocumentSnapshot doc) {
@@ -436,7 +447,8 @@ class localBuddyBooking{
       totalPrice: data['totalPrice'],
       bookingDate: bookingDates,  // Use the formatted date range here
       bookingStatus: data['bookingStatus'],
-      isRefund: data['isRefund']
+      isRefund: data['isRefund'],
+      isReviewSubmitted: data.containsKey('reviewSubmitted') ? data['reviewSubmitted'] : null, // Check if reviewSubmitted exists
     );
 
     localBuddyBookings.localBuddyName = data['localBuddyName'] ?? '';

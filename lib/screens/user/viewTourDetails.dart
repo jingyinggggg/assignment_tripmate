@@ -35,6 +35,8 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
   bool isLoading = false;
   bool isOpenFile = false;
   bool isFavorited = false;
+  bool isFetching = false;
+  List<Map<String, dynamic>> reviewData = [];
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
     _fetchTourData();
     _checkIfFavorited();
     WidgetsBinding.instance.addObserver(this);
+    _fetchReview();
   }
 
   @override
@@ -137,6 +140,59 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
       return file;
     } catch(e){
       return null;
+    }
+  }
+
+  Future<void> _fetchReview() async {
+    setState(() {
+      isFetching = true;
+    });
+
+    try {
+      // Fetch reviews where packageID equals the widget.localBuddyId
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('review')
+          .where('packageID', isEqualTo: widget.tourID)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // Iterate over each review document
+        for (var doc in snapshot.docs) {
+          // Get userID from the review document
+          String userID = doc['userID'];
+
+          // Fetch the user data from the 'users' collection based on userID
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userID)
+              .get();
+
+          if (userDoc.exists) {
+            // Extract user details (assuming the fields exist)
+            String userName = userDoc['name'] ?? 'Unknown';  // Provide default if the field doesn't exist
+            String userProfile = userDoc['profileImage'] ?? '';  // Provide default if the field doesn't exist
+
+            // Prepare the data to be added to the reviewData list
+            Map<String, dynamic> reviewEntry = {
+              'content': doc.data(),  // Store the review data
+              'userName': userName,
+              'userProfile': userProfile,
+            };
+
+            // Add the combined data (review + user details) to the list
+            reviewData.add(reviewEntry);
+          }
+        }
+      }
+
+      // Now you can use reviewData list for displaying or processing further
+      print('Review data: $reviewData');
+    } catch (e) {
+      print("Error fetching reviews: $e");
+    } finally {
+      setState(() {
+        isFetching = false;
+      });
     }
   }
 
@@ -545,7 +601,103 @@ class _ViewTourDetailsScreenState extends State<ViewTourDetailsScreen> with Widg
 
                       availabilityComponent(tourData!),
 
-                      SizedBox(height:30),
+                      // SizedBox(height:30),
+                      SizedBox(height: 30),
+                      Padding(
+                        padding: EdgeInsets.only(left: 0, right: 0),
+                        child: Text(
+                          "Reviews",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18
+                          ),
+                          textAlign: TextAlign.justify,
+                        )
+                      ),
+                      SizedBox(height: 10),
+                      reviewData.isNotEmpty
+                      ? ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: reviewData.length,
+                        itemBuilder: (context, index){
+                          var docData = reviewData[index];
+
+                          return Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(15),
+                            margin: EdgeInsets.only(bottom: 15),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: primaryColor, width: 1.5),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Color(0xFF467BA1),
+                                      width: 2.0,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 25,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage: docData['userProfile'] != null
+                                        ? NetworkImage(docData['userProfile'])
+                                        : AssetImage("images/profile.png") as ImageProvider,
+                                  ),
+                                ),
+                                SizedBox(width: 15),
+                                Expanded( // Use Expanded to avoid overflow
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        docData['userName'],
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: defaultFontSize,
+                                        ),
+                                      ),
+                                      SizedBox(height: 5),
+                                      Text(
+                                        docData['content']['review'],
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.justify,
+                                        overflow: TextOverflow.visible, // Handle long text
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        )
+                      : Padding(
+                          padding: EdgeInsets.only(left: 15, right: 15, bottom: 15),
+                          child: Text(
+                            "Selected tour package does not have any reviews yet.",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                              fontSize: defaultFontSize
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                        ),
                     ],
                   ),
                 ),

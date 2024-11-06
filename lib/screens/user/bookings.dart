@@ -42,6 +42,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   bool isCancelCarRentalBooking = false;
   bool isCancelLocalBuddyBooking = false;
   bool isPayingBalance = false;
+  bool isSubmittingTourReview = false;
+  bool isSubmittingCarReview = false;
+  bool isSubmittingLbReview = false;
   int _outerTabIndex = 0;  // For the outer Upcoming, Completed, Canceled
   int _innerTabIndex = 0;  // For the inner Tour Package, Car Rental, Local Buddy
   TextEditingController _cancelTourBookingController = TextEditingController();
@@ -57,6 +60,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   final TextEditingController _bankNameController = TextEditingController();
   final TextEditingController _accountNameController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
+
 
   @override
   void initState(){
@@ -505,6 +509,117 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       print('Error fetching booking: $e');
       setState(() {
         isFetchingTourPackage = false;
+      });
+    }
+  }
+
+  Future<void> _submitTourReview(String bookingID, String tourID) async {
+    setState(() {
+      isSubmittingTourReview = true;
+    });
+    try{
+      await FirebaseFirestore.instance.collection("tourBooking").doc(bookingID).update({
+        'reviewSubmitted': 1
+      });
+
+      await FirebaseFirestore.instance.collection("review").doc().set({
+        'packageID': tourID,
+        'userID': widget.userID,
+        'review': _reviewTourBookingController.text,
+        'timestamp': DateTime.now()
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: "Success", 
+        content: "You have submitted the review successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
+
+    }catch(e){
+      print("Error in saving review: $e");
+    }finally{
+      setState(() {
+        isSubmittingTourReview = false;
+      });
+    }
+  }
+
+  Future<void> _submitCarReview(String bookingID, String carID) async {
+    setState(() {
+      isSubmittingCarReview = true;
+    });
+    try{
+      await FirebaseFirestore.instance.collection("carRentalBooking").doc(bookingID).update({
+        'reviewSubmitted': 1
+      });
+
+      await FirebaseFirestore.instance.collection("review").doc().set({
+        'packageID': carID,
+        'userID': widget.userID,
+        'review': _reviewCarRentalBookingController.text,
+        'timestamp': DateTime.now()
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: "Success", 
+        content: "You have submitted the review successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
+
+    }catch(e){
+      print("Error in saving review: $e");
+    }finally{
+      setState(() {
+        isSubmittingCarReview = false;
+      });
+    }
+  }
+
+  Future<void> _submitLbReview(String bookingID, String lbID) async {
+    setState(() {
+      isSubmittingLbReview = true;
+    });
+    try{
+      await FirebaseFirestore.instance.collection("localBuddyBooking").doc(bookingID).update({
+        'reviewSubmitted': 1
+      });
+
+      await FirebaseFirestore.instance.collection("review").doc().set({
+        'packageID': lbID,
+        'userID': widget.userID,
+        'review': _reviewLocalBookingController.text,
+        'timestamp': DateTime.now()
+      });
+
+      showCustomDialog(
+        context: context, 
+        title: "Success", 
+        content: "You have submitted the review successfully.", 
+        onPressed: (){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userID, currentPageIndex: 3,))
+          );
+        }
+      );
+
+    }catch(e){
+      print("Error in saving review: $e");
+    }finally{
+      setState(() {
+        isSubmittingLbReview = false;
       });
     }
   }
@@ -1330,221 +1445,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     );
   }
 
-  // Future<void> showPaymentOption(BuildContext context, String deposit, Function onOptionSelected) async {
-  //   String? selectedPaymentOption; // To store the selected payment option
 
-  //   await showDialog<void>(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Text(
-  //           'Select Payment Option', 
-  //           style: TextStyle(
-  //             fontSize: defaultLabelFontSize,
-  //             fontWeight: FontWeight.w600,
-  //             color: Colors.black,
-  //           ),
-  //         ),
-  //         content: StatefulBuilder(
-  //           builder: (BuildContext context, StateSetter setState) {
-  //             return Container(
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min, // To adjust based on content
-  //                 children: <Widget>[
-  //                   ListTile(
-  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-  //                     leading: Transform.scale(
-  //                       scale: 0.6, // Scale the radio size
-  //                       child: Radio<String>(
-  //                         value: "Touch'n Go",
-  //                         groupValue: selectedPaymentOption,
-  //                         activeColor: primaryColor, // Set the selected radio color to blue
-  //                         onChanged: (String? value) {
-  //                           setState(() {
-  //                             selectedPaymentOption = value; // Update selected payment option
-  //                           });
-  //                         },
-  //                       ),
-  //                     ),
-  //                     title: Row(
-  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-  //                       children: [
-  //                         Text(
-  //                           "Touch'n Go",
-  //                           style: TextStyle(
-  //                             fontSize: defaultFontSize,
-  //                             fontWeight: FontWeight.w500,
-  //                             color: Colors.black
-  //                           ),
-  //                         ),
-  //                         Image(
-  //                           image: AssetImage('images/TNG-eWallet.png'),
-  //                           width: 40,
-  //                           alignment: Alignment.centerRight,
-  //                         ), 
-  //                       ],
-  //                     ),
-  //                   ),
-
-  //                   ListTile(
-  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-  //                     leading: Transform.scale(
-  //                       scale: 0.6, // Scale the radio size
-  //                       child: Radio<String>(
-  //                         value: 'Credit Card',
-  //                         groupValue: selectedPaymentOption,
-  //                         activeColor: primaryColor, // Set the selected radio color to blue
-  //                         onChanged: (String? value) {
-  //                           setState(() {
-  //                             selectedPaymentOption = value; // Update selected payment option
-  //                           });
-  //                         },
-  //                       ),
-  //                     ),
-  //                     title: Row(
-  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-  //                       children: [
-  //                         Text(
-  //                           'Credit Card',
-  //                           style: TextStyle(
-  //                             fontSize: defaultFontSize,
-  //                             fontWeight: FontWeight.w500,
-  //                             color: Colors.black
-  //                           ),
-  //                         ),
-  //                         Image(
-  //                           image: AssetImage('images/credit_card.png'),
-  //                           width: 40,
-  //                         ), 
-  //                       ],
-  //                     ),
-  //                   ),
-
-  //                   ListTile(
-  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-  //                     leading: Transform.scale(
-  //                       scale: 0.6, // Scale the radio size
-  //                       child: Radio<String>(
-  //                         value: 'PayPal',
-  //                         groupValue: selectedPaymentOption,
-  //                         activeColor: primaryColor, // Set the selected radio color to blue
-  //                         onChanged: (String? value) {
-  //                           setState(() {
-  //                             selectedPaymentOption = value; // Update selected payment option
-  //                           });
-  //                         },
-  //                       ),
-  //                     ),
-  //                     title: Row(
-  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-  //                       children: [
-  //                         Text(
-  //                           'PayPal',
-  //                           style: TextStyle(
-  //                             fontSize: defaultFontSize,
-  //                             fontWeight: FontWeight.w500,
-  //                             color: Colors.black
-  //                           ),
-  //                         ),
-  //                         Image(
-  //                           image: AssetImage('images/paypal.png'),
-  //                           width: 50,
-  //                           height: 40,
-  //                         ), 
-  //                       ],
-  //                     ),
-  //                   ),
-
-  //                   ListTile(
-  //                     contentPadding: EdgeInsets.symmetric(horizontal: 0.0), // Remove default padding
-  //                     leading: Transform.scale(
-  //                       scale: 0.6, // Scale the radio size
-  //                       child: Radio<String>(
-  //                         value: 'Online Banking',
-  //                         groupValue: selectedPaymentOption,
-  //                         activeColor: primaryColor, // Set the selected radio color to blue
-  //                         onChanged: (String? value) {
-  //                           setState(() {
-  //                             selectedPaymentOption = value; // Update selected payment option
-  //                           });
-  //                         },
-  //                       ),
-  //                     ),
-  //                     title: Row(
-  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween, // Space between text and icon
-  //                       children: [
-  //                         Text(
-  //                           'Online Banking',
-  //                           style: TextStyle(
-  //                             fontSize: defaultFontSize,
-  //                             fontWeight: FontWeight.w500,
-  //                             color: Colors.black
-  //                           ),
-  //                         ),
-  //                         Icon(Icons.account_balance, color: primaryColor, size: 20), // Icon for Bank Transfer
-  //                       ],
-  //                     ),
-  //                   ),
-
-  //                   SizedBox(height: 20),
-  //                   Text(
-  //                     'Total Price: $deposit',
-  //                     style: TextStyle(
-  //                       fontSize: defaultLabelFontSize,
-  //                       fontWeight: FontWeight.bold,
-  //                     ),
-  //                   ),
-
-  //                   SizedBox(height: 10),
-
-  //                   Row(
-  //                     mainAxisAlignment: MainAxisAlignment.end,
-  //                     crossAxisAlignment: CrossAxisAlignment.end,
-  //                     children: [
-  //                       TextButton(
-  //                         child: Text('Cancel'),
-  //                         onPressed: () {
-  //                           Navigator.of(context).pop(); // Close the dialog
-  //                         },
-  //                         style: TextButton.styleFrom(
-  //                           backgroundColor: primaryColor, // Set the background color
-  //                           foregroundColor: Colors.white, // Set the text color
-  //                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-  //                           shape: RoundedRectangleBorder(
-  //                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-  //                           ),
-  //                         ),
-  //                       ),
-  //                       SizedBox(width: 10),
-
-  //                       TextButton(
-  //                         child: Text('Pay'),
-  //                         style: TextButton.styleFrom(
-  //                           backgroundColor: selectedPaymentOption != null ? primaryColor : Colors.grey.shade300, // Set the background color
-  //                           foregroundColor: Colors.white, // Set the text color
-  //                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Optional padding
-  //                           shape: RoundedRectangleBorder(
-  //                             borderRadius: BorderRadius.circular(8), // Optional: rounded corners
-  //                           ),
-  //                         ),
-  //                         onPressed: selectedPaymentOption != null
-  //                           ? () {
-  //                               onOptionSelected(selectedPaymentOption!); // Pass the selected payment option to the callback
-  //                               Navigator.of(context).pop(); // Close the dialog
-  //                             }
-  //                           : null,
-  //                       ),
-  //                     ],
-  //                   )
-  //                 ],
-  //               ),
-  //             );
-  //           },
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
 
   Future<void> generateInvoice(String id, Invoice invoices, String servicesType, String collectionName, String pdfFileName, bool isDeposit, bool isRefund, bool isDepositRefund) async {
     setState(() {
@@ -2171,7 +2072,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                             ),
                           ],
                           
-                        ] else if (status == 1) 
+                        ] else if (status == 1 && tourbookings.isReviewSubmitted == null) 
                           SizedBox(
                             height: 30, // Set the button height
                             child: TextButton(
@@ -2240,19 +2141,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                                 },
                                               );
                                             } else {
-                                              // Proceed with cancelation if reason is provided
-                                              // Navigator.of(context).pop(); // Close the main dialog
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = true;
-                                              // });
-                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = false;
-                                              // });
-                                              // Navigator.pop(context);
+                                              _submitTourReview(tourbookings.tourBookingID, tourbookings.tourID);
                                             }
                                           },
-                                          child: isCancelCarRentalBooking
+                                          child: isSubmittingTourReview
                                           ? SizedBox(
                                             width: 10,
                                             height: 10,
@@ -2661,7 +2553,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                             ),
                           ),
                         )
-                      : status == 1
+                      : status == 1 && carRentalbookings.isReviewSubmitted == null
                         ? SizedBox(
                           height: 30, // Set the button height
                           child: TextButton(
@@ -2730,19 +2622,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                                 },
                                               );
                                             } else {
-                                              // Proceed with cancelation if reason is provided
-                                              // Navigator.of(context).pop(); // Close the main dialog
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = true;
-                                              // });
-                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = false;
-                                              // });
-                                              // Navigator.pop(context);
+                                              _submitCarReview(carRentalbookings.carRentalBookingID, carRentalbookings.carID);
                                             }
                                           },
-                                          child: isCancelCarRentalBooking
+                                          child: isSubmittingCarReview
                                           ? SizedBox(
                                             width: 10,
                                             height: 10,
@@ -3246,7 +3129,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                             ),
                           ),
                         )
-                      : status == 1
+                      : status == 1 && localBuddyBookings.isReviewSubmitted == null
                         ? SizedBox(
                           height: 30, // Set the button height
                           child: TextButton(
@@ -3315,19 +3198,10 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                                 },
                                               );
                                             } else {
-                                              // Proceed with cancelation if reason is provided
-                                              // Navigator.of(context).pop(); // Close the main dialog
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = true;
-                                              // });
-                                              // cancelCarBooking(carRentalbookings.carRentalBookingID, _cancelCarRentalBookingController.text);
-                                              // setState(() {
-                                              //   isCancelCarRentalBooking = false;
-                                              // });
-                                              // Navigator.pop(context);
+                                              _submitLbReview(localBuddyBookings.localBuddyBookingID, localBuddyBookings.localBuddyID);
                                             }
                                           },
-                                          child: isCancelCarRentalBooking
+                                          child: isSubmittingLbReview
                                           ? SizedBox(
                                             width: 10,
                                             height: 10,

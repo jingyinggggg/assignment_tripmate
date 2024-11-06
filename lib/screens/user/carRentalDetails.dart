@@ -27,12 +27,15 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   LatLng targetCarLocation = LatLng(0, 0);
   Set<Marker> _markers = {};
   bool isFavorited = false;
+  bool isFetching = false;
+  List<Map<String, dynamic>> reviewData = [];
 
   @override
   void initState() {
     super.initState();
     _fetchCarDetails();
     _checkIfFavorited();
+    _fetchReview();
   }
 
   Future<void> _checkIfFavorited() async {
@@ -118,6 +121,59 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _fetchReview() async {
+    setState(() {
+      isFetching = true;
+    });
+
+    try {
+      // Fetch reviews where packageID equals the widget.localBuddyId
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('review')
+          .where('packageID', isEqualTo: widget.carId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        // Iterate over each review document
+        for (var doc in snapshot.docs) {
+          // Get userID from the review document
+          String userID = doc['userID'];
+
+          // Fetch the user data from the 'users' collection based on userID
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userID)
+              .get();
+
+          if (userDoc.exists) {
+            // Extract user details (assuming the fields exist)
+            String userName = userDoc['name'] ?? 'Unknown';  // Provide default if the field doesn't exist
+            String userProfile = userDoc['profileImage'] ?? '';  // Provide default if the field doesn't exist
+
+            // Prepare the data to be added to the reviewData list
+            Map<String, dynamic> reviewEntry = {
+              'content': doc.data(),  // Store the review data
+              'userName': userName,
+              'userProfile': userProfile,
+            };
+
+            // Add the combined data (review + user details) to the list
+            reviewData.add(reviewEntry);
+          }
+        }
+      }
+
+      // Now you can use reviewData list for displaying or processing further
+      print('Review data: $reviewData');
+    } catch (e) {
+      print("Error fetching reviews: $e");
+    } finally {
+      setState(() {
+        isFetching = false;
+      });
+    }
   }
 
   Future<void> _addToWishlist(String carRentalId) async {
@@ -463,6 +519,102 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
               _buildInsuranceSection(),
               const SizedBox(height: 15),
               _buildRentalPolicySection(),
+              SizedBox(height: 15),
+              Padding(
+                padding: EdgeInsets.only(left: 0, right: 0),
+                child: Text(
+                  "Reviews",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: defaultLabelFontSize
+                  ),
+                  textAlign: TextAlign.justify,
+                )
+              ),
+              SizedBox(height: 10),
+              reviewData.isNotEmpty
+              ? ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: reviewData.length,
+                itemBuilder: (context, index){
+                  var docData = reviewData[index];
+
+                  return Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(15),
+                    margin: EdgeInsets.only(bottom: 15),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: primaryColor, width: 1.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Color(0xFF467BA1),
+                              width: 2.0,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 25,
+                            backgroundColor: Colors.white,
+                            backgroundImage: docData['userProfile'] != null
+                                ? NetworkImage(docData['userProfile'])
+                                : AssetImage("images/profile.png") as ImageProvider,
+                          ),
+                        ),
+                        SizedBox(width: 15),
+                        Expanded( // Use Expanded to avoid overflow
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                docData['userName'],
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: defaultFontSize,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                docData['content']['review'],
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.justify,
+                                overflow: TextOverflow.visible, // Handle long text
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                )
+              : Padding(
+                  padding: EdgeInsets.only(left: 15, right: 15, bottom: 15),
+                  child: Text(
+                    "Selected car rental package does not have any reviews yet.",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w500,
+                      fontSize: defaultFontSize
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+                ),
             ],
           ),
         ),
