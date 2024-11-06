@@ -46,18 +46,20 @@ class _AdminRevenueDetailsScreenState extends State<AdminRevenueDetailsScreen> {
 
   String decryptText(String encryptedText) {
     final key = encrypt.Key.fromUtf8('16CharactersLong');
-    final parts = encryptedText.split(':'); // Split to get IV and encrypted data
+    final parts = encryptedText.split(':');
 
     if (parts.length != 2) {
-      throw ArgumentError("Invalid encrypted format"); // Check for expected format
+      print("Invalid encrypted text format: $encryptedText"); // Debugging line
+      return "Decryption Error"; // Or return a default value to indicate an error
     }
 
-    final iv = encrypt.IV.fromBase64(parts[0]); // Retrieve the original IV
+    final iv = encrypt.IV.fromBase64(parts[0]);
     final encryptedData = encrypt.Encrypted.fromBase64(parts[1]);
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
 
-    return encrypter.decrypt(encryptedData, iv: iv); // Decrypt using original IV
+    return encrypter.decrypt(encryptedData, iv: iv);
   }
+
 
   Future<String> uploadImageToStorage(String childName, Uint8List file) async{
     Reference ref = FirebaseStorage.instance.ref().child(childName);
@@ -114,22 +116,45 @@ class _AdminRevenueDetailsScreenState extends State<AdminRevenueDetailsScreen> {
     }
   }
 
-  Future<void> _fetchWithdrawalUserDetails() async{
+  Future<void> _fetchWithdrawalUserDetails() async {
     setState(() {
       isFetching = true;
     });
-    try{
-      if(widget.withdrawalUserID.startsWith("TA")){
+    try {
+      if (widget.withdrawalUserID.startsWith("TA")) {
+        // Fetch from travelAgent collection
         DocumentReference reference = _firestore.collection('travelAgent').doc(widget.withdrawalUserID);
         DocumentSnapshot snapshot = await reference.get();
 
-        if(snapshot.exists){
+        if (snapshot.exists) {
           withdrawalUserData = snapshot.data() as Map<String, dynamic>;
         }
+      } else {
+        // Fetch from localBuddy collection
+        DocumentReference reference = _firestore.collection('localBuddy').doc(widget.withdrawalUserID);
+        DocumentSnapshot snapshot = await reference.get();
+
+        if (snapshot.exists) {
+          withdrawalUserData = snapshot.data() as Map<String, dynamic>;
+
+          // Check for userID in localBuddy data and fetch additional user details
+          String? userId = withdrawalUserData['userID'];
+          if (userId != null) {
+            DocumentReference userRef = _firestore.collection('users').doc(userId);
+            DocumentSnapshot userSnapshot = await userRef.get();
+
+            if (userSnapshot.exists) {
+              // Merge the user details into withdrawalUserData
+              Map<String, dynamic> userData = userSnapshot.data() as Map<String, dynamic>;
+              withdrawalUserData['name'] = userData['name'];
+              withdrawalUserData.addAll(userData); // Combine other user data if needed
+            }
+          }
+        }
       }
-    }catch(e){
+    } catch (e) {
       print("Error fetching withdrawal user data: $e");
-    }finally{
+    } finally {
       setState(() {
         isFetching = false;
       });

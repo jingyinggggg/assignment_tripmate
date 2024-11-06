@@ -50,6 +50,16 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
     };
   }
 
+  String encryptText(String text) {
+    final key = encrypt.Key.fromUtf8('16CharactersLong');
+    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+    final encrypted = encrypter.encrypt(text, iv: iv);
+    // Combine IV and encrypted text with a delimiter
+    return "${iv.base64}:${encrypted.base64}";
+  }
+
   Future<void> _fetchRevenue() async {
     setState(() {
       isLoading = true; // Set loading to true when starting to fetch data
@@ -161,15 +171,7 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
     }
   }
 
-  String encryptText(String text) {
-    final key = encrypt.Key.fromUtf8('16CharactersLong');
-    final iv = encrypt.IV.fromSecureRandom(16); // Generate a random IV for each encryption
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-
-    final encrypted = encrypter.encrypt(text, iv: iv);
-    // Combine IV and encrypted text with a delimiter
-    return "${iv.base64}:${encrypted.base64}";
-  }
+  
 
   Future<void> _handleWithdraw() async {
     String? userBankAccount = await _checkBankAccount();
