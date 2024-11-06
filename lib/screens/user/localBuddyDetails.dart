@@ -167,8 +167,6 @@ class _LocalBuddyDetailsScreenState extends State<LocalBuddyDetailsScreen> {
         }
       }
 
-      // Now you can use reviewData list for displaying or processing further
-      print('Review data: $reviewData');
     } catch (e) {
       print("Error fetching reviews: $e");
     } finally {

@@ -1,4 +1,5 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentViewReviewDetails.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
@@ -287,16 +288,15 @@ class _TravelAgentViewReviewMainpageScreenState extends State<TravelAgentViewRev
   Widget TourBookingComponent({required TravelAgentTourBookingList tourBooking}) {
     return GestureDetector(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => TravelAgentViewBookingDetailsScreen(
-        //       userId: widget.userId,
-        //       tourID: tourBooking.tourID,
-        //       totalBookingNumber: tourBooking.totalBookingNumber,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TravelAgentViewReviewDetailsScreen(
+              userId: widget.userId,
+              packageID: tourBooking.tourID,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),
@@ -391,16 +391,15 @@ class _TravelAgentViewReviewMainpageScreenState extends State<TravelAgentViewRev
   Widget CarRentalBookingComponent({required TravelAgentCarRentalBookingList carRentalBooking}) {
     return GestureDetector(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => TravelAgentViewBookingDetailsScreen(
-        //       userId: widget.userId,
-        //       carRentalID: carRentalBooking.carRentalID,
-        //       totalBookingNumber: carRentalBooking.totalBookingNumber,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TravelAgentViewReviewDetailsScreen(
+              userId: widget.userId,
+              packageID: carRentalBooking.carRentalID,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20.0),

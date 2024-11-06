@@ -1,5 +1,6 @@
 import 'package:assignment_tripmate/screens/admin/adminProfile.dart';
 import 'package:assignment_tripmate/screens/admin/adminSetting.dart';
+import 'package:assignment_tripmate/screens/admin/adminViewFeedback.dart';
 import 'package:assignment_tripmate/screens/login.dart';
 import 'package:assignment_tripmate/screens/user/helpCenter.dart';
 import 'package:flutter/material.dart';
@@ -243,12 +244,12 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //       builder: (context) =>
-                            //           const SettingScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      AdminViewFeedbackScreen(userId: widget.userId,)),
+                            );
                           },
                           child: Image.asset(
                             'images/location-pin.png',
@@ -289,37 +290,6 @@ class _AdminAccountScreenState extends State<AdminAccountScreen> {
                       ],
                     ),
                   ),
-                  
-                  // Positioned(
-                  //   top: 505,
-                  //   left: 170,
-                  //   child: Column(
-                  //     children: [
-                  //       const Text(
-                  //         "Car Rental",
-                  //         style: TextStyle(
-                  //             fontWeight: FontWeight.w900,
-                  //             color: Colors.black,
-                  //             fontSize: 16),
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           // Navigator.push(
-                  //           //   context,
-                  //           //   MaterialPageRoute(
-                  //           //       builder: (context) =>
-                  //           //           const SettingScreen()),
-                  //           // );
-                  //         },
-                  //         child: Image.asset(
-                  //           'images/location-pin.png',
-                  //           width: 50,
-                  //           height: 50,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                   Positioned(
                     top: screenHeight * 0.61,
                     left: screenWidth * 0.74,

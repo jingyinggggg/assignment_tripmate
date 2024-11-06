@@ -29,7 +29,8 @@ class _FeedbackScreenState extends State<FeedbackScreen>{
       if(_feedbackController.text.isNotEmpty){
         await FirebaseFirestore.instance.collection('feedback').doc().set({
           'feedback': _feedbackController.text,
-          'userID': widget.userID
+          'userID': widget.userID,
+          'timestamp': DateTime.now()
         });
 
         showCustomDialog(
