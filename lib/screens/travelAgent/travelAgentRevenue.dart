@@ -1,4 +1,6 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentRevenueDetails.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
@@ -620,7 +622,10 @@ class _TravelAgentRevenueScreenState extends State<TravelAgentRevenueScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+            );
           },
         ),
       ),
@@ -933,6 +938,9 @@ class _TravelAgentRevenueScreenState extends State<TravelAgentRevenueScreen> {
                                     ),
                                     child: ListTile(
                                       tileColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
                                       title: Text(
                                         'RM ${historyItem['amount'].toStringAsFixed(2)}',
                                         style: TextStyle(
@@ -944,9 +952,19 @@ class _TravelAgentRevenueScreenState extends State<TravelAgentRevenueScreen> {
                                         style: TextStyle(fontSize: 14),
                                       ),
                                       trailing: Icon(
-                                        historyItem['status'] == "pending" ? Icons.pending_actions : Icons.check,
-                                        color: historyItem['status'] == "pending" ? Colors.orange : Colors.green,
+                                        historyItem['status'] == "pending"
+                                            ? Icons.pending_actions
+                                            : Icons.check_circle,
+                                        color: historyItem['status'] == "pending"
+                                            ? Colors.orange
+                                            : Colors.green,
                                       ),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(builder: (context) => TravelAgentRevenueDetailsScreen(userId: widget.userId, withdrawalID: historyItem['withdrawalID']))
+                                        );
+                                      },
                                     ),
                                   );
                                 },
@@ -960,9 +978,10 @@ class _TravelAgentRevenueScreenState extends State<TravelAgentRevenueScreen> {
                                   ),
                                 ),
                               ),
-                      ]
-                    )
+                      ],
+                    ),
                   )
+
                 ],
               ),
             ),

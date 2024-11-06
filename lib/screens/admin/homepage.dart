@@ -1,4 +1,5 @@
 import 'package:assignment_tripmate/screens/admin/adminAccountPage.dart';
+import 'package:assignment_tripmate/screens/admin/adminManageWithdrawalRequestMainpage.dart';
 import 'package:assignment_tripmate/screens/admin/adminViewAnalyticsMainpage.dart';
 import 'package:assignment_tripmate/screens/admin/adminViewBookingListMainpage.dart';
 import 'package:assignment_tripmate/screens/admin/admin_bottom_nav_bar.dart';
@@ -154,7 +155,7 @@ class _AdminHomepageScreenState extends State<AdminHomepageScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AdminManageUserListScreen(userId: widget.userId),
+                            builder: (context) => AdminRevenueMainpageScreen(userId: widget.userId),
                           ),
                         );
                       },

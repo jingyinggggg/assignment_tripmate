@@ -1,4 +1,6 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/user/homepage.dart";
+import "package:assignment_tripmate/screens/user/localBuddyRevenueDetails.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
@@ -39,6 +41,7 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
     super.initState();
     _initializeMonthlyData();
     _fetchRevenue(); // Fetch data on initialization
+    _fetchWithdrawalHistory();
   }
 
   void _initializeMonthlyData() {
@@ -527,7 +530,10 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.push(
+              context, 
+              MaterialPageRoute(builder: (context) => UserHomepageScreen(userId: widget.userId, currentPageIndex: 4,))
+            );
           },
         ),
       ),
@@ -742,6 +748,9 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                                     ),
                                     child: ListTile(
                                       tileColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
                                       title: Text(
                                         'RM ${historyItem['amount'].toStringAsFixed(2)}',
                                         style: TextStyle(
@@ -753,9 +762,15 @@ class _LocalBuddyRevenueScreenState extends State<LocalBuddyRevenueScreen> {
                                         style: TextStyle(fontSize: 14),
                                       ),
                                       trailing: Icon(
-                                        historyItem['status'] == "pending" ? Icons.pending_actions : Icons.check,
+                                        historyItem['status'] == "pending" ? Icons.pending_actions : Icons.check_circle,
                                         color: historyItem['status'] == "pending" ? Colors.orange : Colors.green,
                                       ),
+                                      onTap: (){
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(builder: (context) => LocalBuddyRevenueDetailsScreen(userId: widget.userId, withdrawalID: historyItem['withdrawalID'], localBuddyID: widget.localBuddyID))
+                                        );
+                                      },
                                     ),
                                   );
                                 },
