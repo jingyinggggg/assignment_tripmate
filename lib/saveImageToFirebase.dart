@@ -89,14 +89,22 @@ class StoreData {
     required String companyContact, 
     required String companyAddress, 
     Uint8List? file, // Make file parameter optional
+    Uint8List? employeeCard,
+    int? accountStatus
   }) async {
     String resp = "Some Error Occurred";
     try {
       String? imageURL;
+      String? employeeCardURL;
 
       if (file != null) {
         String fileName = "$userId($name).jpg"; 
         imageURL = await uploadImageToStorage("profile_images/travelAgent/$fileName", file);
+      }
+
+      if (employeeCard != null){
+        String filename = "$userId-$companyName.jpg"; 
+        employeeCardURL = await uploadImageToStorage("travelAgent(employee card)/$filename", employeeCard);
       }
 
       // Build the update data map with only non-null values
@@ -112,6 +120,14 @@ class StoreData {
       // Only include 'profileImage' if a new image is provided
       if (imageURL != null) {
         updateData['profileImage'] = imageURL;
+      }
+
+      if (employeeCardURL != null){
+        updateData['employeeCardPath'] = employeeCardURL;
+      }
+
+      if (accountStatus != null){
+        updateData['accountApproved'] = accountStatus;
       }
 
       await _firestore.collection("travelAgent").doc(userId).update(updateData);
@@ -376,8 +392,8 @@ class StoreData {
     required String carCondition, 
     required String rentalPolicy, 
     required String agencyID,
-    required String agencyName,
-    required String agencyContact,
+    String? agencyName,
+    String? agencyContact,
     required int action
   }) async{
     String resp = "Some Error Occurred";
@@ -401,8 +417,8 @@ class StoreData {
           'carCondition': carCondition,
           'rentalPolicy': rentalPolicy,
           'agencyID': agencyID,
-          'agencyName': agencyName,
-          'agencyContact': agencyContact
+          'agencyName': agencyName ?? "",
+          'agencyContact': agencyContact ?? ""
         });
       } else{
         await _firestore.collection("car_rental").doc(carID).update({
@@ -420,8 +436,8 @@ class StoreData {
           'carCondition': carCondition,
           'rentalPolicy': rentalPolicy,
           'agencyID': agencyID,
-          'agencyName': agencyName,
-          'agencyContact': agencyContact
+          // 'agencyName': agencyName,
+          // 'agencyContact': agencyContact
         });
       }
       resp = "Success";
@@ -463,12 +479,12 @@ class StoreData {
         'registrationStatus': registrationStatus,
       };
 
-      // Conditionally add referenceImage if provided
-      if (referenceImage != null) {
-        String referenceFileName = "referenceImage.jpg";
-        String referenceImageURL = await uploadImageToStorage("localBuddy/$localBuddyID/$referenceFileName", referenceImage);
-        buddyData['referenceImage'] = referenceImageURL;
-      }
+      // // Conditionally add referenceImage if provided
+      // if (referenceImage != null) {
+      //   String referenceFileName = "referenceImage.jpg";
+      //   String referenceImageURL = await uploadImageToStorage("localBuddy/$localBuddyID/$referenceFileName", referenceImage);
+      //   buddyData['referenceImage'] = referenceImageURL;
+      // }
 
       // Conditionally add previousExperience if provided
       if (previousExperience != null && previousExperience.isNotEmpty) {

@@ -1752,7 +1752,7 @@ class _createBookingScreenState extends State<createBookingScreen> {
                                         ),
                                         Expanded( // Allow the Text to expand and wrap text
                                           child: Text(
-                                            'The balance can pay through online banking or QR pay.',
+                                            'The balance can pay through online banking.',
                                             style: TextStyle(
                                               fontSize: defaultFontSize,
                                               fontWeight: FontWeight.w500,

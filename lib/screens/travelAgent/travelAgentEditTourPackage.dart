@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:assignment_tripmate/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewPDF.dart';
@@ -317,49 +318,139 @@ class _TravelAgentEditTourPackageScreenState extends State<TravelAgentEditTourPa
     }
   }
 
-  void _removeTourHighlightRow(int index) {
-    setState(() {
-      if (_tourHighlights.length > 1) {
-        _tourHighlights.removeAt(index);
-        _tourHighlightControllers[index].dispose();
-        _tourHighlightControllers.removeAt(index);
-      }
-    });
+  void _removeTourHighlightRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this tour highlight?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldRemove == true) {
+      setState(() {
+        if (_tourHighlights.length > 1) {
+          _tourHighlights.removeAt(index);
+          _tourHighlightControllers[index].dispose();
+          _tourHighlightControllers.removeAt(index);
+        }
+      });
+    }
   }
 
 
-void _removeItineraryRow(int index) {
-  setState(() {
-    if (_itinerary.length > 1) {
-      // Remove the row
-      _itinerary.removeAt(index);
+  void _removeItineraryRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this row?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-      // Dispose of the text controllers and remove them from the list
-      _itineraryTitleControllers[index].dispose();
-      _itineraryDescriptionControllers[index].dispose();
+    if (shouldRemove == true) {
+      setState(() {
+        if (_itinerary.length > 1) {
+          // Remove the row
+          _itinerary.removeAt(index);
 
-      _itineraryTitleControllers.removeAt(index);
-      _itineraryDescriptionControllers.removeAt(index);
+          // Dispose of the text controllers and remove them from the list
+          _itineraryTitleControllers[index].dispose();
+          _itineraryDescriptionControllers[index].dispose();
+
+          _itineraryTitleControllers.removeAt(index);
+          _itineraryDescriptionControllers.removeAt(index);
+        }
+      });
     }
-  });
-}
+  }
 
-  void _removeFlightRow(int index) {
-    setState(() {
-      if (_flight.length > 1) {
-        _flight.removeAt(index);
-        
-        _flightDepartDateControllers[index].dispose();
-        _flightReturnDateControllers[index].dispose();
-        _flightNameControllers[index].dispose();
+  void _removeFlightRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this flight?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-        _flightDepartDateControllers.removeAt(index);
-        _flightReturnDateControllers.removeAt(index);
-        _flightNameControllers.removeAt(index);
+    if (shouldRemove == true) {
+      setState(() {
+        if (_flight.length > 1) {
+          _flight.removeAt(index);
+          
+          _flightDepartDateControllers[index].dispose();
+          _flightReturnDateControllers[index].dispose();
+          _flightNameControllers[index].dispose();
 
-        _removeAvailabilityRow(index);
-      }
-    });
+          _flightDepartDateControllers.removeAt(index);
+          _flightReturnDateControllers.removeAt(index);
+          _flightNameControllers.removeAt(index);
+
+          _removeAvailabilityRow(index);
+        }
+      });
+    }
   }
 
   void _removeAvailabilityRow(int index) {
@@ -378,39 +469,65 @@ void _removeItineraryRow(int index) {
     });
   }
 
-  void _saveDataToList(String category){
-    switch (category) {
-      case "highlight":
-        for (int i = 0; i < _tourHighlightControllers.length; i++) {
-          _tourHighlights[i]['no'] = (i + 1).toString();
-          _tourHighlights[i]['description'] = _tourHighlightControllers[i].text.trim();
-        }
+  void _saveDataToList(String category) {
+    try {
+      switch (category) {
+        case "highlight":
+          for (int i = 0; i < _tourHighlightControllers.length; i++) {
+            if (_tourHighlightControllers[i].text.trim().isEmpty) {
+              throw Exception("Highlight row ${i + 1} is incomplete. Please provide a description.");
+            }
+            _tourHighlights[i]['no'] = (i + 1).toString();
+            _tourHighlights[i]['description'] = _tourHighlightControllers[i].text.trim();
+          }
+          break;
 
-      case "itinerary":
-        for (int i = 0; i < _itinerary.length; i++) {
-          _itinerary[i]['day'] = (i + 1).toString();
-          _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
-          _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
-        }
+        case "itinerary":
+          for (int i = 0; i < _itinerary.length; i++) {
+            if (_itineraryTitleControllers[i].text.trim().isEmpty || 
+                _itineraryDescriptionControllers[i].text.trim().isEmpty) {
+              throw Exception("Itinerary row ${i + 1} is incomplete. Please provide both a title and a description.");
+            }
+            _itinerary[i]['day'] = (i + 1).toString();
+            _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
+            _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
+          }
+          break;
 
-      case "flight":
-        for (int i = 0; i < _flight.length; i++) {
-          _flight[i]['no'] = (i + 1).toString();
-          _flight[i]['depart'] = _flightDepartDateControllers[i].text.trim();
-          _flight[i]['return'] = _flightReturnDateControllers[i].text.trim();
-          _flight[i]['flight'] = _flightNameControllers[i].text.trim();
-        }
+        case "flight":
+          for (int i = 0; i < _flight.length; i++) {
+            if (_flightDepartDateControllers[i].text.trim().isEmpty || 
+                _flightReturnDateControllers[i].text.trim().isEmpty || 
+                _flightNameControllers[i].text.trim().isEmpty) {
+              throw Exception("Flight row ${i + 1} is incomplete. Please provide departure date, return date, and flight name.");
+            }
+            _flight[i]['no'] = (i + 1).toString();
+            _flight[i]['depart'] = _flightDepartDateControllers[i].text.trim();
+            _flight[i]['return'] = _flightReturnDateControllers[i].text.trim();
+            _flight[i]['flight'] = _flightNameControllers[i].text.trim();
+          }
+          break;
 
-      case "availability":
-        for (int i = 0; i < _availability.length; i++) {
-          _availability[i]['no'] = (i + 1).toString();
-          _availability[i]['date'] = _availableDateRangeControllers[i].text.trim();
-          _availability[i]['slot'] = _availableSlotControllers[i].text.trim();
-          _availability[i]['price'] = _priceControllers[i].text.trim();
-        }
+        case "availability":
+          for (int i = 0; i < _availability.length; i++) {
+            if (_availableDateRangeControllers[i].text.trim().isEmpty || 
+                _availableSlotControllers[i].text.trim().isEmpty || 
+                _priceControllers[i].text.trim().isEmpty) {
+              throw Exception("Availability row ${i + 1} is incomplete. Please provide slot, and price.");
+            }
+            _availability[i]['no'] = (i + 1).toString();
+            _availability[i]['date'] = _availableDateRangeControllers[i].text.trim();
+            _availability[i]['slot'] = _availableSlotControllers[i].text.trim();
+            _availability[i]['price'] = _priceControllers[i].text.trim();
+          }
+          break;
 
-      default:
-        throw ArgumentError("Unknown category: $category");
+        default:
+          throw ArgumentError("Unknown category: $category");
+      }
+    } catch (e) {
+      // Show error message
+      print(e); // Replace this with your UI error handling, such as a dialog or snackbar
     }
   }
 
@@ -577,24 +694,24 @@ void _removeItineraryRow(int index) {
   }
 
   Future<void> _updateTour() async {
-    _saveDataToList("highlight");
-    _saveDataToList("itinerary");
-    _saveDataToList("flight");
-    _saveDataToList("availability");
+    try{
+      _saveDataToList("highlight");
+      _saveDataToList("itinerary");
+      _saveDataToList("flight");
+      _saveDataToList("availability");
 
-    setState(() {
-      isLoading = true; // Start loading
-    });
+      setState(() {
+        isLoading = true; // Start loading
+      });
 
-    final firestore = FirebaseFirestore.instance;
+      final firestore = FirebaseFirestore.instance;
 
-    // Convert list to map
-    final tourHighlightData = convertToMap('highlight', _tourHighlights);
-    final itineraryData = convertToMap('itinerary', _itinerary);
-    final flightData = convertToMap('flight', _flight);
-    final availabilityData = convertToMap('availability', _availability);
-
-    try {
+      // Convert list to map
+      final tourHighlightData = convertToMap('highlight', _tourHighlights);
+      final itineraryData = convertToMap('itinerary', _itinerary);
+      final flightData = convertToMap('flight', _flight);
+      final availabilityData = convertToMap('availability', _availability);
+    
       if (_tourNameController.text.isNotEmpty &&
           _travelAgencyController.text.isNotEmpty &&
           _tourHighlights.isNotEmpty &&

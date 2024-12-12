@@ -219,6 +219,7 @@ class _ViewTourListScreenState extends State<ViewTourListScreen> {
             )
           : Container(
               alignment: Alignment.center,
+              padding: EdgeInsets.only(right: 10, left: 10, top: 230),
               child: Center(
                 child: Text(
                   "No tour package available for the selected agency.",

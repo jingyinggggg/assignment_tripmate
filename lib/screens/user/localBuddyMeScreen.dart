@@ -154,7 +154,40 @@ class _LocalBuddyMeScreenState extends State<LocalBuddyMeScreen> {
 
                                 )
                               ),
+                            ),
+                          
+                          if(localBuddyData?['registrationStatus'] == 3)
+                            Container(
+                              width: 200,
+                              height: 50,
+                              margin: EdgeInsets.only(top: 20),
+                              child: ElevatedButton(
+                                onPressed: (){
+                                  Navigator.push(
+                                    context, 
+                                    MaterialPageRoute(builder: (context) => LocalBuddyEditInfoScreen(userId: widget.userId))
+                                  );
+                                }, 
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFF467BA1),
+                                  textStyle: const TextStyle(
+                                    fontSize: defaultLabelFontSize,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: Text(
+                                  "View Reject Reason",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+
+                                )
+                              ),
                             )
+
                         ],
                       )
                   ],

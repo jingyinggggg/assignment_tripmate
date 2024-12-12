@@ -24,7 +24,7 @@ class _TravelAgentCarMaintenanceScreenState extends State<TravelAgentCarMaintena
   bool isUpdating = false;
   bool _isDataInitialized = false;
   bool isFetchingCarMaintenance = false;
-  List<String> carStatus = ['Reserved', 'Maintenance'];
+  List<String> carStatus = ['Maintenance'];
   // List<Map<String, dynamic>> _carMaintenanceData = [];
   List<DateTime> _maintenanceDates = [];
   Map<String, List<DateTime>> groupedMaintenanceDates = {};

@@ -1,4 +1,5 @@
 import "package:assignment_tripmate/constants.dart";
+import "package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart";
 import "package:assignment_tripmate/screens/travelAgent/travelAgentViewReviewDetails.dart";
 import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
@@ -144,7 +145,10 @@ class _TravelAgentViewReviewMainpageScreenState extends State<TravelAgentViewRev
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+              );
             },
           ),
           bottom: PreferredSize(

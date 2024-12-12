@@ -778,7 +778,10 @@ class _AdminViewBookingDetailsScreenState extends State<AdminViewBookingDetailsS
                 TableRow(
                   children: [
                     _buildTextFieldCell('${index + 1}'),
-                    _buildTextFieldCell(data[index]['customerInfo']['name'] ?? 'No Name', isRequestRefund: type == "Car" ? data[index]['isCheckCarCondition'] == 1 && data[index]['isRefund'] == 0 : false),
+                    _buildTextFieldCell(data[index]['customerInfo']['name'] ?? 'No Name', 
+                    isRequestRefund: type == "Car" 
+                    ? data[index]['isCheckCarCondition'] == 1 && data[index]['isRefund'] == 0 
+                    : false),
                     Container(
                       height: 40, // Set a specific height for centering
                       alignment: Alignment.center, // Center the row vertically

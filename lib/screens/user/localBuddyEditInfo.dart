@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:assignment_tripmate/screens/user/homepage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:assignment_tripmate/constants.dart';
@@ -34,6 +35,8 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   Uint8List? _image;
   Uint8List? _referenceImage;
   String? localBuddyID;
+  String? rejectReason;
+  int? registrationStatus;
 
   List<String> selectedDays = [];
 
@@ -66,6 +69,12 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
           _bioController.text = userData['bio'] ?? '';
           _previousExperienceController.text = userData['previousExperience'] ?? '';
           localBuddyID = userData['localBuddyID'];
+          rejectReason = userData['rejectReason'] ?? null;
+          registrationStatus = userData['registrationStatus'] ?? null;
+          // _referenceController = userData
+
+          print("Reject reason: $rejectReason");
+          print("Registration status: $registrationStatus");
 
           // Ensure availability is a List and extract days
           if (userData['availability'] is List) {
@@ -152,10 +161,10 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
       }
 
       // Check if reference image is provided (optional)
-      Uint8List? referenceImage;
-      if (_referenceImage != null) {
-        referenceImage = _referenceImage!;
-      }
+      // Uint8List? referenceImage;
+      // if (_referenceImage != null) {
+      //   referenceImage = _referenceImage!;
+      // }
 
       String? country = '';
       String? area = '';
@@ -175,11 +184,11 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
         locationArea: locationArea,
         availability: availability,
         price: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
-        referenceImage: referenceImage,  // Optional field
+        // referenceImage: referenceImage,  // Optional field
         bio: _bioController.text,  // Required field, already checked
         previousExperience: previousExperience,  // Optional field
         action: 0,
-        registrationStatus: 2
+        registrationStatus: rejectReason == null && registrationStatus == 2 ? 2 : 0
       );
 
       // Show success dialog
@@ -252,15 +261,39 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
+      appBar: rejectReason != null && registrationStatus == 3 ? AppBar(
+        title: const Text("Local Buddy"),
+        centerTitle: true,
+        backgroundColor: const Color(0xFF749CB9),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontFamily: 'Inika',
+          fontWeight: FontWeight.bold,
+          fontSize: defaultAppBarTitleFontSize,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LocalBuddyHomepageScreen(userId: widget.userId)),
+            );
+          },
+        ),
+      ) 
+      : null,
       body: isFetchLoading
       ? Center(child: CircularProgressIndicator(color: primaryColor))
       : ListView(
         padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         children: [
           Text(
-            'Your registration for local buddy has been approved by admin. You can update your infomation at here:',
+            rejectReason == null && registrationStatus == 2
+            ?'Your registration for local buddy has been approved by admin. You can update your infomation at here:'
+            :'Reject reason: $rejectReason \nPlease update the info and submit the request again.',
             style: TextStyle(
-              color: Colors.grey,
+              color: rejectReason == null && registrationStatus == 2 ? Colors.grey : Colors.black87,
               fontSize: defaultFontSize,
               fontWeight: FontWeight.w600
             ),
@@ -370,65 +403,65 @@ class _LocalBuddyEditInfoScreenState extends State<LocalBuddyEditInfoScreen> {
           buildTextField(_bioController, 'Enter your personal bio', 'Personal Bio/ Introduction'),
           SizedBox(height: 20),
           buildTextField(_previousExperienceController, 'Enter your previous experience (if any)', 'Experience for Local Friend/Local Guide (optional)'),
-          SizedBox(height: 20),
-          TextField(
-            controller: _referenceController,
-            readOnly: true,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: defaultFontSize,
-              color: Colors.black54
-            ),
-            decoration: InputDecoration(
-              hintText: 'Please upload any references if applicable...',
-              labelText: 'References/Reviews (optional)',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: const TextStyle(
-                fontSize: defaultLabelFontSize,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                shadows: [
-                  Shadow(
-                    offset: Offset(0.5, 0.5),
-                    color: Colors.black87,
-                  ),
-                ],
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(
-                  Icons.image,
-                  color: Color(0xFF467BA1),
-                  size: 25,
-                ),
-                onPressed: () {
-                  selectReferenceImage();
-                }
-              ),
-            ),
-          ),
+          // SizedBox(height: 20),
+          // TextField(
+          //   controller: _referenceController,
+          //   readOnly: true,
+          //   style: const TextStyle(
+          //     fontWeight: FontWeight.w800,
+          //     fontSize: defaultFontSize,
+          //     color: Colors.black54
+          //   ),
+          //   decoration: InputDecoration(
+          //     hintText:  'Please upload any references if applicable...',
+          //     labelText: 'References/Reviews (optional)',
+          //     filled: true,
+          //     fillColor: Colors.white,
+          //     border: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     focusedBorder: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     enabledBorder: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     floatingLabelBehavior: FloatingLabelBehavior.always,
+          //     labelStyle: const TextStyle(
+          //       fontSize: defaultLabelFontSize,
+          //       fontWeight: FontWeight.bold,
+          //       color: Colors.black87,
+          //       shadows: [
+          //         Shadow(
+          //           offset: Offset(0.5, 0.5),
+          //           color: Colors.black87,
+          //         ),
+          //       ],
+          //     ),
+          //     suffixIcon: IconButton(
+          //       icon: const Icon(
+          //         Icons.image,
+          //         color: Color(0xFF467BA1),
+          //         size: 25,
+          //       ),
+          //       onPressed: () {
+          //         selectReferenceImage();
+          //       }
+          //     ),
+          //   ),
+          // ),
           SizedBox(height: 30),
           Container(
             width: double.infinity,

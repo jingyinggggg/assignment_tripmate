@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/screens/user/chatDetailsPage.dart';
+import 'package:assignment_tripmate/utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
@@ -43,11 +46,15 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
   bool isOpenFile = false;
   bool isOpenInvoice = false;
   bool isSubmittingRefundRequest = false;
+  bool isRejectingRefundRequest = false;
   Map<String, dynamic>? custData;
   Map<String, dynamic>? tourData;
   Map<String, dynamic>? carData;
   Map<String, dynamic>? tourBookingData;
   Map<String, dynamic>? carBookingData;
+
+  bool isSelectingImage = false;
+  Uint8List? _rejectProof;
 
   @override
   void initState() {
@@ -201,6 +208,15 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     }
   }
 
+  Future<String> uploadImageToStorage(String childName, Uint8List file) async{
+  
+    Reference ref = FirebaseStorage.instance.ref().child(childName);
+    UploadTask uploadTask = ref.putData(file);
+    TaskSnapshot snapshot = await uploadTask;
+    String downloadURL = await snapshot.ref.getDownloadURL();
+    return downloadURL;
+  }
+
   Future<void> requestRefund(String id) async{
     setState(() {
       isSubmittingRefundRequest = true;
@@ -242,6 +258,62 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
     } finally{
       setState(() {
         isSubmittingRefundRequest = false;
+      });
+    }
+  }
+
+  Future<void> rejectRefund(String id, String reason, String receiverID) async {
+    setState(() {
+      isRejectingRefundRequest = true;
+    });
+    try{
+
+      String fileName = "rejectProof.jpg";
+      String uploadedRejectProof = "";
+
+      if(_rejectProof != null){
+        uploadedRejectProof = await uploadImageToStorage("booking/$id/$fileName", _rejectProof!);
+        
+        await FirebaseFirestore.instance.collection('carRentalBooking').doc(id).update({
+          'isCheckCarCondition' : 1,
+          'isRefundDeposit': 2,
+          'rejectDepositRefundReason': reason,
+          'rejectProof': uploadedRejectProof
+        });
+
+        await FirebaseFirestore.instance.collection('notification').doc().set({
+          'content': "Travel Agent(${widget.userId}) has rejected your deposit refund request. Please check the reject reason in the booking details page.",
+          'isRead': 0,
+          'type': "refund",
+          'timestamp': DateTime.now(),
+          'receiverID': receiverID
+        });
+      }
+
+      showCustomDialog(
+        context: context, 
+        title: "Rejected Successful", 
+        content: "You have rejected the deposit refund request successful.", 
+        onPressed: (){
+          setState(() {
+            carBookingData!['isCheckCarCondition'] = 1;
+            carBookingData!['isRefundDeposit'] = 2;
+          });
+          Navigator.pop(context);
+        }
+      );
+    } catch(e){
+      showCustomDialog(
+        context: context, 
+        title: "Failed", 
+        content: "Something went wrong. Please try again later...", 
+        onPressed: (){
+          Navigator.pop(context);
+        }
+      );
+    } finally{
+      setState(() {
+        isRejectingRefundRequest = false;
       });
     }
   }
@@ -656,7 +728,7 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                 ],
                               ),
                               SizedBox(height: 10),
-                              if(carBookingData!['bookingStatus'] == 1 && carBookingData!['isRefundDeposit'] == 0)...[
+                              if(carBookingData!['bookingStatus'] == 1)...[
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.start,
@@ -715,6 +787,19 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                           style: TextStyle(
                                             fontSize: defaultFontSize,
                                             color: Colors.orange,
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+
+                                    else if (carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 2)
+                                      Expanded(
+                                        child: Text(
+                                          "Deposit refund has been rejected",
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.red,
                                             fontWeight: FontWeight.w500
                                           ),
                                           textAlign: TextAlign.justify,
@@ -798,8 +883,167 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                         Expanded(
                                           child: TextButton(
                                             onPressed: () {
-                                              // Add logic for reject refund request here
-                                              // rejectRefund(carBookingData!['bookingID']);
+                                              showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  final TextEditingController rejectReasonController = TextEditingController();
+                                                  String? uploadedProof;
+                                                  String? validationError; // To store validation error messages
+                                                  bool isRejectLoading = false; // To manage the loading state
+
+                                                  return StatefulBuilder(
+                                                    builder: (context, setState) {
+                                                      return AlertDialog(
+                                                        title: const Text("Confirmation"),
+                                                        content: SingleChildScrollView(
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                            children: [
+                                                              const Text(
+                                                                "Are you sure you want to reject the deposit refund for this booking?",
+                                                                textAlign: TextAlign.justify,
+                                                              ),
+                                                              const SizedBox(height: 20),
+                                                              const Text(
+                                                                "Reason for Rejection:",
+                                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                              TextField(
+                                                                controller: rejectReasonController,
+                                                                decoration: const InputDecoration(
+                                                                  border: OutlineInputBorder(),
+                                                                  hintText: "Enter reason here...",
+                                                                ),
+                                                                maxLines: 3,
+                                                              ),
+                                                              const SizedBox(height: 20),
+                                                              const Text(
+                                                                "Upload Proof:",
+                                                                style: TextStyle(fontWeight: FontWeight.bold),
+                                                              ),
+                                                              const SizedBox(height: 10),
+                                                              ElevatedButton(
+                                                                onPressed: () async {
+                                                                  setState(() {
+                                                                    isSelectingImage = true;
+                                                                  });
+
+                                                                  Uint8List? img = await ImageUtils.selectImage(context);
+
+                                                                  setState((){
+                                                                    _rejectProof = img;
+                                                                    uploadedProof = "reject_proof.pdf";
+                                                                    validationError = "";
+                                                                    isSelectingImage = false;
+                                                                  });
+                                                                },
+                                                                child: const Text("Upload Proof"),
+                                                                style: TextButton.styleFrom(
+                                                                  backgroundColor: Colors.white,
+                                                                  foregroundColor: primaryColor,
+                                                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                                                  shape: RoundedRectangleBorder(
+                                                                    borderRadius: BorderRadius.circular(8),
+                                                                    side: BorderSide(color: primaryColor, width: 1.5),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              if (uploadedProof != null) ...[
+                                                                const SizedBox(height: 10),
+                                                                Text(
+                                                                  "Uploaded: $uploadedProof",
+                                                                  style: const TextStyle(color: Colors.green),
+                                                                ),
+                                                              ],
+                                                              const SizedBox(height: 10),
+                                                              if (validationError != null) ...[
+                                                                Text(
+                                                                  validationError!,
+                                                                  style: const TextStyle(color: Colors.red),
+                                                                ),
+                                                              ],
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        actions: <Widget>[
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(context).pop(); // Close the dialog
+                                                            },
+                                                            style: TextButton.styleFrom(
+                                                              backgroundColor: Colors.grey,
+                                                              foregroundColor: Colors.white,
+                                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius: BorderRadius.circular(8),
+                                                              ),
+                                                            ),
+                                                            child: const Text("Cancel"),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () async {
+                                                              // Perform validation
+                                                              if (rejectReasonController.text.isEmpty) {
+                                                                setState(() {
+                                                                  validationError = "Please enter a rejection reason.";
+                                                                });
+                                                                return;
+                                                              }
+
+                                                              if (uploadedProof == null) {
+                                                                setState(() {
+                                                                  validationError = "Please upload proof.";
+                                                                });
+                                                                return;
+                                                              }
+
+                                                              setState(() {
+                                                                validationError = null;
+                                                                isRejectLoading = true;
+                                                              });
+
+                                                              // Simulate async operation
+                                                              await Future.delayed(const Duration(seconds: 2));
+
+                                                              // Call reject refund function
+                                                              rejectRefund(
+                                                                carBookingData!['bookingID'],
+                                                                rejectReasonController.text,
+                                                                custData!['id'],
+                                                              );
+
+                                                              setState(() {
+                                                                isRejectLoading = false;
+                                                              });
+
+                                                              Navigator.of(context).pop(); // Close the dialog
+                                                            },
+                                                            style: TextButton.styleFrom(
+                                                              backgroundColor: primaryColor,
+                                                              foregroundColor: Colors.white,
+                                                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius: BorderRadius.circular(8),
+                                                              ),
+                                                            ),
+                                                            child: isRejectLoading
+                                                                ? const SizedBox(
+                                                                    height: 18,
+                                                                    width: 18,
+                                                                    child: CircularProgressIndicator(
+                                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                                      strokeWidth: 2,
+                                                                    ),
+                                                                  )
+                                                                : const Text("Confirm"),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              );
                                             },
                                             child: const Text(
                                               "Car Check Reject",
@@ -817,6 +1061,9 @@ class _TravelAgentViewCustomerDetailsScreenState extends State<TravelAgentViewCu
                                             ),
                                           ),
                                         ),
+
+
+
                                       ],
                                     ),
                                   )

@@ -126,6 +126,7 @@ class _TravelAgentHomepageScreenState extends State<TravelAgentHomepageScreen> {
             : currentAccountStatus == 2 && rejectReason != null
               ? Container(
                   padding: EdgeInsets.all(10.0),
+                  margin: EdgeInsets.only(left:10, right:10),
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 228, 243, 255),
                     border: Border.all(color: primaryColor, width: 2.0)

@@ -48,7 +48,7 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
       QuerySnapshot querySnapshot = await carRef.get();
 
       // Create a list of car rentals
-      List<CarList> _carList = querySnapshot.docs.map((doc) {
+      _carList = querySnapshot.docs.map((doc) {
         return CarList(
           doc['carID'] ?? '',
           doc['carModel'] ?? 'Unknown Model',
@@ -60,7 +60,7 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
           price: doc['pricePerDay'],
           agentID: doc['agencyID'],
           agencyName: doc['agencyName'],
-          pickUpLocation: doc['pickUpLocation']
+          pickUpLocation: doc['pickUpLocation'],
         );
       }).toList();
 
@@ -109,10 +109,10 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
     return radiusOfEarth * c;
   }
 
-  Future<void> onSearch(String search) async{
-    if(search.trim().isEmpty){
+  Future<void> onSearch(String search) async {
+    if (search.trim().isEmpty) {
       setState(() {
-        _foundedCar = _carList.map((car){
+        _foundedCar = _carList.map((car) {
           car.distance = null;
           return car;
         }).toList();
@@ -120,14 +120,14 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
       return;
     }
 
-    try{
+    try {
       Map<String, double> userLocation = await getCoordinatesFromAddress(search);
       double userLat = userLocation['lat']!;
       double userLng = userLocation['lng']!;
 
       List<CarList> filteredCar = [];
 
-      for(var car in _carList){
+      for (var car in _carList) {
         Map<String, double> carLocation = await getCoordinatesFromAddress(car.pickUpLocation!);
         double carLat = carLocation['lat']!;
         double carLng = carLocation['lng']!;
@@ -137,23 +137,20 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
         filteredCar.add(car);
       }
 
+      // Sort the list by distance
+      filteredCar.sort((a, b) {
+        if (a.distance == null || b.distance == null) return 0;
+        return a.distance!.compareTo(b.distance!);
+      });
+
       setState(() {
         _foundedCar = filteredCar;
       });
 
-    } catch(e){
+    } catch (e) {
       print("Error during search: $e");
     }
   }
-
-  // void onSearch(String search) {
-  //   setState(() {
-  //     _foundedCar = _carList
-  //         .where((carList) =>
-  //             carList.carModel.toUpperCase().contains(search.toUpperCase()))
-  //         .toList();
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -298,7 +295,7 @@ class _CarRentalHomepageScreenState extends State<CarRentalHomepageScreen>{
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     image: NetworkImage(carList.carImage!),
-                    fit: BoxFit.cover, // Ensure the image scales down but retains aspect ratio
+                    fit: BoxFit.contain, // Ensure the image scales down but retains aspect ratio
                   ),
                 ),
               ),

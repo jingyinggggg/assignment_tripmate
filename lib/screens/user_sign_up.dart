@@ -652,6 +652,7 @@ class _UserSignUpScreenState extends State<UserSignUpScreen> {
         fontWeight: FontWeight.w800,
         fontSize: 14,
       ),
+      keyboardType: TextInputType.phone,
       decoration: InputDecoration(
         hintText: 'Enter Contact Number',
         labelText: 'Contact Number',

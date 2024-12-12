@@ -91,35 +91,42 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     }
   }
 
-  Future<void>_fetchCarBookingDetails() async {
-    setState(() {
-      isFetchingCarBooking = true;
-    });
-    try{
-      DocumentReference carRef = FirebaseFirestore.instance.collection('carRentalBooking').doc(widget.carRentalBookingID);
-      DocumentSnapshot carSnapshot = await carRef.get();
+  Future<void> _fetchCarBookingDetails() async {
+  setState(() {
+    isFetchingCarBooking = true;
+  });
+  try {
+    DocumentReference carRef = FirebaseFirestore.instance
+        .collection('carRentalBooking')
+        .doc(widget.carRentalBookingID);
+    DocumentSnapshot carSnapshot = await carRef.get();
 
-      if(carSnapshot.exists){
-        Map<String, dynamic>? data = carSnapshot.data() as  Map<String, dynamic>?;
-        // Convert booking dates from Timestamp to DateTime
-        if (data != null && data['bookingDate'] != null) {
-          List<Timestamp> timestamps = List<Timestamp>.from(data['bookingDate']);
-          List<DateTime> bookingDates = timestamps.map((timestamp) => timestamp.toDate()).toList();
+    if (carSnapshot.exists) {
+      Map<String, dynamic>? data = carSnapshot.data() as Map<String, dynamic>?;
+      // Convert booking dates from Timestamp to DateTime
+      if (data != null && data['bookingDate'] != null) {
+        List<Timestamp> timestamps = List<Timestamp>.from(data['bookingDate']);
+        List<DateTime> bookingDates =
+            timestamps.map((timestamp) => timestamp.toDate()).toList();
 
-          setState(() {
-            carBookingData = data;
-            carBookingData!['bookingDate'] = bookingDates; // Update bookingDate with DateTime list
-          });
-        }
+        setState(() {
+          carBookingData = data;
+          carBookingData!['bookingDate'] = bookingDates; // Update bookingDate with DateTime list
+        });
+
+        // Print the car booking data to the console
+        print("Car Booking Data: $carBookingData");
       }
-    } catch(e){
-      print('Error fetch car booking data: $e');
-    } finally{
-      setState(() {
-        isFetchingCarBooking = false;
-      });
     }
+  } catch (e) {
+    print('Error fetching car booking data: $e');
+  } finally {
+    setState(() {
+      isFetchingCarBooking = false;
+    });
   }
+}
+
 
   Future<void>_fetchLocalBuddyBookingDetails() async {
     setState(() {
@@ -442,7 +449,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                             ),
                             SizedBox(width: 10),
                             if(tourBookingData!['invoice'] != null)
-                              isOpenFile
+                              isOpenFullPayment
                               ? SizedBox(
                                   width: 20.0,
                                   height: 20.0,
@@ -694,76 +701,178 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                             ],
                           ),
                           SizedBox(height: 20),
-                          if(carBookingData!['bookingSatus'] == 1)
-                            Row(
+                          if(carBookingData!['bookingStatus'] == 1)...[
+                            Column(
                               children: [
-                                Container(
-                                  width: 100,
-                                  child: Text(
-                                    "Deposit Refund Invoice",
-                                    style: TextStyle(
-                                      fontSize: defaultFontSize,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  ":",
-                                  style: TextStyle(
-                                    fontSize: defaultFontSize,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                if(carBookingData!['depositRefundInvoice'] != null)
-                                  isOpenDepositRefund
-                                  ? SizedBox(
-                                      width: 20.0,
-                                      height: 20.0,
-                                      child: CircularProgressIndicator(color: primaryColor),
-                                    ) 
-                                  : SizedBox(
-                                    height: 35,
-                                    child: ElevatedButton(
-                                      onPressed: () async {
-                                        setState(() {
-                                          isOpenDepositRefund = true; // Update the loading state
-                                        });
-                                        String url = carBookingData!['depositRefundInvoice']; 
-                                        String fileName = 'deposit_refund_invoice'; 
-                                        await downloadAndOpenPdfFromUrl(url, fileName);
-                                        setState(() {
-                                          isOpenDepositRefund = false; // Update the state when done
-                                        });
-                                      }, 
-                                      child:Text(
-                                        "View Refund Deposit Invoice",
-                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.white,  
-                                        foregroundColor: primaryColor,  
-                                        shape: RoundedRectangleBorder(
-                                          side: BorderSide(color: primaryColor, width: 2),
-                                          borderRadius: BorderRadius.circular(10)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      child: Text(
+                                        "Deposit Refund Invoice",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
                                         ),
                                       ),
-                                    )
-                                  )
-                                else
-                                  Text(
-                                    "N/A",
-                                    style: TextStyle(
-                                      fontSize: defaultFontSize,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600
                                     ),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      ":",
+                                      style: TextStyle(
+                                        fontSize: defaultFontSize,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w600
+                                      ),
+                                    ),
+                                    SizedBox(width: 10),
+                                    if(carBookingData!['depositRefundInvoice'] != null)
+                                      isOpenDepositRefund
+                                      ? SizedBox(
+                                          width: 20.0,
+                                          height: 20.0,
+                                          child: CircularProgressIndicator(color: primaryColor),
+                                        ) 
+                                      : SizedBox(
+                                        height: 35,
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              isOpenDepositRefund = true; // Update the loading state
+                                            });
+                                            String url = carBookingData!['depositRefundInvoice']; 
+                                            String fileName = 'deposit_refund_invoice'; 
+                                            await downloadAndOpenPdfFromUrl(url, fileName);
+                                            setState(() {
+                                              isOpenDepositRefund = false; // Update the state when done
+                                            });
+                                          }, 
+                                          child:Text(
+                                            "View Refund Deposit Invoice",
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.white,  
+                                            foregroundColor: primaryColor,  
+                                            shape: RoundedRectangleBorder(
+                                              side: BorderSide(color: primaryColor, width: 2),
+                                              borderRadius: BorderRadius.circular(10)
+                                            ),
+                                          ),
+                                        )
+                                      )
+                                    else if (carBookingData!['isRefundDeposit'] == 2)
+                                      Expanded(
+                                        child: Text(
+                                          'Your deposit refund request is rejected by travel agent.',
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+                                    else 
+                                      Text(
+                                        "N/A",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                SizedBox(height: 10),
+                                if(carBookingData!['isRefundDeposit'] == 2)...[
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 100,
+                                        child: Text(
+                                          "Reject Reason",
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w600
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        ":",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          carBookingData!['rejectDepositRefundReason'],
+                                          style: TextStyle(
+                                              fontSize: defaultFontSize,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          textAlign: TextAlign.justify,
+                                        )
+                                      )
+                                    ],
                                   ),
+                                  SizedBox(height: 10),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 100,
+                                        child: Text(
+                                          "Reject Proof",
+                                          style: TextStyle(
+                                            fontSize: defaultFontSize,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.w600
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        ":",
+                                        style: TextStyle(
+                                          fontSize: defaultFontSize,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w600
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                    ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  Container(
+                                    width: double.infinity,
+                                    height: 200,
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFF467BA1), width: 1.5),
+                                    ),
+                                    child: Image.network(
+                                      carBookingData!['rejectProof'],
+                                      fit: BoxFit.contain,
+                                    ),
+                                  )
+                                ]
+                                
                               ],
                             )
+                          ]
+                            
                           else if (carBookingData!['bookingStatus'] == 2)
                           Row(
                               children: [

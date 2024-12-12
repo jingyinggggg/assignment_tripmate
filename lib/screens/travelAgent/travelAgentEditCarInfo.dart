@@ -47,6 +47,7 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
   Uint8List? _carImage;
 
   List<AutoCompletePredictions> placedPredictions = [];
+  List<AutoCompletePredictions> dropPlacedPredictions = [];
   bool isLoading = false;
   bool isFetching = false;
   String? agencyName;
@@ -137,6 +138,31 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
     } 
   }
 
+  void dropPlaceAutoComplete(String query) async{
+    Uri uri = Uri.https(
+      "maps.googleapis.com",
+      "maps/api/place/autocomplete/json", /// unencoder path
+      {
+        "input": query,
+        "key": apiKey,
+      }
+    );
+
+    // Make GET request
+    String? response = await NetworkUtility.fetchUrl(uri);
+
+    if(response != null){
+      PlaceAutoCompleteResponse result = PlaceAutoCompleteResponse.parseAutoCompleteResult(response);
+
+      if(result.predictions != null){
+        setState(() {
+          dropPlacedPredictions = result.predictions!;    
+        });
+        
+      }
+    } 
+  }
+
   Future<void> fetchTravelAgencyNameAndContact() async {
     try {
       QuerySnapshot userQuery = await FirebaseFirestore.instance
@@ -221,8 +247,6 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
         carCondition: _carConditionController.text, 
         rentalPolicy: _rentalPolicyController.text, 
         agencyID: widget.userId,
-        agencyName: agencyName ?? '',
-        agencyContact: agencyContact ?? '',
         action: 2
       );
 
@@ -458,7 +482,7 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
                     children: [
                       TextFormField(
                         onChanged: (value) {
-                          placeAutoComplete(value);
+                          dropPlaceAutoComplete(value);
                         },
                         controller: _dropOffLocationController,
                         textInputAction: TextInputAction.search,
@@ -515,7 +539,7 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
                         textAlign: TextAlign.justify,
                       ),
                       SizedBox(height: 10,),
-                      if (placedPredictions.isNotEmpty) 
+                      if (dropPlacedPredictions.isNotEmpty) 
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           decoration: BoxDecoration(
@@ -523,14 +547,14 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
-                            children: List.generate(placedPredictions.length, (index) {
+                            children: List.generate(dropPlacedPredictions.length, (index) {
                               return ListTile(
-                                title: Text(placedPredictions[index].description!),
+                                title: Text(dropPlacedPredictions[index].description!),
                                 onTap: () {
                                   // Handle selection
-                                  _dropOffLocationController.text = placedPredictions[index].description!;
+                                  _dropOffLocationController.text = dropPlacedPredictions[index].description!;
                                   setState(() {
-                                    placedPredictions.clear(); // Clear predictions after selection
+                                    dropPlacedPredictions.clear(); // Clear predictions after selection
                                   });
                                 },
                               );
@@ -789,7 +813,7 @@ class _TravelAgentEditCarInfoScreenState extends State<TravelAgentEditCarInfoScr
                 ),
                 child: Image.network(
                   existingImagePath!,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                 ),
               )
             : Container( // Placeholder if no image is available

@@ -45,6 +45,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
   Uint8List? _carImage;
 
   List<AutoCompletePredictions> placedPredictions = [];
+  List<AutoCompletePredictions> dropPlacedPredictions = [];
   bool isLoading = false;
   String? agencyName;
   String? agencyContact;
@@ -52,6 +53,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
   @override
   void initState() {
     super.initState();
+    fetchTravelAgencyNameAndContact();
   }
 
   Future<void> selectImage() async {
@@ -83,6 +85,31 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
       if(result.predictions != null){
         setState(() {
           placedPredictions = result.predictions!;    
+        });
+        
+      }
+    } 
+  }
+
+  void dropPlaceAutoComplete(String query) async{
+    Uri uri = Uri.https(
+      "maps.googleapis.com",
+      "maps/api/place/autocomplete/json", /// unencoder path
+      {
+        "input": query,
+        "key": apiKey,
+      }
+    );
+
+    // Make GET request
+    String? response = await NetworkUtility.fetchUrl(uri);
+
+    if(response != null){
+      PlaceAutoCompleteResponse result = PlaceAutoCompleteResponse.parseAutoCompleteResult(response);
+
+      if(result.predictions != null){
+        setState(() {
+          dropPlacedPredictions = result.predictions!;    
         });
         
       }
@@ -432,7 +459,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                     children: [
                       TextFormField(
                         onChanged: (value) {
-                          placeAutoComplete(value);
+                          dropPlaceAutoComplete(value);
                         },
                         controller: _dropOffLocationController,
                         textInputAction: TextInputAction.search,
@@ -488,7 +515,7 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                         maxLines: null,
                       ),
                       SizedBox(height: 10,),
-                      if (placedPredictions.isNotEmpty) 
+                      if (dropPlacedPredictions.isNotEmpty) 
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 5),
                           decoration: BoxDecoration(
@@ -496,14 +523,14 @@ class _TravelAgentAddCarInfoScreenState extends State<TravelAgentAddCarInfoScree
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
-                            children: List.generate(placedPredictions.length, (index) {
+                            children: List.generate(dropPlacedPredictions.length, (index) {
                               return ListTile(
-                                title: Text(placedPredictions[index].description!),
+                                title: Text(dropPlacedPredictions[index].description!),
                                 onTap: () {
                                   // Handle selection
-                                  _dropOffLocationController.text = placedPredictions[index].description!;
+                                  _dropOffLocationController.text = dropPlacedPredictions[index].description!;
                                   setState(() {
-                                    placedPredictions.clear(); // Clear predictions after selection
+                                    dropPlacedPredictions.clear(); // Clear predictions after selection
                                   });
                                 },
                               );

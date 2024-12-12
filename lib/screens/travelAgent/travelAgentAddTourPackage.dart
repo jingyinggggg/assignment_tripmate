@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:assignment_tripmate/constants.dart';
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/screens/travelAgent/travelAgentViewTourList.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -219,54 +220,143 @@ class _TravelAgentAddTourPackageScreenState extends State<TravelAgentAddTourPack
     }
   }
 
-  void _removeTourHighlightRow(int index) {
-    setState(() {
-      if (_tourHighlights.length > 1) {
-        _tourHighlights.removeAt(index);
-        _tourHighlightControllers[index].dispose();
-        _tourHighlightControllers.removeAt(index);
-      }
-    });
-  }
+  void _removeTourHighlightRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this tour highlight?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
 
-
-void _removeItineraryRow(int index) {
-  setState(() {
-    if (_itinerary.length > 1) {
-      // Remove the row
-      _itinerary.removeAt(index);
-
-      // Dispose of the text controllers and remove them from the list
-      _itineraryTitleControllers[index].dispose();
-      _itineraryDescriptionControllers[index].dispose();
-      // _itineraryOvernightControllers[index].dispose();
-
-      _itineraryTitleControllers.removeAt(index);
-      _itineraryDescriptionControllers.removeAt(index);
-      // _itineraryOvernightControllers.removeAt(index);
+    if (shouldRemove == true) {
+      setState(() {
+        if (_tourHighlights.length > 1) {
+          _tourHighlights.removeAt(index);
+          _tourHighlightControllers[index].dispose();
+          _tourHighlightControllers.removeAt(index);
+        }
+      });
     }
-  });
-}
-
-  void _removeFlightRow(int index) {
-    setState(() {
-      if (_flight.length > 1) {
-        _flight.removeAt(index);
-        
-        _flightDepartDateControllers[index].dispose();
-        _flightReturnDateControllers[index].dispose();
-        _flightNameControllers[index].dispose();
-
-        _flightDepartDateControllers.removeAt(index);
-        _flightReturnDateControllers.removeAt(index);
-        _flightNameControllers.removeAt(index);
-
-        _removeAvailabilityRow(index);
-      }
-    });
   }
 
-  void _removeAvailabilityRow(int index) {
+
+
+  void _removeItineraryRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this row?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldRemove == true) {
+      setState(() {
+        if (_itinerary.length > 1) {
+          // Remove the row
+          _itinerary.removeAt(index);
+
+          // Dispose of the text controllers and remove them from the list
+          _itineraryTitleControllers[index].dispose();
+          _itineraryDescriptionControllers[index].dispose();
+
+          _itineraryTitleControllers.removeAt(index);
+          _itineraryDescriptionControllers.removeAt(index);
+        }
+      });
+    }
+  }
+
+  void _removeFlightRow(int index) async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Removal'),
+          content: Text('Are you sure you want to remove this flight?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Remove'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white, 
+                backgroundColor: primaryColor
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldRemove == true) {
+      setState(() {
+        if (_flight.length > 1) {
+          _flight.removeAt(index);
+          
+          _flightDepartDateControllers[index].dispose();
+          _flightReturnDateControllers[index].dispose();
+          _flightNameControllers[index].dispose();
+
+          _flightDepartDateControllers.removeAt(index);
+          _flightReturnDateControllers.removeAt(index);
+          _flightNameControllers.removeAt(index);
+
+          _removeAvailabilityRow(index);
+        }
+      });
+    }
+  }
+
+  void _removeAvailabilityRow(int index){
     setState(() {
       if (_availability.length > 1) {
         _availability.removeAt(index);
@@ -282,42 +372,68 @@ void _removeItineraryRow(int index) {
     });
   }
 
-  void _saveDataToList(String category){
-    switch (category) {
-      case "highlight":
-        for (int i = 0; i < _tourHighlightControllers.length; i++) {
-          _tourHighlights[i]['no'] = (i + 1).toString();
-          _tourHighlights[i]['description'] = _tourHighlightControllers[i].text.trim();
-        }
+  void _saveDataToList(String category) {
+    try {
+      switch (category) {
+        case "highlight":
+          for (int i = 0; i < _tourHighlightControllers.length; i++) {
+            if (_tourHighlightControllers[i].text.trim().isEmpty) {
+              throw Exception("Highlight row ${i + 1} is incomplete. Please provide a description.");
+            }
+            _tourHighlights[i]['no'] = (i + 1).toString();
+            _tourHighlights[i]['description'] = _tourHighlightControllers[i].text.trim();
+          }
+          break;
 
-      case "itinerary":
-        for (int i = 0; i < _itinerary.length; i++) {
-          _itinerary[i]['day'] = (i + 1).toString();
-          _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
-          _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
-          // _itinerary[i]['overnight'] = _itineraryOvernightControllers[i].text.trim();
-        }
+        case "itinerary":
+          for (int i = 0; i < _itinerary.length; i++) {
+            if (_itineraryTitleControllers[i].text.trim().isEmpty || 
+                _itineraryDescriptionControllers[i].text.trim().isEmpty) {
+              throw Exception("Itinerary row ${i + 1} is incomplete. Please provide both a title and a description.");
+            }
+            _itinerary[i]['day'] = (i + 1).toString();
+            _itinerary[i]['title'] = _itineraryTitleControllers[i].text.trim();
+            _itinerary[i]['description'] = _itineraryDescriptionControllers[i].text.trim();
+          }
+          break;
 
-      case "flight":
-        for (int i = 0; i < _flight.length; i++) {
-          _flight[i]['no'] = (i + 1).toString();
-          _flight[i]['depart'] = _flightDepartDateControllers[i].text.trim();
-          _flight[i]['return'] = _flightReturnDateControllers[i].text.trim();
-          _flight[i]['flight'] = _flightNameControllers[i].text.trim();
-        }
+        case "flight":
+          for (int i = 0; i < _flight.length; i++) {
+            if (_flightDepartDateControllers[i].text.trim().isEmpty || 
+                _flightReturnDateControllers[i].text.trim().isEmpty || 
+                _flightNameControllers[i].text.trim().isEmpty) {
+              throw Exception("Flight row ${i + 1} is incomplete. Please provide departure date, return date, and flight name.");
+            }
+            _flight[i]['no'] = (i + 1).toString();
+            _flight[i]['depart'] = _flightDepartDateControllers[i].text.trim();
+            _flight[i]['return'] = _flightReturnDateControllers[i].text.trim();
+            _flight[i]['flight'] = _flightNameControllers[i].text.trim();
+          }
+          break;
 
-      case "availability":
-        for (int i = 0; i < _availability.length; i++) {
-          _availability[i]['no'] = (i + 1).toString();
-          _availability[i]['date'] = _availableDateRangeControllers[i].text.trim();
-          _availability[i]['slot'] = _availableSlotControllers[i].text.trim();
-          _availability[i]['price'] = _priceControllers[i].text.trim();
-        }
+        case "availability":
+          for (int i = 0; i < _availability.length; i++) {
+            if (_availableDateRangeControllers[i].text.trim().isEmpty || 
+                _availableSlotControllers[i].text.trim().isEmpty || 
+                _priceControllers[i].text.trim().isEmpty) {
+              throw Exception("Availability row ${i + 1} is incomplete. Please provide slot, and price.");
+            }
+            _availability[i]['no'] = (i + 1).toString();
+            _availability[i]['date'] = _availableDateRangeControllers[i].text.trim();
+            _availability[i]['slot'] = _availableSlotControllers[i].text.trim();
+            _availability[i]['price'] = _priceControllers[i].text.trim();
+          }
+          break;
 
-      default:
-        throw ArgumentError("Unknown category: $category");
+        default:
+          throw ArgumentError("Unknown category: $category");
+      }
+    } catch (e) {
+      // Show error message
+      print(e); // Replace this with your UI error handling, such as a dialog or snackbar
     }
   }
+
 
   void _updateReturnDatePicker(int index, DateTime firstDate) {
     setState(() {
@@ -449,79 +565,83 @@ void _removeItineraryRow(int index) {
   }
 
   Future<void> _addTour() async {
-    _saveDataToList("highlight");
-    _saveDataToList("itinerary");
-    _saveDataToList("flight");
-    _saveDataToList("availability");
-
-    setState(() {
-      isLoading = true; // Start loading
-    });
-
-    final firestore = FirebaseFirestore.instance;
-
-    // Convert list to map
-    final tourHighlightData = convertToMap('highlight', _tourHighlights);
-    final itineraryData = convertToMap('itinerary', _itinerary);
-    final flightData = convertToMap('flight', _flight);
-    final availabilityData = convertToMap('availability', _availability);
-
     try {
+      // Validate and save data to lists
+      _saveDataToList("highlight");
+      _saveDataToList("itinerary");
+      _saveDataToList("flight");
+      _saveDataToList("availability");
+
+      setState(() {
+        isLoading = true; // Start loading
+      });
+
+      final firestore = FirebaseFirestore.instance;
+
+      // Convert lists to maps
+      final tourHighlightData = convertToMap('highlight', _tourHighlights);
+      final itineraryData = convertToMap('itinerary', _itinerary);
+      final flightData = convertToMap('flight', _flight);
+      final availabilityData = convertToMap('availability', _availability);
+
       if (_tourNameController.text.isNotEmpty &&
-          _travelAgencyController.text.isNotEmpty &&
-          _tourHighlights.isNotEmpty &&
-          _itinerary.isNotEmpty &&
-          _flight.isNotEmpty &&
-          _availability.isNotEmpty) {
+        _travelAgencyController.text.isNotEmpty &&
+        _tourHighlights.isNotEmpty &&
+        _itinerary.isNotEmpty &&
+        _flight.isNotEmpty &&
+        _availability.isNotEmpty) {
         final usersSnapshot = await firestore.collection('tourPackage').get();
         final tourid = 'TP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
 
         if (_image == null) {
           throw Exception("Tour cover image is required.");
         }
-        
+
         if (_uploadedPdfFile == null) {
           throw Exception("Brochure in PDF file is required.");
         }
 
-        String resp = await StoreData().saveTourPackageData(
-          tourid: tourid,
-          tourName: _tourNameController.text,
-          countryName: widget.countryName,
-          cityName: widget.cityName,
-          agency: _travelAgencyController.text,
-          companyID: companyID?? '',
-          agentID: widget.userId,
-          tourHighlightData: tourHighlightData,
-          itineraryData: itineraryData,
-          flightData: flightData,
-          availabilityData: availabilityData,
-          tourCover: _image!, // Safe to use ! now
-          pdfFile: _uploadedPdfFile!, // Safe to use ! now
-          isPublish: 0,
-        );
+        }
 
-        // Show success dialog
-        _showDialog(
-          title: 'Successful',
-          content: 'You have added the tour package successfully.',
-          onPressed: () {
-            Navigator.of(context).pop(); // Close the success dialog
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TravelAgentViewTourListScreen(
-                  userId: widget.userId,
-                  countryName: widget.countryName,
-                  cityName: widget.cityName,
-                ),
+      final usersSnapshot = await firestore.collection('tourPackage').get();
+      final tourid = 'TP${(usersSnapshot.docs.length + 1).toString().padLeft(4, '0')}';
+
+      // Save tour package data
+      String resp = await StoreData().saveTourPackageData(
+        tourid: tourid,
+        tourName: _tourNameController.text,
+        countryName: widget.countryName,
+        cityName: widget.cityName,
+        agency: _travelAgencyController.text,
+        companyID: companyID ?? '',
+        agentID: widget.userId,
+        tourHighlightData: tourHighlightData,
+        itineraryData: itineraryData,
+        flightData: flightData,
+        availabilityData: availabilityData,
+        tourCover: _image!, // Safe to use ! now
+        pdfFile: _uploadedPdfFile!, // Safe to use ! now
+        isPublish: 0,
+      );
+
+      // Show success dialog
+      _showDialog(
+        title: 'Successful',
+        content: 'You have added the tour package successfully.',
+        onPressed: () {
+          Navigator.of(context).pop(); // Close the success dialog
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TravelAgentViewTourListScreen(
+                userId: widget.userId,
+                countryName: widget.countryName,
+                cityName: widget.cityName,
               ),
-            );
-          },
-        );
-      } else {
-        throw Exception("All fields are required.");
-      }
+            ),
+          );
+        },
+      );
     } catch (e) {
       // Show error dialog
       _showDialog(
@@ -537,6 +657,7 @@ void _removeItineraryRow(int index) {
       });
     }
   }
+
 
   // Method to show a dialog with a title and content
   void _showDialog({

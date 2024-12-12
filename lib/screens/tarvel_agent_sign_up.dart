@@ -685,6 +685,7 @@ class _TravelAgentSignUpScreenState extends State<TravelAgentSignUpScreen> {
         fontWeight: FontWeight.w800,
         fontSize: 14,
       ),
+      keyboardType: TextInputType.phone,
       decoration: InputDecoration(
         hintText: 'Enter Company Contact Number',
         labelText: 'Company Contact Number',

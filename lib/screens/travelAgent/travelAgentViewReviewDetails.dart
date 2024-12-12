@@ -1,6 +1,5 @@
 import "package:assignment_tripmate/constants.dart";
 import "package:assignment_tripmate/screens/travelAgent/travelAgentReviewMainpage.dart";
-import "package:assignment_tripmate/utils.dart";
 import "package:cloud_firestore/cloud_firestore.dart";
 import "package:flutter/material.dart";
 
@@ -34,8 +33,10 @@ class _TravelAgentViewReviewDetailsScreenState extends State<TravelAgentViewRevi
       isFetching = true;
     });
 
+    print("Package ID: ${widget.packageID}");
+
     try {
-      // Fetch reviews where packageID equals the widget.localBuddyId
+      // Fetch reviews where packageID equals the widget.packageID
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('review')
           .where('packageID', isEqualTo: widget.packageID)
@@ -55,20 +56,23 @@ class _TravelAgentViewReviewDetailsScreenState extends State<TravelAgentViewRevi
 
           if (userDoc.exists) {
             // Extract user details (assuming the fields exist)
-            String userName = userDoc['name'] ?? 'Unknown';  // Provide default if the field doesn't exist
-            String userProfile = userDoc['profileImage'] ?? '';  // Provide default if the field doesn't exist
+            String userName = userDoc['name'] ?? 'Unknown'; // Provide default if the field doesn't exist
+            String userProfile = userDoc['profileImage'] ?? ''; // Provide default if the field doesn't exist
 
             // Prepare the data to be added to the reviewData list
             Map<String, dynamic> reviewEntry = {
-              'content': doc.data(),  // Store the review data
+              'content': doc.data(), // Store the review data
               'userName': userName,
               'userProfile': userProfile,
             };
+
+            // Add the review entry to the reviewData list
+            reviewData.add(reviewEntry);
           }
         }
       }
 
-      // Now you can use reviewData list for displaying or processing further
+      // Debugging output
       print('Review data: $reviewData');
     } catch (e) {
       print("Error fetching reviews: $e");
@@ -78,6 +82,7 @@ class _TravelAgentViewReviewDetailsScreenState extends State<TravelAgentViewRevi
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

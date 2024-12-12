@@ -28,11 +28,11 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
   TextEditingController _previousExperienceController = TextEditingController();
   TextEditingController _bioController = TextEditingController();
   TextEditingController _imageNameController = TextEditingController();
-  TextEditingController _referenceController = TextEditingController();
+  // TextEditingController _referenceController = TextEditingController();
 
   bool isLoading = false;
   Uint8List? _image;
-  Uint8List? _referenceImage;
+  // Uint8List? _referenceImage;
 
   List<String> selectedDays = [];
 
@@ -81,15 +81,15 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
     }
   }
 
-  Future<void> selectReferenceImage() async {
-    Uint8List? img = await ImageUtils.selectImage(context);
-    if (img != null) {
-      setState(() {
-        _referenceImage = img;
-        _referenceController.text = 'Reference Uploaded'; 
-      });
-    }
-  }
+  // Future<void> selectReferenceImage() async {
+  //   Uint8List? img = await ImageUtils.selectImage(context);
+  //   if (img != null) {
+  //     setState(() {
+  //       _referenceImage = img;
+  //       _referenceController.text = 'Reference Uploaded'; 
+  //     });
+  //   }
+  // }
 
   Future<void> _saveBuddyData() async {
     // Check if required fields are filled
@@ -140,10 +140,10 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
       }
 
       // Check if reference image is provided (optional)
-      Uint8List? referenceImage;
-      if (_referenceImage != null) {
-        referenceImage = _referenceImage!;
-      }
+      // Uint8List? referenceImage;
+      // if (_referenceImage != null) {
+      //   referenceImage = _referenceImage!;
+      // }
 
       String? country = '';
       String? area = '';
@@ -165,7 +165,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
         availability: availability,
         price: int.tryParse(_pricingController.text) ?? 0,  // Default to 0 if parsing fails
         idCard: _image!,  // Required field, already checked
-        referenceImage: referenceImage,  // Optional field
+        // referenceImage: referenceImage,  // Optional field
         bio: _bioController.text,  // Required field, already checked
         previousExperience: previousExperience,  // Optional field
         action: 1,
@@ -440,64 +440,64 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyRegistrationScreen>
             ),
           ),
           SizedBox(height: 20),
-          TextField(
-            controller: _referenceController,
-            readOnly: true,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: defaultFontSize,
-              color: Colors.black54
-            ),
-            decoration: InputDecoration(
-              hintText: 'Please upload any references if applicable...',
-              labelText: 'References/Reviews (optional)',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Color(0xFF467BA1),
-                  width: 2.5,
-                ),
-              ),
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              labelStyle: const TextStyle(
-                fontSize: defaultLabelFontSize,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                shadows: [
-                  Shadow(
-                    offset: Offset(0.5, 0.5),
-                    color: Colors.black87,
-                  ),
-                ],
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(
-                  Icons.image,
-                  color: Color(0xFF467BA1),
-                  size: 25,
-                ),
-                onPressed: () {
-                  selectReferenceImage();
-                }
-              ),
-            ),
-          ),
+          // TextField(
+          //   controller: _referenceController,
+          //   readOnly: true,
+          //   style: const TextStyle(
+          //     fontWeight: FontWeight.w800,
+          //     fontSize: defaultFontSize,
+          //     color: Colors.black54
+          //   ),
+          //   decoration: InputDecoration(
+          //     hintText: 'Please upload any references if applicable...',
+          //     labelText: 'References/Reviews (optional)',
+          //     filled: true,
+          //     fillColor: Colors.white,
+          //     border: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     focusedBorder: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     enabledBorder: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //       borderSide: const BorderSide(
+          //         color: Color(0xFF467BA1),
+          //         width: 2.5,
+          //       ),
+          //     ),
+          //     floatingLabelBehavior: FloatingLabelBehavior.always,
+          //     labelStyle: const TextStyle(
+          //       fontSize: defaultLabelFontSize,
+          //       fontWeight: FontWeight.bold,
+          //       color: Colors.black87,
+          //       shadows: [
+          //         Shadow(
+          //           offset: Offset(0.5, 0.5),
+          //           color: Colors.black87,
+          //         ),
+          //       ],
+          //     ),
+          //     suffixIcon: IconButton(
+          //       icon: const Icon(
+          //         Icons.image,
+          //         color: Color(0xFF467BA1),
+          //         size: 25,
+          //       ),
+          //       onPressed: () {
+          //         selectReferenceImage();
+          //       }
+          //     ),
+          //   ),
+          // ),
 
 
           SizedBox(height: 30),

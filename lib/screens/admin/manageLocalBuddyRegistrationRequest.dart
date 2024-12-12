@@ -667,15 +667,15 @@ class _AdminManageLocalBuddyRegistrationRequestScreenState extends State<AdminMa
                               child: _buildImage(localBuddyData?['idCardImage'], double.infinity, 220),
                             ),
                             SizedBox(height: 10),
-                            _buildDetailRow('References', localBuddyData?['referenceImage'] != null ? '' : 'N/A', 130),
-                            if (localBuddyData?['referenceImage'] != null && localBuddyData!['referenceImage'].isNotEmpty) ...[
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black, width: 1.5),
-                                ),
-                                child: _buildImage(localBuddyData!['referenceImage'], double.infinity, 220),
-                              ),
-                            ],
+                            // _buildDetailRow('References', localBuddyData?['referenceImage'] != null ? '' : 'N/A', 130),
+                            // if (localBuddyData?['referenceImage'] != null && localBuddyData!['referenceImage'].isNotEmpty) ...[
+                            //   Container(
+                            //     decoration: BoxDecoration(
+                            //       border: Border.all(color: Colors.black, width: 1.5),
+                            //     ),
+                            //     child: _buildImage(localBuddyData!['referenceImage'], double.infinity, 220),
+                            //   ),
+                            // ],
                           ],
                         ),
                       ),

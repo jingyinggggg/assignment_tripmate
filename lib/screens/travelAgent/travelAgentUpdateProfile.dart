@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:assignment_tripmate/screens/travelAgent/travelAgentHomepage.dart';
 import 'package:http/http.dart' as http;
 import 'package:assignment_tripmate/saveImageToFirebase.dart';
 import 'package:assignment_tripmate/utils.dart';
@@ -28,6 +29,10 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
   Uint8List? _image;
   bool isUpdating = false;
   bool _isDataInitialized = false;
+  
+  Uint8List? _employeeCardImage;
+  String? existingImagePath;
+  int? accountStatus;
 
   @override
   void initState() {
@@ -55,6 +60,16 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
     }
   }
 
+  Future<void> _selectEmployeeCardImage() async {
+    Uint8List? img = await ImageUtils.selectImage(context);
+    if (img != null) {
+      setState(() {
+        _employeeCardImage = img;
+        existingImagePath = null;
+      });
+    }
+  }
+
   Future<void> _fetchTravelAgentData() async{
     setState(() {
       _isDataInitialized = true;
@@ -78,6 +93,8 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
           _companyContactController.text = data?['companyContact'] ?? '';
           _companyAddressController.text = data?['companyAddress'] ?? '';
           existingProfielURL = data?['profileImage'] ?? null;
+          existingImagePath = data?['employeeCardPath'] ?? null;
+          accountStatus = data?['accountApproved'] ?? null;
         });
       } else{
         setState(() {
@@ -189,6 +206,8 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
                             companyContact(),
                             const SizedBox(height: 20),
                             companyAddress(),
+                            const SizedBox(height: 10),
+                            employeeCardImage(),
                             const SizedBox(height: 20),
                             SizedBox(
                               width: double.infinity, // This makes the button take up the full width
@@ -586,7 +605,6 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
     );
   }
 
-
   Widget dob() {
     return Padding(
       padding: const EdgeInsets.only(top: 0), // Adjust padding as needed
@@ -645,6 +663,91 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
     );
   }
 
+  
+  Widget employeeCardImage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Employee Card",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              onPressed: () async {
+                // Select a new image
+                await _selectEmployeeCardImage();
+              },
+              icon: const Icon(
+                Icons.edit,
+                size: 25,
+                color: Color(0xFF467BA1),
+              ),
+            ),
+          ],
+        ),
+        _employeeCardImage != null // If a new image is selected from memory
+          ? Container(
+              width: double.infinity,
+              height: 200,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: const Color(0xFF467BA1), width: 3),
+              ),
+              child: Image.memory(
+                _employeeCardImage!,
+                fit: BoxFit.cover,
+              ),
+            )
+          : (existingImagePath != null && existingImagePath!.isNotEmpty)
+            ? Container( // If there's a network image to display
+                width: double.infinity,
+                height: 200,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(color: const Color(0xFF467BA1), width: 3),
+                ),
+                child: Image.network(
+                  existingImagePath!,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Container( // Placeholder if no image is available
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.image, size: 50, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text(
+                        'Insert employee card to preview',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+      ],
+    );
+  }
+
   void _showDialog({
     required String title,
     required String content,
@@ -690,8 +793,10 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
 
       // Get the profile image URL from the fetched user data
       String? existingProfileURL = userDoc['profileImage'] ?? '';
+      String? existingEmployeeCardURL = userDoc['employeeCardPath'] ?? '';
 
       Uint8List? profileImageToUpload;
+      Uint8List? employeeCardToUpload;
 
       // Check if a new image is selected (_image is not null)
       if (_image != null) {
@@ -699,6 +804,12 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
       } else if (existingProfileURL != null && existingProfileURL.isNotEmpty) {
         // If no new image is selected, use the existing profile image URL
         profileImageToUpload = await _getImageFromURL(existingProfileURL);
+      }
+
+      if(_employeeCardImage != null){
+        employeeCardToUpload = _employeeCardImage!;
+      } else if (existingEmployeeCardURL != null && existingEmployeeCardURL.isNotEmpty){
+        employeeCardToUpload = await _getImageFromURL(existingEmployeeCardURL);
       }
 
       if (_nameController.text.isNotEmpty && 
@@ -717,18 +828,37 @@ class _TravelAgentUpdateProfileScreenState extends State<TravelAgentUpdateProfil
           companyName: _companyNameController.text,
           companyContact: _companyContactController.text, 
           companyAddress: _companyAddressController.text, 
-          file: profileImageToUpload // Use the selected or existing image
+          file: profileImageToUpload, // Use the selected or existing image
+          employeeCard: employeeCardToUpload,
+          accountStatus: accountStatus == 2 || accountStatus == 0 ? 0 : 1
         );
 
-        // Show success dialog
-        _showDialog(
-          title: 'Update Successful',
-          content: 'Your details have been updated successfully.',
-          onPressed: () {
-            Navigator.of(context).pop(); // Close the success dialog
-            Navigator.of(context).pop();
-          },
-        );
+        if(accountStatus == 2){
+          // Show success dialog
+          _showDialog(
+            title: 'Update Successful',
+            content: 'Your details have been updated successfully.',
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the success dialog
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => TravelAgentHomepageScreen(userId: widget.userId))
+              );
+            },
+          );
+        } else{
+          // Show success dialog
+          _showDialog(
+            title: 'Update Successful',
+            content: 'Your details have been updated successfully.',
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the success dialog
+              Navigator.of(context).pop();
+            },
+          );
+        }
+
+        
       }
     } catch (e) {
       // Handle errors

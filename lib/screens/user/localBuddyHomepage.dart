@@ -177,6 +177,11 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
         }
       }
 
+      filteredBuddies.sort((a,b){
+        if(a.distance == null || b.distance == null) return 0;
+        return a.distance!.compareTo(b.distance!);
+      });
+
       setState(() {
         _foundedLocalBuddy = filteredBuddies; // Update with filtered list
       });
@@ -226,7 +231,7 @@ class _LocalBuddyHomepageScreenState extends State<LocalBuddyHomepageScreen> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Colors.red, width: 2),
                   ),
-                  hintText: "Search local buddy with destination...",
+                  hintText: "Search nearby local buddy with destination...",
                   hintStyle: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade500,

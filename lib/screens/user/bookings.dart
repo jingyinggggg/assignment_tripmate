@@ -2314,9 +2314,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                                   overflow: TextOverflow.ellipsis, // Ensures text doesn't overflow
                                 ),
                                 Text(
-                                  "${(carRentalbookings.isDepositRefund == 0) ? "Progressing..." : "Done"}", 
+                                  "${(carRentalbookings.isDepositRefund == 0) ? "Progressing..." : (carRentalbookings.isDepositRefund == 2) ? "Rejected" : "Done"}", 
                                   style: TextStyle(
-                                    color: carRentalbookings.isDepositRefund == 0 ? Colors.orange : Colors.green, 
+                                    color: carRentalbookings.isDepositRefund == 0 ? Colors.orange : carRentalbookings.isDepositRefund == 2 ? Colors.red : Colors.green, 
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 10,
                                   ),

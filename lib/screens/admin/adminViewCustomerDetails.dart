@@ -1897,6 +1897,18 @@ class _AdminViewCustomerDetailsScreenState extends State<AdminViewCustomerDetail
                                     textAlign: TextAlign.justify,
                                   ),
                                 )
+                              else if (carBookingData!['isCheckCarCondition'] == 1 && carBookingData!['isRefundDeposit'] == 2)
+                                Container(
+                                  constraints: BoxConstraints(maxHeight: 60), // or any appropriate height
+                                  child: Text(
+                                    '*** Remarks: Travel agent has rejected the deposit refund because the car did not pass the condition check.***',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.justify,
+                                  ),
+                                )
                               else
                                 Container(),
 
