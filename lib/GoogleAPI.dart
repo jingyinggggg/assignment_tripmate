@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GoogleTranslateApi {
-  final String _apiKey = 'AIzaSyCHTQkSfA59c9agWbthQ-w1X4YxcQLxpYo'; // Replace with your API key
+  final String _apiKey = 'AIzaSyBFCbi7ht9miK8Mcqrusg25VWZzvLNa8qE'; // Replace with your API key
 
   Future<String> translateText(String text, String targetLanguage) async {
     final url = 'https://translation.googleapis.com/language/translate/v2?key=$_apiKey';

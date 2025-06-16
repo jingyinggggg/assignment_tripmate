@@ -5,7 +5,7 @@ import 'package:assignment_tripmate/screens/user/localBuddyViewAppointmentDetail
 import 'package:assignment_tripmate/utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
+// import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class LocalBuddyViewAppointmentScreen extends StatefulWidget {
   final String userId;
@@ -80,23 +80,23 @@ class _LocalBuddyViewAppointmentScreenState extends State<LocalBuddyViewAppointm
     }
   }
 
-  List<Appointment> _getAppointments() {
-    List<Appointment> appointmentsList = [];
-    appointments.forEach((date, appointmentList) {
-      for (var appointment in appointmentList) {
-        appointmentsList.add(
-          Appointment(
-            startTime: date, // Start time is the booking date
-            endTime: date, // Keep the end time as the same date to show the full day
-            subject: 'Booking ID: ${appointment.localBuddyBookingID}\nCustomer: ${appointment.custName}',
-            color: primaryColor, // Set the color for the appointment
-            isAllDay: true, // Set to true to indicate it's an all-day event
-          ),
-        );
-      }
-    });
-    return appointmentsList;
-  }
+  // List<Appointment> _getAppointments() {
+  //   List<Appointment> appointmentsList = [];
+  //   appointments.forEach((date, appointmentList) {
+  //     for (var appointment in appointmentList) {
+  //       appointmentsList.add(
+  //         Appointment(
+  //           startTime: date, // Start time is the booking date
+  //           endTime: date, // Keep the end time as the same date to show the full day
+  //           subject: 'Booking ID: ${appointment.localBuddyBookingID}\nCustomer: ${appointment.custName}',
+  //           color: primaryColor, // Set the color for the appointment
+  //           isAllDay: true, // Set to true to indicate it's an all-day event
+  //         ),
+  //       );
+  //     }
+  //   });
+  //   return appointmentsList;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -139,99 +139,100 @@ class _LocalBuddyViewAppointmentScreenState extends State<LocalBuddyViewAppointm
       ),
       body: isFetchLoading
           ? Center(child: CircularProgressIndicator())
-          : SfCalendar(
-              view: CalendarView.month,
-              initialSelectedDate: DateTime.now(),
-              dataSource: AppointmentDataSource(_getAppointments()),
-              todayHighlightColor: primaryColor,
-              todayTextStyle: TextStyle(
-                color: primaryColor,
-                fontWeight: FontWeight.bold
-              ),
-              monthCellBuilder: (BuildContext context, MonthCellDetails details) {
-                DateTime cellDate = details.date;
-                List<localBuddyCustomerAppointment>? cellAppointments = appointments[cellDate];
+          : Container()
+          // : SfCalendar(
+          //     view: CalendarView.month,
+          //     initialSelectedDate: DateTime.now(),
+          //     dataSource: AppointmentDataSource(_getAppointments()),
+          //     todayHighlightColor: primaryColor,
+          //     todayTextStyle: TextStyle(
+          //       color: primaryColor,
+          //       fontWeight: FontWeight.bold
+          //     ),
+          //     monthCellBuilder: (BuildContext context, MonthCellDetails details) {
+          //       DateTime cellDate = details.date;
+          //       List<localBuddyCustomerAppointment>? cellAppointments = appointments[cellDate];
 
-                bool isCurrentMonth = details.date.month == details.visibleDates[0].month;
-                bool isToday = cellDate.isAtSameMomentAs(DateTime.now());
+          //       bool isCurrentMonth = details.date.month == details.visibleDates[0].month;
+          //       bool isToday = cellDate.isAtSameMomentAs(DateTime.now());
 
-                return Container(
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: cellAppointments != null && cellAppointments.isNotEmpty 
-                        ? primaryColor.withOpacity(0.2) 
-                        : Colors.transparent,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        cellDate.day.toString(),
-                      ),
-                      if (cellAppointments != null && cellAppointments.isNotEmpty)
-                        Expanded(
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: cellAppointments.length,
-                            itemBuilder: (context, index) {
-                              final appointment = cellAppointments[index];
-                              return Text(
-                                'Customer\n(${appointment.custName})',
-                                maxLines: null,
-                                overflow: TextOverflow.visible,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                );
-              },
-              onTap: (CalendarTapDetails details) {
-                if (details.targetElement == CalendarElement.calendarCell) {
-                  // Handle tap on calendar cell
-                  DateTime tappedDate = details.date!;
+          //       return Container(
+          //         padding: EdgeInsets.all(4),
+          //         decoration: BoxDecoration(
+          //           color: cellAppointments != null && cellAppointments.isNotEmpty 
+          //               ? primaryColor.withOpacity(0.2) 
+          //               : Colors.transparent,
+          //         ),
+          //         child: Column(
+          //           crossAxisAlignment: CrossAxisAlignment.end,
+          //           children: [
+          //             Text(
+          //               cellDate.day.toString(),
+          //             ),
+          //             if (cellAppointments != null && cellAppointments.isNotEmpty)
+          //               Expanded(
+          //                 child: ListView.builder(
+          //                   shrinkWrap: true,
+          //                   itemCount: cellAppointments.length,
+          //                   itemBuilder: (context, index) {
+          //                     final appointment = cellAppointments[index];
+          //                     return Text(
+          //                       'Customer\n(${appointment.custName})',
+          //                       maxLines: null,
+          //                       overflow: TextOverflow.visible,
+          //                       style: TextStyle(
+          //                         fontSize: 9,
+          //                         color: Colors.black,
+          //                         fontWeight: FontWeight.w600,
+          //                       ),
+          //                     );
+          //                   },
+          //                 ),
+          //               ),
+          //           ],
+          //         ),
+          //       );
+          //     },
+          //     onTap: (CalendarTapDetails details) {
+          //       if (details.targetElement == CalendarElement.calendarCell) {
+          //         // Handle tap on calendar cell
+          //         DateTime tappedDate = details.date!;
                   
-                  // Check if there are appointments for the tapped date
-                  if (appointments[tappedDate] != null && appointments[tappedDate]!.isNotEmpty) {
-                    // Retrieve the first appointment (or however you want to select an appointment)
-                    final appointment = appointments[tappedDate]!.first;
+          //         // Check if there are appointments for the tapped date
+          //         if (appointments[tappedDate] != null && appointments[tappedDate]!.isNotEmpty) {
+          //           // Retrieve the first appointment (or however you want to select an appointment)
+          //           final appointment = appointments[tappedDate]!.first;
 
-                    // Now you can access custID and localBuddyBookingID from the appointment object
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LocalBuddyViewAppointmentDetailsScreen(
-                          userId: widget.userId,
-                          localBuddyId: widget.localBuddyId,
-                          custID: appointment.custID, // Pass the custID
-                          localBuddyBookingID: appointment.localBuddyBookingID, // Pass the booking ID
-                          appointments: appointments[tappedDate]!, // Pass the list of appointments for details
-                        ),
-                      ),
-                    );
-                  } else {
-                    // Handle case where no appointments exist for the selected date
-                    print('No appointments found for this date.');
-                  }
-                }
-              },
+          //           // Now you can access custID and localBuddyBookingID from the appointment object
+          //           Navigator.push(
+          //             context,
+          //             MaterialPageRoute(
+          //               builder: (context) => LocalBuddyViewAppointmentDetailsScreen(
+          //                 userId: widget.userId,
+          //                 localBuddyId: widget.localBuddyId,
+          //                 custID: appointment.custID, // Pass the custID
+          //                 localBuddyBookingID: appointment.localBuddyBookingID, // Pass the booking ID
+          //                 appointments: appointments[tappedDate]!, // Pass the list of appointments for details
+          //               ),
+          //             ),
+          //           );
+          //         } else {
+          //           // Handle case where no appointments exist for the selected date
+          //           print('No appointments found for this date.');
+          //         }
+          //       }
+          //     },
 
-            ),
+            // ),
     );
   }
 }
 
-class AppointmentDataSource extends CalendarDataSource {
-  AppointmentDataSource(List<Appointment> source) {
-    appointments = source;
-  }
-}
+// class AppointmentDataSource extends CalendarDataSource {
+//   AppointmentDataSource(List<Appointment> source) {
+//     appointments = source;
+//   }
+// }
 
 class AppointmentDetailsScreen extends StatelessWidget {
   final List<localBuddyCustomerAppointment> appointments;

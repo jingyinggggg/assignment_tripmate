@@ -281,6 +281,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           GestureDetector(
                             onTap: () {
                               if (localBuddyID != null) { // Check if localBuddyID is not null
+                              // print("Local Buddy ID is not null");
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
